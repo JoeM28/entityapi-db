@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spring Data Abstraction vs Raw Couchbase SDK</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600;700&family=IBM+Plex+Serif:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #0a0e1a;
+    --surface:   #111827;
+    --surface2:  #1a2235;
+    --border:    #1e2d45;
+    --text:      #e2e8f0;
+    --text-dim:  #94a3b8;
+    --text-muted:#64748b;
+    --accent:    #00d4ff;
+    --green:     #10b981;
+    --amber:     #f59e0b;
+    --red:       #ef4444;
+    --purple:    #7c3aed;
+    --code-bg:   #0d1117;
+    --heading:   #f8fafc;
+    --mono: 'IBM Plex Mono', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-weight: 300;
+    line-height: 1.7;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    background: linear-gradient(135deg, #0a0e1a 0%, #0f172a 50%, #1a1040 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 60px 64px 50px;
+    position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; top: -100px; right: -100px;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(0,212,255,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-tag {
+    font-family: var(--mono);
+    font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 16px; opacity: 0.8;
+  }
+  .hero h1 {
+    font-family: 'IBM Plex Serif', serif;
+    font-size: 38px; font-weight: 600;
+    color: var(--heading); line-height: 1.2; margin-bottom: 14px;
+  }
+  .hero h1 span { color: var(--accent); }
+  .hero p { font-size: 15px; color: var(--text-dim); max-width: 680px; }
+  .verdict-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    margin-top: 24px; padding: 8px 18px;
+    background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3);
+    border-radius: 24px;
+    font-family: var(--mono); font-size: 12px; font-weight: 600;
+    color: #ef4444; letter-spacing: 0.5px;
+  }
+
+  /* ── NAV ── */
+  .nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(10,14,26,0.95); backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 64px; display: flex; gap: 0; overflow-x: auto;
+  }
+  .nav a {
+    color: var(--text-muted); text-decoration: none;
+    font-size: 12px; font-weight: 600; letter-spacing: 1px;
+    text-transform: uppercase; padding: 16px 20px;
+    border-bottom: 2px solid transparent; white-space: nowrap;
+    transition: all 0.2s;
+  }
+  .nav a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ── LAYOUT ── */
+  .container { max-width: 1400px; margin: 0 auto; padding: 60px 64px; }
+  .section { margin-bottom: 80px; }
+  .section-header {
+    display: flex; align-items: center; gap: 16px;
+    margin-bottom: 32px; padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-icon {
+    width: 42px; height: 42px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+  }
+  .section-header h2 {
+    font-family: 'IBM Plex Serif', serif;
+    font-size: 26px; font-weight: 600; color: var(--heading);
+  }
+  .section-header .sub {
+    font-family: var(--mono); font-size: 12px;
+    color: var(--text-muted); margin-top: 3px; letter-spacing: 1px;
+  }
+
+  /* ── SIDE-BY-SIDE PANEL ── */
+  .compare-card {
+    border: 1px solid var(--border); border-radius: 14px;
+    overflow: hidden; margin-bottom: 36px;
+  }
+  .compare-card-header {
+    background: var(--surface);
+    padding: 14px 24px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .compare-card-header h3 {
+    font-family: var(--mono); font-size: 13px; font-weight: 600;
+    color: var(--heading); letter-spacing: 0.5px;
+  }
+  .compare-card-header .file-tag {
+    margin-left: auto;
+    font-family: var(--mono); font-size: 11px;
+    color: var(--text-muted); letter-spacing: 1px;
+  }
+
+  .split {
+    display: grid; grid-template-columns: 1fr 1fr;
+  }
+  .split-pane {
+    border-right: 1px solid var(--border);
+  }
+  .split-pane:last-child { border-right: none; }
+
+  .pane-label {
+    padding: 10px 20px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+    font-family: var(--mono); font-size: 11px;
+    font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+  }
+  .pane-label .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .dot-red   { background: var(--red); }
+  .dot-green { background: var(--green); }
+  .dot-amber { background: var(--amber); }
+  .dot-blue  { background: var(--accent); }
+
+  .label-text-red   { color: var(--red); }
+  .label-text-green { color: var(--green); }
+
+  pre {
+    background: var(--code-bg);
+    padding: 22px 20px;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.85;
+    color: #c9d1d9;
+    margin: 0;
+  }
+
+  /* syntax */
+  .k  { color: #79c0ff; }   /* keys / field names */
+  .s  { color: #a5d6ff; }   /* strings */
+  .n  { color: #f78166; }   /* numbers */
+  .kw { color: #ff7b72; }   /* keywords (return, void, etc.) */
+  .c  { color: #6e7681; font-style: italic; }  /* comments */
+  .t  { color: #7ee787; }   /* types / class names */
+  .e  { color: #ffa657; }   /* enums / annotations */
+  .m  { color: #d2a8ff; }   /* method calls */
+  .hi { color: #ffd700; font-weight: 600; } /* highlighted — the actual DB call */
+  .ann { color: #f59e0b; }  /* annotations */
+
+  /* ── CALLOUTS ── */
+  .callout {
+    border-radius: 10px; padding: 16px 20px; margin: 20px 0;
+    font-size: 13.5px; color: var(--text-dim); border: 1px solid;
+    border-left-width: 3px;
+  }
+  .callout-blue  { background: rgba(0,212,255,0.04); border-color: rgba(0,212,255,0.2); border-left-color: var(--accent); }
+  .callout-red   { background: rgba(239,68,68,0.04); border-color: rgba(239,68,68,0.2); border-left-color: var(--red); }
+  .callout-green { background: rgba(16,185,129,0.04); border-color: rgba(16,185,129,0.2); border-left-color: var(--green); }
+  .callout-amber { background: rgba(245,158,11,0.04); border-color: rgba(245,158,11,0.2); border-left-color: var(--amber); }
+  .callout strong { font-weight: 600; }
+  .callout-blue  strong { color: var(--accent); }
+  .callout-red   strong { color: var(--red); }
+  .callout-green strong { color: var(--green); }
+  .callout-amber strong { color: var(--amber); }
+
+  /* ── LIABILITY CARDS ── */
+  .liability-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 36px;
+  }
+  .liability-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .liability-card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: flex-start; gap: 14px;
+  }
+  .liability-number {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 12px; font-weight: 600;
+    color: var(--red); flex-shrink: 0; margin-top: 1px;
+  }
+  .liability-card-header h3 {
+    font-size: 14px; font-weight: 700; color: var(--heading);
+    margin-bottom: 3px;
+  }
+  .liability-card-header p {
+    font-size: 12px; color: var(--text-muted); line-height: 1.5;
+  }
+  .liability-body { padding: 0; }
+  .liability-body pre {
+    font-size: 11.5px;
+    border-radius: 0;
+  }
+
+  /* ── COMPARISON TABLE ── */
+  .table-wrap {
+    overflow-x: auto; border-radius: 12px;
+    border: 1px solid var(--border);
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead tr { background: var(--surface); }
+  th {
+    padding: 14px 18px; text-align: left;
+    font-family: var(--mono); font-size: 11px; font-weight: 600;
+    letter-spacing: 1px; text-transform: uppercase;
+    color: var(--text-muted); border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  td {
+    padding: 13px 18px; border-bottom: 1px solid rgba(30,45,69,0.5);
+    vertical-align: top; line-height: 1.5;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:nth-child(even) td { background: rgba(17,24,39,0.4); }
+  td:first-child { font-family: var(--mono); font-size: 12px; font-weight: 600; color: var(--text-dim); }
+  .yes  { color: var(--green);  font-weight: 600; }
+  .no   { color: var(--red);    font-weight: 600; }
+  .part { color: var(--amber);  font-weight: 600; }
+
+  /* ── FLOW DIAGRAM ── */
+  .flow {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 36px 40px;
+    display: flex; align-items: center; justify-content: center; gap: 0;
+    flex-wrap: wrap;
+  }
+  .flow-node {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 22px;
+    text-align: center; min-width: 130px;
+  }
+  .flow-node .node-label {
+    font-family: var(--mono); font-size: 10px; font-weight: 600;
+    letter-spacing: 1px; text-transform: uppercase;
+    color: var(--text-muted); margin-bottom: 4px;
+  }
+  .flow-node .node-name {
+    font-size: 13px; font-weight: 700; color: var(--heading);
+  }
+  .flow-node .node-detail {
+    font-family: var(--mono); font-size: 10px;
+    color: var(--text-muted); margin-top: 3px;
+  }
+  .flow-arrow {
+    padding: 0 12px; color: var(--text-muted);
+    font-size: 20px; flex-shrink: 0;
+  }
+  .flow-arrow.down { transform: rotate(0deg); }
+  .node-blue   { border-color: rgba(0,212,255,0.4);   }
+  .node-amber  { border-color: rgba(245,158,11,0.4);  }
+  .node-green  { border-color: rgba(16,185,129,0.4);  }
+  .node-red    { border-color: rgba(239,68,68,0.4);   }
+  .node-purple { border-color: rgba(124,58,237,0.4);  }
+
+  code {
+    font-family: var(--mono); font-size: 12px;
+    background: rgba(0,212,255,0.08); color: var(--accent);
+    padding: 2px 7px; border-radius: 4px;
+  }
+
+  /* ── VERDICT SECTION ── */
+  .verdict-box {
+    background: linear-gradient(135deg, rgba(16,185,129,0.06) 0%, rgba(0,212,255,0.04) 100%);
+    border: 1px solid rgba(16,185,129,0.25);
+    border-radius: 14px; padding: 32px 36px;
+  }
+  .verdict-box h3 {
+    font-family: 'IBM Plex Serif', serif;
+    font-size: 20px; font-weight: 600; color: var(--heading);
+    margin-bottom: 16px;
+  }
+  .verdict-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .verdict-list li {
+    display: flex; align-items: flex-start; gap: 12px;
+    font-size: 13.5px; color: var(--text-dim);
+  }
+  .verdict-list li::before {
+    content: '→'; color: var(--green);
+    font-family: var(--mono); font-weight: 600;
+    flex-shrink: 0; margin-top: 1px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════ HERO -->
+<div class="hero">
+  <div class="hero-tag">Architecture Analysis · Entity API Service</div>
+  <h1>Spring Data Abstraction<br>vs <span>Raw Couchbase SDK</span></h1>
+  <p>
+    A line-by-line comparison of <code>AccountService.java</code> and <code>AccountRepository.java</code>
+    showing exactly what Spring Data hides from you — and why that matters when you need to tune, optimise, or debug.
+  </p>
+  <div class="verdict-badge">⚠ Abstraction is a liability for Couchbase — 4 reasons below</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ NAV -->
+<nav class="nav">
+  <a href="#flow">Request Flow</a>
+  <a href="#repository">AccountRepository</a>
+  <a href="#service">AccountService</a>
+  <a href="#liabilities">4 Liabilities</a>
+  <a href="#comparison">Comparison</a>
+  <a href="#verdict">Verdict</a>
+</nav>
+
+<div class="container">
+
+  <!-- ══════════════════════════════════════════════════ REQUEST FLOW -->
+  <section class="section" id="flow">
+    <div class="section-header">
+      <div class="section-icon" style="background:rgba(0,212,255,0.1);">🔄</div>
+      <div>
+        <h2>Request Flow — What Actually Happens</h2>
+        <div class="sub">HTTP → Controller → Service → ??? → Couchbase KV</div>
+      </div>
+    </div>
+
+    <div class="callout callout-blue">
+      <strong>Key insight:</strong> In both approaches, the final Couchbase operation is identical — <code>collection.get()</code> or <code>collection.upsert()</code>.
+      The difference is whether <em>you</em> write that line or Spring Data does it invisibly inside a generated proxy class.
+    </div>
+
+    <p style="margin-bottom: 20px; color: var(--text-dim); font-size: 13.5px;">
+      With Spring Data, a hidden proxy class sits between your service and the Couchbase SDK. You cannot see it, step into it in the debugger, or configure it per-operation.
+    </p>
+
+    <div style="margin-bottom: 12px; font-family: var(--mono); font-size: 11px; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase;">Spring Data path (current code)</div>
+    <div class="flow" style="margin-bottom: 28px;">
+      <div class="flow-node node-blue">
+        <div class="node-label">HTTP</div>
+        <div class="node-name">Controller</div>
+        <div class="node-detail">AccountController</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node node-amber">
+        <div class="node-label">Business</div>
+        <div class="node-name">Service</div>
+        <div class="node-detail">AccountService</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node node-red">
+        <div class="node-label">⚠ Hidden</div>
+        <div class="node-name">SD Proxy</div>
+        <div class="node-detail">generated at runtime</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node node-purple">
+        <div class="node-label">SDK</div>
+        <div class="node-name">collection</div>
+        <div class="node-detail">.get() / .upsert()</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node node-green">
+        <div class="node-label">KV port 11210</div>
+        <div class="node-name">Couchbase</div>
+        <div class="node-detail">customer_bucket</div>
+      </div>
+    </div>
+
+    <div style="margin-bottom: 12px; font-family: var(--mono); font-size: 11px; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase;">Raw SDK path (recommended)</div>
+    <div class="flow">
+      <div class="flow-node node-blue">
+        <div class="node-label">HTTP</div>
+        <div class="node-name">Controller</div>
+        <div class="node-detail">AccountController</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node node-amber">
+        <div class="node-label">Business</div>
+        <div class="node-name">Service</div>
+        <div class="node-detail">AccountService</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node node-green">
+        <div class="node-label">✓ Visible</div>
+        <div class="node-name">collection</div>
+        <div class="node-detail">.get() / .upsert()</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node node-green">
+        <div class="node-label">KV port 11210</div>
+        <div class="node-name">Couchbase</div>
+        <div class="node-detail">customer_bucket</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════ REPOSITORY -->
+  <section class="section" id="repository">
+    <div class="section-header">
+      <div class="section-icon" style="background:rgba(245,158,11,0.1);">📄</div>
+      <div>
+        <h2>AccountRepository.java</h2>
+        <div class="sub">Spring Data interface vs no repository needed with raw SDK</div>
+      </div>
+    </div>
+
+    <div class="compare-card">
+      <div class="compare-card-header">
+        <h3>AccountRepository.java</h3>
+        <span class="file-tag">src/main/java/…/repository/</span>
+      </div>
+      <div class="split">
+        <div class="split-pane">
+          <div class="pane-label">
+            <div class="dot dot-red"></div>
+            <span class="label-text-red">Spring Data (current) — 14 lines</span>
+          </div>
+          <pre><span class="e">@Repository</span>
+<span class="kw">public interface</span> <span class="t">AccountRepository</span>
+    <span class="kw">extends</span> <span class="t">CouchbaseRepository</span>&lt;<span class="t">AccountDocument</span>, <span class="t">String</span>&gt; {
+
+  <span class="c">// No methods written here.
+  // Spring Data generates a proxy class
+  // at runtime that implements:
+  //
+  //   findById(String id)
+  //   existsById(String id)
+  //   save(AccountDocument doc)
+  //
+  // You have NO visibility into what
+  // those implementations do, what
+  // SDK options they use, or how
+  // errors are handled.</span>
+}</pre>
+        </div>
+        <div class="split-pane">
+          <div class="pane-label">
+            <div class="dot dot-green"></div>
+            <span class="label-text-green">Raw SDK — repository file deleted entirely</span>
+          </div>
+          <pre><span class="c">// AccountRepository.java → DELETED
+//
+// With raw SDK you inject the
+// Couchbase Collection directly
+// into AccountService.
+//
+// No proxy. No magic. No hidden layer.
+// Every DB call is a line of code
+// you wrote yourself.
+//
+// The Collection bean is
+// auto-configured by Spring Boot
+// from application.yml — you just
+// inject it where you need it.</span>
+
+
+
+</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout callout-amber">
+      <strong>Why the interface feels convenient but isn't:</strong> The 14-line interface looks clean, but Spring Data generates hundreds of lines of proxy code behind it. You cannot read that code, set breakpoints in it, or configure it. When something goes wrong, your stack trace goes into Spring Data internals — not your code.
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════ SERVICE -->
+  <section class="section" id="service">
+    <div class="section-header">
+      <div class="section-icon" style="background:rgba(16,185,129,0.1);">⚙️</div>
+      <div>
+        <h2>AccountService.java</h2>
+        <div class="sub">Full side-by-side — every DB call made explicit</div>
+      </div>
+    </div>
+
+    <!-- GET -->
+    <div class="compare-card">
+      <div class="compare-card-header">
+        <h3>READ — getById()</h3>
+        <span class="file-tag">GET /entity/account/{accountId}</span>
+      </div>
+      <div class="split">
+        <div class="split-pane">
+          <div class="pane-label">
+            <div class="dot dot-red"></div>
+            <span class="label-text-red">Spring Data (current)</span>
+          </div>
+          <pre><span class="kw">public</span> <span class="t">AccountRecord</span> <span class="m">getById</span>(<span class="t">Long</span> accountId) {
+
+    <span class="kw">return</span> repository
+        .<span class="m">findById</span>(<span class="t">String</span>.<span class="m">valueOf</span>(accountId))
+        .<span class="m">map</span>(this::<span class="m">toRecord</span>)
+        .<span class="m">orElseThrow</span>(() -&gt;
+            <span class="kw">new</span> <span class="t">AccountNotFoundException</span>(accountId));
+
+    <span class="c">// What actually runs:
+    //   collection.get(key)    ← hidden
+    //
+    // What you CANNOT control:
+    //   - timeout (uses cluster default)
+    //   - replica reads (always primary)
+    //   - return expiry alongside doc</span>
+}</pre>
+        </div>
+        <div class="split-pane">
+          <div class="pane-label">
+            <div class="dot dot-green"></div>
+            <span class="label-text-green">Raw SDK (explicit)</span>
+          </div>
+          <pre><span class="kw">public</span> <span class="t">AccountRecord</span> <span class="m">getById</span>(<span class="t">Long</span> accountId) {
+    <span class="kw">try</span> {
+        <span class="t">GetResult</span> result = collection.<span class="hi">get</span>(
+            <span class="t">String</span>.<span class="m">valueOf</span>(accountId),
+            <span class="t">GetOptions</span>.<span class="m">getOptions</span>()
+                .<span class="m">timeout</span>(<span class="t">Duration</span>.<span class="m">ofMillis</span>(<span class="n">200</span>))
+                .<span class="m">withExpiry</span>(<span class="kw">true</span>)
+        );
+        <span class="kw">return</span> <span class="m">toRecord</span>(
+            result.<span class="m">contentAs</span>(<span class="t">AccountDocument</span>.<span class="kw">class</span>));
+
+    } <span class="kw">catch</span> (<span class="t">DocumentNotFoundException</span> e) {
+        <span class="kw">throw new</span> <span class="t">AccountNotFoundException</span>(accountId);
+    }
+    <span class="c">// Every option is visible and tunable.
+    // Timeout, replica reads, expiry
+    // — all in your code, not hidden.</span>
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- EXISTS -->
+    <div class="compare-card">
+      <div class="compare-card-header">
+        <h3>EXISTS check — before upsert to decide 200 vs 201</h3>
+        <span class="file-tag">POST /entity/account</span>
+      </div>
+      <div class="split">
+        <div class="split-pane">
+          <div class="pane-label">
+            <div class="dot dot-red"></div>
+            <span class="label-text-red">Spring Data (current)</span>
+          </div>
+          <pre><span class="kw">public boolean</span> <span class="m">exists</span>(<span class="t">Long</span> accountNumber) {
+
+    <span class="kw">return</span> repository
+        .<span class="m">existsById</span>(<span class="t">String</span>.<span class="m">valueOf</span>(accountNumber));
+
+    <span class="c">// Calls collection.exists() under the hood.
+    // Timeout, options — all hidden.</span>
+}</pre>
+        </div>
+        <div class="split-pane">
+          <div class="pane-label">
+            <div class="dot dot-green"></div>
+            <span class="label-text-green">Raw SDK (explicit)</span>
+          </div>
+          <pre><span class="kw">public boolean</span> <span class="m">exists</span>(<span class="t">Long</span> accountNumber) {
+
+    <span class="kw">return</span> collection.<span class="hi">exists</span>(
+        <span class="t">String</span>.<span class="m">valueOf</span>(accountNumber),
+        <span class="t">ExistsOptions</span>.<span class="m">existsOptions</span>()
+            .<span class="m">timeout</span>(<span class="t">Duration</span>.<span class="m">ofMillis</span>(<span class="n">100</span>))
+    ).<span class="m">exists</span>();
+    <span class="c">// Explicit. Tunable. Readable.</span>
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- UPSERT -->
+    <div class="compare-card">
+      <div class="compare-card-header">
+        <h3>WRITE — upsert()</h3>
+        <span class="file-tag">POST /entity/account</span>
+      </div>
+      <div class="split">
+        <div class="split-pane">
+          <div class="pane-label">
+            <div class="dot dot-red"></div>
+            <span class="label-text-red">Spring Data (current)</span>
+          </div>
+          <pre><span class="kw">public</span> <span class="t">AccountRecord</span> <span class="m">upsert</span>(<span class="t">AccountRecord</span> record) {
+
+    <span class="t">AccountDocument</span> saved =
+        repository.<span class="m">save</span>(<span class="m">toDocument</span>(record));
+
+    <span class="kw">return</span> <span class="m">toRecord</span>(saved);
+
+    <span class="c">// What actually runs:
+    //   collection.upsert(key, doc)  ← hidden
+    //
+    // What you CANNOT set:
+    //   - durability level
+    //   - per-document TTL (expiry)
+    //   - CAS for optimistic locking
+    //   - timeout</span>
+}</pre>
+        </div>
+        <div class="split-pane">
+          <div class="pane-label">
+            <div class="dot dot-green"></div>
+            <span class="label-text-green">Raw SDK (explicit)</span>
+          </div>
+          <pre><span class="kw">public</span> <span class="t">AccountRecord</span> <span class="m">upsert</span>(<span class="t">AccountRecord</span> record) {
+
+    <span class="t">AccountDocument</span> doc = <span class="m">toDocument</span>(record);
+
+    collection.<span class="hi">upsert</span>(
+        doc.<span class="m">getId</span>(),
+        doc,
+        <span class="t">UpsertOptions</span>.<span class="m">upsertOptions</span>()
+            .<span class="m">durability</span>(<span class="t">DurabilityLevel</span>.<span class="e">MAJORITY</span>)
+            .<span class="m">expiry</span>(<span class="t">Duration</span>.<span class="m">ofHours</span>(<span class="n">24</span>))
+            .<span class="m">timeout</span>(<span class="t">Duration</span>.<span class="m">ofMillis</span>(<span class="n">500</span>))
+    );
+    <span class="kw">return</span> <span class="m">toRecord</span>(doc);
+    <span class="c">// Durability, TTL, timeout — all yours.</span>
+}</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════ LIABILITIES -->
+  <section class="section" id="liabilities">
+    <div class="section-header">
+      <div class="section-icon" style="background:rgba(239,68,68,0.1);">⚠️</div>
+      <div>
+        <h2>4 Reasons the Abstraction is a Liability</h2>
+        <div class="sub">Each one becomes a real problem the moment you need to tune or scale</div>
+      </div>
+    </div>
+
+    <!-- LIABILITY 1 -->
+    <div class="compare-card" style="margin-bottom:28px;">
+      <div class="compare-card-header">
+        <div class="liability-number">1</div>
+        <div>
+          <h3 class="label-text-red">KV Options — Timeout, Durability, TTL are invisible</h3>
+          <span style="font-size:12px; color:var(--text-muted);">
+            Spring Data uses cluster-level defaults for every operation. You cannot override them per call.
+          </span>
+        </div>
+      </div>
+      <div class="split">
+        <div class="split-pane">
+          <div class="pane-label"><div class="dot dot-red"></div><span class="label-text-red">What Spring Data does</span></div>
+          <pre><span class="c">// Spring Data calls this internally —
+// you have no way to change these:</span>
+
+collection.<span class="m">upsert</span>(key, content);
+
+<span class="c">// Timeout    → cluster default (2.5s)
+//              cannot change per-call
+// Durability → NONE — write acknowledged
+//              before reaching replicas
+//              (data loss risk on node fail)
+// Expiry/TTL → 0 — document never expires
+//              even if you want cache-style
+//              auto-deletion</span></pre>
+        </div>
+        <div class="split-pane">
+          <div class="pane-label"><div class="dot dot-green"></div><span class="label-text-green">What raw SDK lets you do</span></div>
+          <pre><span class="c">// You control every option per call:</span>
+
+collection.<span class="hi">upsert</span>(key, content,
+    <span class="t">UpsertOptions</span>.<span class="m">upsertOptions</span>()
+        .<span class="m">timeout</span>(<span class="t">Duration</span>.<span class="m">ofMillis</span>(<span class="n">500</span>))
+        .<span class="m">durability</span>(
+            <span class="t">DurabilityLevel</span>.<span class="e">MAJORITY</span>)
+        .<span class="m">expiry</span>(<span class="t">Duration</span>.<span class="m">ofHours</span>(<span class="n">24</span>))
+);
+<span class="c">// Read with fast timeout for
+// latency-sensitive endpoints:</span>
+collection.<span class="hi">get</span>(key,
+    <span class="t">GetOptions</span>.<span class="m">getOptions</span>()
+        .<span class="m">timeout</span>(<span class="t">Duration</span>.<span class="m">ofMillis</span>(<span class="n">100</span>)));</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- LIABILITY 2 -->
+    <div class="compare-card" style="margin-bottom:28px;">
+      <div class="compare-card-header">
+        <div class="liability-number">2</div>
+        <div>
+          <h3 class="label-text-red">CAS — Concurrent Updates Always Silently Overwrite Each Other</h3>
+          <span style="font-size:12px; color:var(--text-muted);">
+            Spring Data's save() calls upsert() which ignores the CAS (Compare-And-Swap) token. Last writer always wins, with no error.
+          </span>
+        </div>
+      </div>
+      <div class="split">
+        <div class="split-pane">
+          <div class="pane-label"><div class="dot dot-red"></div><span class="label-text-red">Spring Data — last write wins silently</span></div>
+          <pre><span class="c">// Thread A reads accountNumber=123
+// Thread B reads accountNumber=123
+// Thread A updates status → SUSPENDED
+// Thread B updates status → ACTIVE
+//
+// Both call repository.save() →
+// Both call collection.upsert() →
+// Thread B wins. Thread A's write
+// is silently discarded.
+// No error. No warning. Data lost.</span>
+
+<span class="t">AccountDocument</span> doc = <span class="m">toDocument</span>(record);
+repository.<span class="hi">save</span>(doc);
+<span class="c">// CAS token is never used.</span></pre>
+        </div>
+        <div class="split-pane">
+          <div class="pane-label"><div class="dot dot-green"></div><span class="label-text-green">Raw SDK — optimistic locking with CAS</span></div>
+          <pre><span class="c">// Read the document AND its CAS token:</span>
+<span class="t">GetResult</span> result = collection.<span class="m">get</span>(key);
+<span class="kw">long</span> cas = result.<span class="m">cas</span>();
+
+<span class="t">AccountDocument</span> doc = <span class="m">toDocument</span>(record);
+
+<span class="kw">try</span> {
+    collection.<span class="hi">replace</span>(key, doc,
+        <span class="t">ReplaceOptions</span>.<span class="m">replaceOptions</span>()
+            .<span class="m">cas</span>(cas));
+} <span class="kw">catch</span> (<span class="t">CasMismatchException</span> e) {
+    <span class="c">// Another thread modified the doc.
+    // Retry or return 409 Conflict —
+    // your choice. Data is never lost.</span>
+    <span class="kw">throw new</span> <span class="t">ConcurrentModificationException</span>();
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- LIABILITY 3 -->
+    <div class="compare-card" style="margin-bottom:28px;">
+      <div class="compare-card-header">
+        <div class="liability-number">3</div>
+        <div>
+          <h3 class="label-text-red">N1QL Query Tuning — You Cannot See or Control Generated Queries</h3>
+          <span style="font-size:12px; color:var(--text-muted);">
+            The moment you add a findByStatus() method, Spring Data generates a N1QL query you never wrote and cannot tune.
+          </span>
+        </div>
+      </div>
+      <div class="split">
+        <div class="split-pane">
+          <div class="pane-label"><div class="dot dot-red"></div><span class="label-text-red">Spring Data — query you did not write</span></div>
+          <pre><span class="c">// You write this in AccountRepository:</span>
+<span class="t">List</span>&lt;<span class="t">AccountDocument</span>&gt; <span class="m">findByStatus</span>(
+    <span class="t">String</span> status);
+
+<span class="c">// Spring Data generates and runs this
+// N1QL — you never see it:</span>
+<span class="kw">SELECT</span> META(d).id, d.*
+<span class="kw">FROM</span>   customer_bucket d
+<span class="kw">WHERE</span>  d.status = <span class="s">"ACTIVE"</span>
+<span class="kw">AND</span>    d._class = <span class="s">"com.company...AccountDocument"</span>
+
+<span class="c">// Problems:
+//  - No index hint
+//  - _class filter is hidden overhead
+//  - No LIMIT or pagination
+//  - No scan consistency control
+//  - Full bucket scan if index missing</span></pre>
+        </div>
+        <div class="split-pane">
+          <div class="pane-label"><div class="dot dot-green"></div><span class="label-text-green">Raw SDK — query you own completely</span></div>
+          <pre><span class="c">// You write the exact N1QL:</span>
+<span class="t">String</span> sql =
+  <span class="s">"SELECT META(d).id, d.* "</span> +
+  <span class="s">"FROM customer_bucket d "</span> +
+  <span class="s">"WHERE d.doc_type = $type "</span> +
+  <span class="s">"AND d.status = $status "</span> +
+  <span class="s">"ORDER BY d.last_update_timestamp DESC "</span> +
+  <span class="s">"LIMIT $limit OFFSET $offset"</span>;
+
+<span class="t">QueryResult</span> r = cluster.<span class="hi">query</span>(sql,
+    <span class="t">QueryOptions</span>.<span class="m">queryOptions</span>()
+        .<span class="m">parameters</span>(<span class="t">JsonObject</span>.<span class="m">create</span>()
+            .<span class="m">put</span>(<span class="s">"type"</span>,   <span class="s">"Account"</span>)
+            .<span class="m">put</span>(<span class="s">"status"</span>, status)
+            .<span class="m">put</span>(<span class="s">"limit"</span>,  pageSize)
+            .<span class="m">put</span>(<span class="s">"offset"</span>, page * pageSize))
+        .<span class="m">scanConsistency</span>(
+            <span class="t">REQUEST_PLUS</span>)  <span class="c">// strong read</span>
+        .<span class="m">readonly</span>(<span class="kw">true</span>));  <span class="c">// read hint</span></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- LIABILITY 4 -->
+    <div class="compare-card" style="margin-bottom:0;">
+      <div class="compare-card-header">
+        <div class="liability-number">4</div>
+        <div>
+          <h3 class="label-text-red">Sub-Document Operations — Full Document Replace vs Surgical Field Update</h3>
+          <span style="font-size:12px; color:var(--text-muted);">
+            Spring Data always replaces the entire document. Couchbase's sub-doc API lets you update one field — huge difference at scale.
+          </span>
+        </div>
+      </div>
+      <div class="split">
+        <div class="split-pane">
+          <div class="pane-label"><div class="dot dot-red"></div><span class="label-text-red">Spring Data — whole document on the wire</span></div>
+          <pre><span class="c">// You want to update only status.
+// Spring Data has no sub-doc support.
+// It always does a full replace:</span>
+
+<span class="c">// 1. Read entire document   (e.g. 5 KB)</span>
+<span class="t">AccountDocument</span> doc =
+    repository.<span class="m">findById</span>(key).get();
+
+<span class="c">// 2. Change one field in Java memory</span>
+doc.<span class="m">setStatus</span>(<span class="s">"SUSPENDED"</span>);
+doc.<span class="m">setLastUpdateTimestamp</span>(
+    <span class="t">Instant</span>.<span class="m">now</span>().<span class="m">toString</span>());
+
+<span class="c">// 3. Write entire document  (5 KB again)
+//    Even though only 2 fields changed.</span>
+repository.<span class="m">save</span>(doc);
+
+<span class="c">// Network: 5 KB read + 5 KB write = 10 KB
+// for a 20-byte logical change.</span></pre>
+        </div>
+        <div class="split-pane">
+          <div class="pane-label"><div class="dot dot-green"></div><span class="label-text-green">Raw SDK — only the changed fields on the wire</span></div>
+          <pre><span class="c">// Sub-document mutateIn: surgical update.
+// Only the changed fields travel
+// over the network:</span>
+
+collection.<span class="hi">mutateIn</span>(
+    <span class="t">String</span>.<span class="m">valueOf</span>(accountNumber),
+    <span class="t">List</span>.<span class="m">of</span>(
+        <span class="t">MutateInSpec</span>.<span class="m">upsert</span>(
+            <span class="s">"status"</span>,
+            <span class="s">"SUSPENDED"</span>),
+        <span class="t">MutateInSpec</span>.<span class="m">upsert</span>(
+            <span class="s">"last_update_timestamp"</span>,
+            <span class="t">Instant</span>.<span class="m">now</span>().<span class="m">toString</span>())
+    )
+);
+
+<span class="c">// Network: ~30 bytes.
+// No read needed. Atomic on the server.
+// Document never leaves Couchbase.</span></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════ COMPARISON TABLE -->
+  <section class="section" id="comparison">
+    <div class="section-header">
+      <div class="section-icon" style="background:rgba(124,58,237,0.1);">📊</div>
+      <div>
+        <h2>Feature Comparison</h2>
+        <div class="sub">Spring Data Couchbase vs Raw Couchbase SDK</div>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Capability</th>
+            <th>Spring Data CouchbaseRepository</th>
+            <th>Raw Couchbase SDK</th>
+            <th>Why it matters</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Per-call timeout</td>
+            <td><span class="no">✗ No</span> — cluster default only</td>
+            <td><span class="yes">✓ Yes</span> — <code>.timeout(Duration)</code></td>
+            <td>Fast-fail on SLA-sensitive reads</td>
+          </tr>
+          <tr>
+            <td>Durability level</td>
+            <td><span class="no">✗ No</span> — always NONE</td>
+            <td><span class="yes">✓ Yes</span> — NONE / MAJORITY / PERSIST_TO_MAJORITY</td>
+            <td>Prevent data loss on node failover</td>
+          </tr>
+          <tr>
+            <td>Per-document TTL (expiry)</td>
+            <td><span class="no">✗ No</span> — no expiry set</td>
+            <td><span class="yes">✓ Yes</span> — <code>.expiry(Duration)</code></td>
+            <td>Auto-expire cache or temp documents</td>
+          </tr>
+          <tr>
+            <td>Optimistic locking (CAS)</td>
+            <td><span class="no">✗ No</span> — last write always wins</td>
+            <td><span class="yes">✓ Yes</span> — <code>replace().cas(token)</code></td>
+            <td>Prevent silent concurrent overwrites</td>
+          </tr>
+          <tr>
+            <td>Sub-document update</td>
+            <td><span class="no">✗ No</span> — always full replace</td>
+            <td><span class="yes">✓ Yes</span> — <code>mutateIn()</code></td>
+            <td>10× less network I/O for field updates</td>
+          </tr>
+          <tr>
+            <td>N1QL query visibility</td>
+            <td><span class="no">✗ Hidden</span> — generated at runtime</td>
+            <td><span class="yes">✓ Full</span> — you write every character</td>
+            <td>Index tuning, EXPLAIN, scan consistency</td>
+          </tr>
+          <tr>
+            <td>N1QL scan consistency</td>
+            <td><span class="part">⚑ Limited</span> — via @ScanConsistency annotation</td>
+            <td><span class="yes">✓ Yes</span> — <code>REQUEST_PLUS / NOT_BOUNDED</code></td>
+            <td>Strong reads vs eventual reads</td>
+          </tr>
+          <tr>
+            <td>Reactive / async SDK</td>
+            <td><span class="no">✗ No</span> — Spring Data CB is blocking</td>
+            <td><span class="yes">✓ Yes</span> — <code>collection.reactive().get()</code></td>
+            <td>Non-blocking I/O with WebFlux</td>
+          </tr>
+          <tr>
+            <td>Stack trace clarity</td>
+            <td><span class="no">✗ Noisy</span> — goes through SD proxy internals</td>
+            <td><span class="yes">✓ Clean</span> — your code → SDK → exception</td>
+            <td>Faster debugging in production</td>
+          </tr>
+          <tr>
+            <td>Lines of code</td>
+            <td><span class="yes">✓ Less</span> — ~14 lines for repository</td>
+            <td><span class="no">More</span> — explicit per-method</td>
+            <td>Trade-off: brevity vs control</td>
+          </tr>
+          <tr>
+            <td>Suitable for simple CRUD</td>
+            <td><span class="yes">✓ Yes</span></td>
+            <td><span class="yes">✓ Yes</span></td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>Suitable for production scale</td>
+            <td><span class="no">✗ Risky</span></td>
+            <td><span class="yes">✓ Yes</span></td>
+            <td>Tuning required at scale</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════ VERDICT -->
+  <section class="section" id="verdict">
+    <div class="section-header">
+      <div class="section-icon" style="background:rgba(16,185,129,0.1);">✅</div>
+      <div>
+        <h2>Verdict</h2>
+        <div class="sub">When to use each approach</div>
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom:32px;">
+      <div class="compare-card">
+        <div class="compare-card-header" style="border-bottom:none;">
+          <h3 style="color:var(--amber);">Use Spring Data when…</h3>
+        </div>
+        <div style="padding: 0 24px 20px; color: var(--text-dim); font-size:13.5px;">
+          <ul style="list-style:none; display:flex; flex-direction:column; gap:10px;">
+            <li>→ Prototype or internal tool with low traffic</li>
+            <li>→ All operations are simple key lookups (no queries)</li>
+            <li>→ You never need per-document TTL or durability</li>
+            <li>→ Concurrent writes to the same document are impossible</li>
+            <li>→ You want the fastest possible path to a working API</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="compare-card">
+        <div class="compare-card-header" style="border-bottom:none;">
+          <h3 style="color:var(--green);">Use Raw SDK when…</h3>
+        </div>
+        <div style="padding: 0 24px 20px; color: var(--text-dim); font-size:13.5px;">
+          <ul style="list-style:none; display:flex; flex-direction:column; gap:10px;">
+            <li>→ Production system with SLA requirements</li>
+            <li>→ Multiple threads can update the same document</li>
+            <li>→ You need N1QL queries you can read, EXPLAIN, and tune</li>
+            <li>→ Per-document TTL or durability matters</li>
+            <li>→ You will need sub-document updates for performance</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="verdict-box">
+      <h3>For this Entity API — use Raw SDK</h3>
+      <ul class="verdict-list">
+        <li>Account records can be updated concurrently (two requests updating the same accountNumber at once) — CAS is needed to prevent silent data loss.</li>
+        <li>Status updates change one field on a potentially large document — <code>mutateIn()</code> is 10× more efficient than a full replace.</li>
+        <li>The GET endpoint is on a latency-sensitive path — a per-call 200ms timeout prevents a slow Couchbase node from hanging the whole request.</li>
+        <li>Future requirement to query by status will need a tuned N1QL query with the right index and scan consistency — writing it yourself is non-negotiable.</li>
+        <li><strong>The Spring Data version already compiles and works.</strong> Rewriting the service layer to use raw SDK means changing ~50 lines in <code>AccountService.java</code> and deleting <code>AccountRepository.java</code>. The controller, document class, and generated models stay exactly as-is.</li>
+      </ul>
+    </div>
+  </section>
+
+</div><!-- /container -->
+</body>
+</html>
