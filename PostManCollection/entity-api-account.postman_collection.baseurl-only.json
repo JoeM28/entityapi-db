@@ -1,0 +1,104 @@
+{
+  "info": {
+    "_postman_id": "2b891553-f110-4702-97f0-e2c5a1ef4337",
+    "name": "Entity API (Local) - Account (No Vars Except baseUrl)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Postman collection to test Entity API Account endpoints locally.\n\nEnvironment variables:\n- {{baseUrl}} only (default http://localhost:8080)\n\nIMPORTANT:\n- docType must match an allowed enum value from AccountRecord.DocTypeEnum in your generated model.\n  If \"ACCOUNT\" fails, open AccountRecord.DocTypeEnum and use one of the allowed values.\n- accountId is hardcoded in sample requests as 123 (edit in the request URL/body if needed)."
+  },
+  "item": [
+    {
+      "name": "Account",
+      "item": [
+        {
+          "name": "POST Create/Upsert Account (sample)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"docType\": \"CHANGE_ME_TO_ALLOWED_ENUM\",\n  \"accountNumber\": 123,\n  \"status\": \"ACTIVE\",\n  \"dob\": \"2000-01-01\",\n  \"name\": {\n    \"legalName\": \"Joe Mohan\",\n    \"dbaName\": \"JM LLC\"\n  },\n  \"address\": {\n    \"line1\": \"123 Main St\",\n    \"city\": \"Weston\",\n    \"state\": \"FL\",\n    \"countryCode\": \"US\"\n  }\n}\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/entity/account",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "entity",
+                "account"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Account by ID (sample: 123)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/entity/account/123",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "entity",
+                "account",
+                "123"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET (Optional) Actuator Health",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/actuator/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    }
+  ]
+}
