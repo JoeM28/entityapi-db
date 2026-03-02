@@ -1,66 +1,95 @@
 package com.company.entityapi.service;
 
+import com.couchbase.client.core.error.DocumentNotFoundException;
+import com.couchbase.client.java.Collection;
+import com.couchbase.client.java.kv.ExistsOptions;
+import com.couchbase.client.java.kv.GetOptions;
+import com.couchbase.client.java.kv.GetResult;
+import com.couchbase.client.java.kv.UpsertOptions;
 import com.company.entityapi.document.AccountDocument;
 import com.company.entityapi.exception.AccountNotFoundException;
 import com.company.entityapi.model.AccountRecord;
 import com.company.entityapi.model.Address;
 import com.company.entityapi.model.Name;
-import com.company.entityapi.repository.AccountRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 
 /**
- * Business logic for Account operations.
+ * Reads and writes Account documents using the Couchbase Java SDK directly.
  *
- * Mapping responsibility:
- *   API model  (camelCase, generated from entity-api.yaml)
- *   ↕
- *   Couchbase document (snake_case, stored in customer_bucket)
+ * Every operation is explicit:
+ *   collection.get()    → KV GET  (port 11210, not N1QL)
+ *   collection.exists() → KV EXISTS
+ *   collection.upsert() → KV UPSERT  (insert or replace)
+ *
+ * Tuning notes per call:
+ *   - timeout   : per-operation deadline independent of cluster default
+ *   - durability: NONE is correct for single-node Docker dev.
+ *                 Change to DurabilityLevel.MAJORITY on a multi-node cluster
+ *                 to prevent data loss when a node fails mid-write.
+ *
+ * Partial-field updates (e.g. status only) should use collection.mutateIn()
+ * rather than a full upsert — see the HTML reference doc for an example.
  */
 @Service
 public class AccountService {
 
-    private final AccountRepository repository;
+    private final Collection collection;
 
-    public AccountService(AccountRepository repository) {
-        this.repository = repository;
+    public AccountService(Collection collection) {
+        this.collection = collection;
     }
 
     // ── Read ──────────────────────────────────────────────────────────────
 
     public AccountRecord getById(Long accountId) {
-        return repository.findById(String.valueOf(accountId))
-                .map(this::toRecord)
-                .orElseThrow(() -> new AccountNotFoundException(accountId));
+        try {
+            GetResult result = collection.get(
+                    String.valueOf(accountId),
+                    GetOptions.getOptions()
+                            .timeout(Duration.ofMillis(200))
+            );
+            return toRecord(result.contentAs(AccountDocument.class));
+
+        } catch (DocumentNotFoundException e) {
+            throw new AccountNotFoundException(accountId);
+        }
     }
 
     // ── Write ─────────────────────────────────────────────────────────────
 
-    /**
-     * Returns true when the account already exists (caller uses this to decide
-     * whether to return 200 or 201).
-     */
     public boolean exists(Long accountNumber) {
-        return repository.existsById(String.valueOf(accountNumber));
+        return collection.exists(
+                String.valueOf(accountNumber),
+                ExistsOptions.existsOptions()
+                        .timeout(Duration.ofMillis(100))
+        ).exists();
     }
 
-    /**
-     * Upserts the account and returns the persisted record with server-set
-     * timestamps populated.
-     */
     public AccountRecord upsert(AccountRecord record) {
-        AccountDocument saved = repository.save(toDocument(record));
-        return toRecord(saved);
+        AccountDocument doc = toDocument(record);
+        String key = String.valueOf(doc.getAccountNumber());
+
+        collection.upsert(
+                key,
+                doc,
+                UpsertOptions.upsertOptions()
+                        // durability omitted → SDK default (NONE)
+                        // set to DurabilityLevel.MAJORITY for production
+                        .timeout(Duration.ofMillis(500))
+        );
+
+        return toRecord(doc);
     }
 
-    // ── Mapping helpers ───────────────────────────────────────────────────
+    // ── Mapping: API model → Couchbase document ───────────────────────────
 
     private AccountDocument toDocument(AccountRecord r) {
         AccountDocument doc = new AccountDocument();
-        doc.setId(String.valueOf(r.getAccountNumber()));
         doc.setDocType("Account");
         doc.setAccountNumber(r.getAccountNumber());
         doc.setDob(r.getDob());
@@ -85,12 +114,14 @@ public class AccountService {
             doc.setAddress(addrDoc);
         }
 
-        // Server-set timestamps — always overwritten on every write
+        // Server-set on every write — never accepted from the client
         doc.setLastUpdateDate(LocalDate.now().toString());
         doc.setLastUpdateTimestamp(Instant.now().toString());
 
         return doc;
     }
+
+    // ── Mapping: Couchbase document → API model ───────────────────────────
 
     private AccountRecord toRecord(AccountDocument doc) {
         AccountRecord r = new AccountRecord();

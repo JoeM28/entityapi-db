@@ -1,48 +1,44 @@
 package com.company.entityapi.document;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.couchbase.core.mapping.Document;
-import org.springframework.data.couchbase.core.mapping.Field;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * Couchbase document for Account entity.
  *
- * Document key  : String representation of accountNumber (e.g. "123456789")
- * Bucket        : customer_bucket
- * All fields stored in snake_case to match the datastore reference spec.
+ * Spring Data annotations (@Document, @Field) are intentionally absent.
+ * The Couchbase Java SDK serialises this POJO to/from JSON using Jackson,
+ * so standard @JsonProperty handles the snake_case field name mapping.
+ *
+ * @JsonIgnoreProperties(ignoreUnknown = true) tolerates the "_class" field
+ * that Spring Data may have written into previously stored documents.
  */
-@Document
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class AccountDocument {
 
-    @Id
-    private String id;
-
-    @Field("doc_type")
+    @JsonProperty("doc_type")
     private String docType;
 
-    @Field("account_number")
+    @JsonProperty("account_number")
     private Long accountNumber;
 
-    @Field("name")
+    @JsonProperty("name")
     private NameDoc name;
 
-    @Field("address")
+    @JsonProperty("address")
     private AddressDoc address;
 
-    @Field("dob")
+    @JsonProperty("dob")
     private String dob;
 
-    @Field("status")
+    @JsonProperty("status")
     private String status;
 
-    @Field("last_update_date")
+    @JsonProperty("last_update_date")
     private String lastUpdateDate;
 
-    @Field("last_update_timestamp")
+    @JsonProperty("last_update_timestamp")
     private String lastUpdateTimestamp;
-
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
 
     public String getDocType() { return docType; }
     public void setDocType(String docType) { this.docType = docType; }
@@ -66,15 +62,17 @@ public class AccountDocument {
     public void setLastUpdateDate(String lastUpdateDate) { this.lastUpdateDate = lastUpdateDate; }
 
     public String getLastUpdateTimestamp() { return lastUpdateTimestamp; }
-    public void setLastUpdateTimestamp(String lastUpdateTimestamp) { this.lastUpdateTimestamp = lastUpdateTimestamp; }
+    public void setLastUpdateTimestamp(String ts) { this.lastUpdateTimestamp = ts; }
 
     // ── Nested objects ────────────────────────────────────────────────────
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class NameDoc {
-        @Field("legal_name")
+
+        @JsonProperty("legal_name")
         private String legalName;
 
-        @Field("dba_name")
+        @JsonProperty("dba_name")
         private String dbaName;
 
         public String getLegalName() { return legalName; }
@@ -84,17 +82,19 @@ public class AccountDocument {
         public void setDbaName(String dbaName) { this.dbaName = dbaName; }
     }
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class AddressDoc {
-        @Field("line1")
+
+        @JsonProperty("line1")
         private String line1;
 
-        @Field("city")
+        @JsonProperty("city")
         private String city;
 
-        @Field("state")
+        @JsonProperty("state")
         private String state;
 
-        @Field("country_code")
+        @JsonProperty("country_code")
         private String countryCode;
 
         public String getLine1() { return line1; }
