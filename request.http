@@ -1,0 +1,17 @@
+
+
+### Create/Upsert an account
+POST http://localhost:8080/entity/account
+Content-Type: application/json
+
+{
+  "docType": "Account",
+  "accountNumber": 124,
+  "status": "ACTIVE",
+  "dob": "12-31-1972",
+  "name": { "legalName": "Joe Mohan" },
+  "address": { "line1": "123 Main St", "city": "Weston", "state": "FL", "countryCode": "USA" }
+}
+
+### Get the same account
+GET http://localhost:8080/entity/account/124
