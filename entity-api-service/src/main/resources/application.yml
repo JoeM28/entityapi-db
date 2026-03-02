@@ -1,0 +1,15 @@
+spring:
+  couchbase:
+    connection-string: localhost
+    username: Administrator
+    password: password          # change if you used a different password during setup
+  data:
+    couchbase:
+      bucket-name: customer_bucket
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false   # serialize LocalDate/OffsetDateTime as ISO strings
+
+server:
+  port: 8080
