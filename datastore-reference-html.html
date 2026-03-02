@@ -1,0 +1,3142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Customer Account — Datastore Reference Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600;700&family=IBM+Plex+Serif:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: #1e2d45;
+    --accent: #00d4ff;
+    --accent2: #7c3aed;
+    --accent3: #10b981;
+    --accent4: #f59e0b;
+    --accent5: #ef4444;
+    --accent6: #ec4899;
+    --text: #e2e8f0;
+    --text-muted: #64748b;
+    --text-dim: #94a3b8;
+    --code-bg: #0d1117;
+    --heading: #f8fafc;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-weight: 300;
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  .hero {
+    background: linear-gradient(135deg, #0a0e1a 0%, #0f172a 40%, #1a1040 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 60px 60px 50px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -100px; right: -100px;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(0,212,255,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: -80px; left: 200px;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(124,58,237,0.05) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 16px;
+    opacity: 0.8;
+  }
+
+  .hero h1 {
+    font-family: 'IBM Plex Serif', serif;
+    font-size: 42px;
+    font-weight: 600;
+    color: var(--heading);
+    line-height: 1.2;
+    margin-bottom: 12px;
+  }
+
+  .hero p {
+    font-size: 16px;
+    color: var(--text-dim);
+    max-width: 600px;
+  }
+
+  .store-pills {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 28px;
+  }
+
+  .pill {
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    border: 1px solid;
+  }
+
+  .pill-cb   { color: #00d4ff; border-color: rgba(0,212,255,0.3); background: rgba(0,212,255,0.05); }
+  .pill-es   { color: #f59e0b; border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.05); }
+  .pill-fs   { color: #10b981; border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.05); }
+  .pill-ddb  { color: #ec4899; border-color: rgba(236,72,153,0.3); background: rgba(236,72,153,0.05); }
+  .pill-ks   { color: #7c3aed; border-color: rgba(124,58,237,0.3); background: rgba(124,58,237,0.05); }
+  .pill-vk   { color: #ef4444; border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.05); }
+
+  /* NAV */
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(10,14,26,0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 60px;
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+  }
+
+  .nav a {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 16px 20px;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+
+  .nav a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* LAYOUT */
+  .container {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 60px;
+  }
+
+  /* SECTIONS */
+  .section {
+    margin-bottom: 80px;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 32px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .section-header h2 {
+    font-family: 'IBM Plex Serif', serif;
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--heading);
+  }
+
+  .section-header .subtitle {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 2px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  /* STORE SECTIONS */
+  .store-section {
+    margin-bottom: 60px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .store-header {
+    padding: 20px 28px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .store-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .store-header h3 {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+
+  .store-header .store-type {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-left: auto;
+    letter-spacing: 1px;
+  }
+
+  /* CODE BLOCKS */
+  .code-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+
+  .code-pane {
+    padding: 0;
+    border-right: 1px solid var(--border);
+  }
+
+  .code-pane:last-child { border-right: none; }
+
+  .code-pane-header {
+    padding: 10px 20px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .code-pane-header .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--text-muted);
+  }
+
+  pre {
+    background: var(--code-bg);
+    padding: 24px 20px;
+    overflow-x: auto;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    line-height: 1.8;
+    color: #c9d1d9;
+    margin: 0;
+  }
+
+  /* Syntax highlighting */
+  .k { color: #79c0ff; }   /* keys */
+  .s { color: #a5d6ff; }   /* strings */
+  .n { color: #f78166; }   /* numbers */
+  .kw { color: #ff7b72; }  /* keywords */
+  .c { color: #8b949e; font-style: italic; } /* comments */
+  .t { color: #7ee787; }   /* types */
+  .e { color: #ffa657; }   /* enums/special */
+
+  .code-single {
+    border-top: 1px solid var(--border);
+  }
+
+  /* FULL WIDTH CODE */
+  .code-full {
+    border-top: 1px solid var(--border);
+  }
+
+  /* TABLES */
+  .table-wrap {
+    overflow-x: auto;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  thead tr {
+    background: var(--surface);
+  }
+
+  th {
+    padding: 14px 16px;
+    text-align: left;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 13px 16px;
+    border-bottom: 1px solid rgba(30,45,69,0.5);
+    vertical-align: top;
+    line-height: 1.5;
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  tr:nth-child(even) td { background: rgba(17,24,39,0.4); }
+
+  td:first-child {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+
+  .yes { color: var(--accent3); font-weight: 600; }
+  .no  { color: var(--text-muted); }
+  .partial { color: var(--accent4); }
+
+  /* FIELD MAPPING TABLE */
+  .mapping-table td:first-child { color: var(--accent); }
+  .mapping-table td:nth-child(2) { color: var(--accent3); }
+
+  /* INLINE CODE */
+  code {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    background: rgba(0,212,255,0.08);
+    color: var(--accent);
+    padding: 2px 7px;
+    border-radius: 4px;
+  }
+
+  /* CALLOUT */
+  .callout {
+    background: rgba(0,212,255,0.04);
+    border: 1px solid rgba(0,212,255,0.15);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 20px 0;
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+
+  .callout strong { color: var(--accent); }
+
+  .callout-warn {
+    background: rgba(245,158,11,0.04);
+    border-color: rgba(245,158,11,0.15);
+    border-left-color: var(--accent4);
+  }
+
+  .callout-warn strong { color: var(--accent4); }
+
+  /* ARCH DIAGRAM */
+  .arch {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 40px;
+    text-align: center;
+  }
+
+  .arch-flow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0;
+  }
+
+  .arch-node {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 24px;
+    min-width: 140px;
+    text-align: center;
+  }
+
+  .arch-node .node-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .arch-node .node-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .arch-arrow {
+    color: var(--text-muted);
+    font-size: 20px;
+    padding: 0 8px;
+  }
+
+  /* COLOR ASSIGNMENTS */
+  .c-cb  { color: #00d4ff; }
+  .c-es  { color: #f59e0b; }
+  .c-fs  { color: #10b981; }
+  .c-ddb { color: #ec4899; }
+  .c-ks  { color: #7c3aed; }
+  .c-vk  { color: #ef4444; }
+
+  .bg-cb  { background: rgba(0,212,255,0.08);  border-color: rgba(0,212,255,0.2); }
+  .bg-es  { background: rgba(245,158,11,0.08); border-color: rgba(245,158,11,0.2); }
+  .bg-fs  { background: rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.2); }
+  .bg-ddb { background: rgba(236,72,153,0.08); border-color: rgba(236,72,153,0.2); }
+  .bg-ks  { background: rgba(124,58,237,0.08); border-color: rgba(124,58,237,0.2); }
+  .bg-vk  { background: rgba(239,68,68,0.08);  border-color: rgba(239,68,68,0.2); }
+
+  .dot-cb  { background: #00d4ff; }
+  .dot-es  { background: #f59e0b; }
+  .dot-fs  { background: #10b981; }
+  .dot-ddb { background: #ec4899; }
+  .dot-ks  { background: #7c3aed; }
+  .dot-vk  { background: #ef4444; }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 30px 60px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-muted);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  @media (max-width: 900px) {
+    .hero, .container, footer { padding: 30px 20px; }
+    .nav { padding: 0 20px; }
+    .code-grid { grid-template-columns: 1fr; }
+    .code-pane { border-right: none; border-bottom: 1px solid var(--border); }
+    .hero h1 { font-size: 28px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-tag">// Datastore Reference Guide</div>
+  <h1>Customer Account Schema<br>Across 6 Datastores</h1>
+  <p>OpenAPI specification, schema definitions, sample documents, and comparison for every datastore in your architecture.</p>
+  <div class="store-pills">
+    <span class="pill pill-cb">Couchbase</span>
+    <span class="pill pill-es">Elasticsearch</span>
+    <span class="pill pill-fs">Firestore</span>
+    <span class="pill pill-ddb">DynamoDB</span>
+    <span class="pill pill-ks">Keyspaces</span>
+    <span class="pill pill-vk">Valkey</span>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav class="nav">
+  <a href="#regex">Regex Guide</a>
+  <a href="#openapi">OpenAPI</a>
+  <a href="#mapping">Field Mapping</a>
+  <a href="#cb-concepts">CB Concepts</a>
+  <a href="#couchbase">Couchbase</a>
+  <a href="#es-concepts">ES Concepts</a>
+  <a href="#elasticsearch">Elasticsearch</a>
+  <a href="#ddb-concepts">DDB Concepts</a>
+  <a href="#dynamodb">DynamoDB</a>
+  <a href="#firestore">Firestore</a>
+  <a href="#keyspaces">Keyspaces</a>
+  <a href="#valkey">Valkey</a>
+  <a href="#comparison">Comparison</a>
+  <a href="#architecture">Architecture</a>
+  <a href="#springboot">Spring Boot</a>
+</nav>
+
+<div class="container">
+
+
+  <!-- ===================== REGEX GUIDE ===================== -->
+  <section class="section" id="regex">
+    <div class="section-header">
+      <div class="section-icon" style="background:rgba(245,158,11,0.1);">🔤</div>
+      <div>
+        <h2>Regular Expression (Regex) Guide</h2>
+        <div class="subtitle">Pattern validation used across OpenAPI fields</div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>What is a Regex?</strong> A Regular Expression is a sequence of characters that defines a search pattern. In OpenAPI schemas the <code>pattern</code> keyword uses regex to validate that a field value matches an expected format before it is accepted.
+    </div>
+
+    <!-- BUILDING BLOCKS -->
+    <div class="store-section" style="margin-bottom:28px;">
+      <div class="store-header" style="background:rgba(245,158,11,0.08);border-color:rgba(245,158,11,0.2);">
+        <div class="store-dot dot-es"></div>
+        <h3 class="c-es">Regex Building Blocks</h3>
+        <span class="store-type">Character Classes · Quantifiers · Anchors</span>
+      </div>
+      <div class="code-full">
+        <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#f59e0b;"></div> Core Regex Symbols</div>
+        <pre><span class="c">ANCHORS — Control where the pattern starts and ends</span>
+  <span class="kw">^</span>          Start of string — nothing can appear before this point
+  <span class="kw">$</span>          End of string — nothing can appear after this point
+  <span class="kw">^ABC$</span>      Entire string must be exactly "ABC" — no extra chars allowed
+
+<span class="c">CHARACTER CLASSES — Define what characters are allowed</span>
+  <span class="kw">[A-Z]</span>     Any uppercase letter A through Z
+  <span class="kw">[a-z]</span>     Any lowercase letter a through z
+  <span class="kw">[0-9]</span>     Any digit 0 through 9
+  <span class="kw">[A-Za-z]</span>  Any letter upper or lower case
+  <span class="kw">[^abc]</span>    Any character EXCEPT a, b, or c (^ inside [] means NOT)
+
+<span class="c">QUANTIFIERS — Define how many times a character or group repeats</span>
+  <span class="kw">{3}</span>       Exactly 3 times
+  <span class="kw">{2,5}</span>     Between 2 and 5 times (inclusive)
+  <span class="kw">{1,}</span>      1 or more times (same as +)
+  <span class="kw">+</span>          1 or more times
+  <span class="kw">*</span>          0 or more times
+  <span class="kw">?</span>          0 or 1 time (optional)
+
+<span class="c">GROUPS AND ALTERNATION</span>
+  <span class="kw">(ABC)</span>     Group — treat ABC as a single unit
+  <span class="kw">A|B</span>       OR — matches A or B
+  <span class="kw">(A|B)</span>     Group OR — matches A or B as a unit
+  <span class="kw">(AB|CD)</span>   Matches either "AB" or "CD"
+
+<span class="c">LITERALS</span>
+  <span class="kw">-</span>          Literal hyphen (when outside [ ] or at start/end inside)
+  <span class="kw">.</span>          Any single character (except newline) — use \. for literal dot
+  <span class="kw">\d</span>         Any digit (same as [0-9])
+  <span class="kw">\w</span>         Any word character (letters, digits, underscore)</pre>
+      </div>
+    </div>
+
+    <!-- PATTERN BREAKDOWN TABLE -->
+    <div class="store-section" style="margin-bottom:28px;">
+      <div class="store-header" style="background:rgba(245,158,11,0.08);border-color:rgba(245,158,11,0.2);">
+        <div class="store-dot dot-es"></div>
+        <h3 class="c-es">Every Pattern Used in This Schema — Explained</h3>
+        <span class="store-type">Field by Field Breakdown</span>
+      </div>
+      <div class="code-full">
+        <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#f59e0b;"></div> Country Code — ^[A-Z]{3}$</div>
+        <pre>  <span class="kw">^</span>          Start of string
+  <span class="kw">[A-Z]</span>     Any uppercase letter A through Z — no lowercase, no numbers, no symbols
+  <span class="kw">{3}</span>       Exactly 3 of the above characters
+  <span class="kw">$</span>          End of string
+
+  Valid:    <span class="t">USA</span>   <span class="t">GBR</span>   <span class="t">CAN</span>   <span class="t">MEX</span>
+  Invalid:  <span class="e">us</span>    (lowercase)
+            <span class="e">US</span>    (only 2 chars)
+            <span class="e">US1</span>   (contains number)
+            <span class="e">U.S.</span>  (contains dots)</pre>
+      </div>
+      <div class="code-full" style="border-top:1px solid var(--border);">
+        <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#f59e0b;"></div> State Code — ^[A-Z]{2}$</div>
+        <pre>  <span class="kw">^</span>          Start of string
+  <span class="kw">[A-Z]</span>     Any uppercase letter
+  <span class="kw">{2}</span>       Exactly 2 characters
+  <span class="kw">$</span>          End of string
+
+  Valid:    <span class="t">TX</span>   <span class="t">NY</span>   <span class="t">CA</span>   <span class="t">FL</span>
+  Invalid:  <span class="e">tx</span>   (lowercase)   <span class="e">Texas</span>  (too long)   <span class="e">T</span>  (too short)</pre>
+      </div>
+      <div class="code-full" style="border-top:1px solid var(--border);">
+        <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#f59e0b;"></div> Date of Birth — ^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])-[0-9]{4}$</div>
+        <pre>  The pattern has 3 sections separated by literal hyphens: <span class="kw">MM - DD - CCYY</span>
+
+  <span class="c">── MONTH SECTION: (0[1-9]|1[0-2]) ──────────────────────────────────────</span>
+  <span class="kw">(</span>           Open group
+    <span class="kw">0[1-9]</span>    First digit is 0, second digit is 1-9  → covers months 01 to 09
+    <span class="kw">|</span>         OR
+    <span class="kw">1[0-2]</span>    First digit is 1, second digit is 0,1,2 → covers months 10, 11, 12
+  <span class="kw">)</span>           Close group
+  Result:  Accepts 01 02 03 04 05 06 07 08 09 10 11 12
+  Rejects: <span class="e">00</span> (no month zero)  <span class="e">13</span> (no 13th month)
+
+  <span class="kw">-</span>           Literal hyphen separator
+
+  <span class="c">── DAY SECTION: (0[1-9]|[12][0-9]|3[01]) ───────────────────────────────</span>
+  <span class="kw">(</span>
+    <span class="kw">0[1-9]</span>    Days 01 through 09
+    <span class="kw">|</span>
+    <span class="kw">[12][0-9]</span> First digit 1 or 2, second digit 0-9 → covers days 10 through 29
+    <span class="kw">|</span>
+    <span class="kw">3[01]</span>     First digit 3, second digit 0 or 1 → covers days 30 and 31
+  <span class="kw">)</span>
+  Result:  Accepts 01-09, 10-29, 30, 31
+  Rejects: <span class="e">00</span>   <span class="e">32</span>   <span class="e">99</span>
+
+  <span class="kw">-</span>           Literal hyphen separator
+
+  <span class="c">── YEAR SECTION: [0-9]{4} ───────────────────────────────────────────────</span>
+  <span class="kw">[0-9]</span>     Any digit 0-9
+  <span class="kw">{4}</span>       Exactly 4 digits
+  Result:  Accepts 1990  2000  2026  0001
+  Rejects: <span class="e">90</span>  (too short)  <span class="e">20260</span>  (too long)
+
+  Full Valid Examples:   <span class="t">01-15-1990</span>   <span class="t">12-31-2000</span>   <span class="t">07-04-1776</span>
+  Full Invalid Examples: <span class="e">1-5-1990</span> (missing leading zeros)
+                         <span class="e">2000-01-15</span> (wrong order CCYY-MM-DD)
+                         <span class="e">01/15/1990</span> (slashes not hyphens)</pre>
+      </div>
+      <div class="code-full" style="border-top:1px solid var(--border);">
+        <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#f59e0b;"></div> Status Enum — Why Not Use Regex?</div>
+        <pre>  Status uses <span class="kw">enum</span> instead of regex because the allowed values are fixed and known upfront:
+  <span class="kw">enum: ["ACTIVE", "INACTIVE", "SUSPENDED", "CLOSED", "PENDING", "CANCEL"]</span>
+
+  Enum is cleaner than regex for fixed value lists because:
+  → Regex equivalent would be: <span class="e">^(ACTIVE|INACTIVE|SUSPENDED|CLOSED|PENDING|CANCEL)$</span>
+  → Enum is more readable, self-documenting, and generates better validation errors
+  → Enum also auto-generates dropdown choices in tools like Swagger UI</pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== OPENAPI ===================== -->
+  <section class="section" id="openapi">
+    <div class="section-header">
+      <div class="section-icon" style="background:rgba(0,212,255,0.1);">📋</div>
+      <div>
+        <h2>OpenAPI JSON Schema</h2>
+        <div class="subtitle">camelCase · REST API Contract · Validation Rules</div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>Convention:</strong> OpenAPI schemas use <code>camelCase</code> — the de facto standard for REST APIs and JSON originating from JavaScript conventions. This is your API contract that validates all incoming and outgoing data.
+    </div>
+
+    <!-- TYPE AND PROPERTIES EXPLAINER -->
+    <div class="store-section" style="margin-bottom:28px;">
+      <div class="store-header" style="background:rgba(0,212,255,0.08);border-color:rgba(0,212,255,0.2);">
+        <div class="store-dot dot-cb"></div>
+        <h3 class="c-cb">Understanding <code style="font-size:15px;">type: object</code> and <code style="font-size:15px;">properties</code></h3>
+        <span class="store-type">OpenAPI Fundamentals</span>
+      </div>
+      <div class="code-grid">
+        <div class="code-pane">
+          <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#00d4ff;"></div> What is type?</div>
+          <pre><span class="c">type tells OpenAPI what kind of value this field holds.
+It is the data type declaration for that field.</span>
+
+<span class="c">OpenAPI has 6 built-in types:</span>
+
+  <span class="t">string</span>     Any text value
+             "ACTIVE", "Acme Corp", "TX"
+
+  <span class="t">integer</span>    Whole numbers — no decimals
+             123456789, 42, 0
+
+  <span class="t">number</span>     Any number including decimals
+             3.14, 100.50
+
+  <span class="t">boolean</span>    True or false only
+             true, false
+
+  <span class="t">array</span>      A list of values
+             ["ACTIVE", "PENDING", "CLOSED"]
+
+  <span class="t">object</span>     A group of named fields (key-value pairs)
+             { "legalName": "Acme", "dbaName": "Acme Corp" }
+
+<span class="c">In your schema:</span>
+  "docType"       → type: string   (text value)
+  "accountNumber" → type: integer  (whole number)
+  "customerId"    → type: integer  (whole number)
+  "name"          → type: object   (contains sub-fields)
+  "address"       → type: object   (contains sub-fields)
+  "status"        → type: string   (text + enum restriction)
+  "dob"           → type: string   (text with pattern)</pre>
+        </div>
+        <div class="code-pane">
+          <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#00d4ff;"></div> What is type: object?</div>
+          <pre><span class="c">type: object means the field is not a simple value
+like a string or number. Instead it is a CONTAINER
+that holds a group of named sub-fields inside it.</span>
+
+<span class="c">Think of it like a folder that contains files inside.
+The object itself has no value — it is just a wrapper
+that organizes related fields together.</span>
+
+<span class="c">In your schema there are 3 objects:</span>
+
+  <span class="t">Root object</span> — the entire CustomerAccount record
+    Contains: docType, accountNumber, name,
+              address, dob, status, customerId,
+              lastUpdateDate, lastUpdateTimestamp
+
+  <span class="t">name object</span> — groups name-related fields
+    Contains: legalName, dbaName
+
+  <span class="t">address object</span> — groups address-related fields
+    Contains: line1, city, state, countryCode
+
+<span class="c">JSON representation of an object looks like:</span>
+{                         <span class="c">← opening brace = object start</span>
+  "legalName": "Acme",   <span class="c">← sub-field inside the object</span>
+  "dbaName":   "Acme Corp" <span class="c">← another sub-field</span>
+}                         <span class="c">← closing brace = object end</span>
+
+<span class="c">type: object in JSON API payload:</span>
+{
+  "name": {              <span class="c">← name is an object (has braces {})</span>
+    "legalName": "Acme", <span class="c">← string inside the object</span>
+    "dbaName": "Acme"    <span class="c">← string inside the object</span>
+  },
+  "docType": "Account"   <span class="c">← string (not an object, no braces)</span>
+}</pre>
+        </div>
+      </div>
+      <div class="code-full" style="border-top:1px solid var(--border);">
+        <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#00d4ff;"></div> What is properties?</div>
+        <pre><span class="c">properties is the keyword that lists all the named fields INSIDE an object.
+Every field that belongs to an object is declared inside its properties block.
+properties only appears when type is object — it is how you define what the object contains.</span>
+
+<span class="c">Structure:</span>
+{
+  "type": "object",          <span class="c">← declares this is an object (a container)</span>
+  "properties": {            <span class="c">← opens the list of fields inside this object</span>
+    "fieldOne": {            <span class="c">← first field definition</span>
+      "type": "string"       <span class="c">← what type fieldOne holds</span>
+    },
+    "fieldTwo": {            <span class="c">← second field definition</span>
+      "type": "integer"      <span class="c">← what type fieldTwo holds</span>
+    }
+  }                          <span class="c">← closes the properties list</span>
+}
+
+<span class="c">In your schema the ROOT object has these properties:</span>
+  "properties": {
+    "docType":              { type: string,  enum: [...] }
+    "accountNumber":        { type: integer, format: int64 }
+    "name":                 { type: object,  properties: { legalName, dbaName } }   <span class="c">← object inside object!</span>
+    "address":              { type: object,  properties: { line1, city, state, countryCode } }
+    "dob":                  { type: string,  pattern: "..." }
+    "status":               { type: string,  enum: [...] }
+    "customerId":           { type: integer, format: int64 }
+    "lastUpdateDate":       { type: string,  format: date }
+    "lastUpdateTimestamp":  { type: string,  format: date-time }
+  }
+
+<span class="c">The name object has its OWN properties nested inside:</span>
+  "name": {
+    "type": "object",        <span class="c">← name is itself an object</span>
+    "properties": {          <span class="c">← these are name's own sub-fields</span>
+      "legalName": { "type": "string", "maxLength": 20 },
+      "dbaName":   { "type": "string", "maxLength": 20 }
+    }
+  }
+
+<span class="c">IMPORTANT: properties does NOT mean "required".
+A field listed in properties is OPTIONAL by default.
+To make a field required you must also list it in the required array.</span>
+
+  "required": ["docType", "name", "address", "status"]
+  → Only these 4 must be present. All other properties are optional.</pre>
+      </div>
+      <div class="code-full" style="border-top:1px solid var(--border);">
+        <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#00d4ff;"></div> Object Nesting — Visualized in Your Schema</div>
+        <pre><span class="c">Your schema has 3 levels of nesting:</span>
+
+  <span class="t">Level 1</span> — Root Object (CustomerAccount)
+  {
+    "type": "object"          <span class="c">← the whole record is an object</span>
+    "properties": {
+      "docType":       string
+      "accountNumber": integer
+      "status":        string
+      "customerId":    integer
+
+      <span class="t">Level 2</span> — name Object (nested inside root)
+      "name": {
+        "type": "object"      <span class="c">← name is also an object</span>
+        "properties": {
+          <span class="t">Level 3</span> — simple fields inside name
+          "legalName":  string  <span class="c">← just a string, no more nesting</span>
+          "dbaName":    string  <span class="c">← just a string, no more nesting</span>
+        }
+      }
+
+      <span class="t">Level 2</span> — address Object (nested inside root)
+      "address": {
+        "type": "object"      <span class="c">← address is also an object</span>
+        "properties": {
+          <span class="t">Level 3</span> — simple fields inside address
+          "line1":       string
+          "city":        string
+          "state":       string  pattern: ^[A-Z]{2}$
+          "countryCode": string  pattern: ^[A-Z]{3}$
+        }
+      }
+    }
+  }
+
+<span class="c">When this schema validates an incoming API request it checks:
+  → Is the root value a JSON object (has { } braces)?
+  → Does it have the required fields: docType, name, address, status?
+  → Is name itself an object with { } braces?
+  → Does name.legalName exist (required) and is it a string under 20 chars?
+  → Is address an object with line1 present?
+  → Does address.state match the pattern ^[A-Z]{2}$?
+  → And so on for every field in properties...</span></pre>
+      </div>
+    </div>
+
+    <div class="store-section">
+      <div class="store-header bg-cb" style="border-color:rgba(0,212,255,0.2);">
+        <div class="store-dot dot-cb"></div>
+        <h3 class="c-cb">Full OpenAPI JSON Schema</h3>
+        <span class="store-type">camelCase · OpenAPI 3.0</span>
+      </div>
+      <div class="code-full">
+        <pre>{
+  <span class="k">"type"</span>: <span class="s">"object"</span>,
+  <span class="k">"description"</span>: <span class="s">"Customer Account Record"</span>,
+  <span class="k">"properties"</span>: {
+    <span class="k">"docType"</span>: {
+      <span class="k">"type"</span>: <span class="s">"string"</span>,
+      <span class="k">"enum"</span>: [<span class="e">"Account"</span>, <span class="e">"Customer"</span>],
+      <span class="k">"description"</span>: <span class="s">"Document type identifier for datastore segregation"</span>
+    },
+    <span class="k">"accountNumber"</span>: {
+      <span class="k">"type"</span>: <span class="s">"integer"</span>,
+      <span class="k">"format"</span>: <span class="s">"int64"</span>,
+      <span class="k">"description"</span>: <span class="s">"Unique account identifier — also used as document key"</span>
+    },
+    <span class="k">"name"</span>: {
+      <span class="k">"type"</span>: <span class="s">"object"</span>,
+      <span class="k">"description"</span>: <span class="s">"Customer name details"</span>,
+      <span class="k">"properties"</span>: {
+        <span class="k">"legalName"</span>: {
+          <span class="k">"type"</span>: <span class="s">"string"</span>,
+          <span class="k">"maxLength"</span>: <span class="n">20</span>,
+          <span class="k">"description"</span>: <span class="s">"Legal name of the customer"</span>
+        },
+        <span class="k">"dbaName"</span>: {
+          <span class="k">"type"</span>: <span class="s">"string"</span>,
+          <span class="k">"maxLength"</span>: <span class="n">20</span>,
+          <span class="k">"description"</span>: <span class="s">"Doing Business As name"</span>
+        }
+      },
+      <span class="k">"required"</span>: [<span class="s">"legalName"</span>]
+    },
+    <span class="k">"address"</span>: {
+      <span class="k">"type"</span>: <span class="s">"object"</span>,
+      <span class="k">"description"</span>: <span class="s">"Customer address details"</span>,
+      <span class="k">"properties"</span>: {
+        <span class="k">"line1"</span>: {
+          <span class="k">"type"</span>: <span class="s">"string"</span>,
+          <span class="k">"maxLength"</span>: <span class="n">20</span>,
+          <span class="k">"description"</span>: <span class="s">"Street address line 1"</span>
+        },
+        <span class="k">"city"</span>: {
+          <span class="k">"type"</span>: <span class="s">"string"</span>,
+          <span class="k">"maxLength"</span>: <span class="n">20</span>,
+          <span class="k">"description"</span>: <span class="s">"City name"</span>
+        },
+        <span class="k">"state"</span>: {
+          <span class="k">"type"</span>: <span class="s">"string"</span>,
+          <span class="k">"minLength"</span>: <span class="n">2</span>,
+          <span class="k">"maxLength"</span>: <span class="n">2</span>,
+          <span class="k">"pattern"</span>: <span class="s">"^[A-Z]{2}$"</span>,
+          <span class="k">"description"</span>: <span class="s">"2-character alpha state code"</span>
+        },
+        <span class="k">"countryCode"</span>: {
+          <span class="k">"type"</span>: <span class="s">"string"</span>,
+          <span class="k">"minLength"</span>: <span class="n">3</span>,
+          <span class="k">"maxLength"</span>: <span class="n">3</span>,
+          <span class="k">"pattern"</span>: <span class="s">"^[A-Z]{3}$"</span>,
+          <span class="k">"description"</span>: <span class="s">"3-character ISO alpha country code"</span>
+        }
+      },
+      <span class="k">"required"</span>: [<span class="s">"line1"</span>]
+    },
+    <span class="k">"dob"</span>: {
+      <span class="k">"type"</span>: <span class="s">"string"</span>,
+      <span class="k">"pattern"</span>: <span class="s">"^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])-[0-9]{4}$"</span>,
+      <span class="k">"description"</span>: <span class="s">"Date of Birth in MM-DD-CCYY format"</span>
+    },
+    <span class="k">"status"</span>: {
+      <span class="k">"type"</span>: <span class="s">"string"</span>,
+      <span class="k">"enum"</span>: [<span class="e">"ACTIVE"</span>, <span class="e">"INACTIVE"</span>, <span class="e">"SUSPENDED"</span>, <span class="e">"CLOSED"</span>, <span class="e">"PENDING"</span>, <span class="e">"CANCEL"</span>],
+      <span class="k">"description"</span>: <span class="s">"Current account status"</span>
+    },
+    <span class="k">"customerId"</span>: {
+      <span class="k">"type"</span>: <span class="s">"integer"</span>,
+      <span class="k">"format"</span>: <span class="s">"int64"</span>,
+      <span class="k">"description"</span>: <span class="s">"Unique customer identifier"</span>
+    },
+    <span class="k">"lastUpdateDate"</span>: {
+      <span class="k">"type"</span>: <span class="s">"string"</span>,
+      <span class="k">"format"</span>: <span class="s">"date"</span>,
+      <span class="k">"description"</span>: <span class="s">"Date of last update in YYYY-MM-DD format"</span>
+    },
+    <span class="k">"lastUpdateTimestamp"</span>: {
+      <span class="k">"type"</span>: <span class="s">"string"</span>,
+      <span class="k">"format"</span>: <span class="s">"date-time"</span>,
+      <span class="k">"description"</span>: <span class="s">"Full timestamp of last update in ISO 8601 format"</span>
+    }
+  },
+  <span class="k">"required"</span>: [<span class="s">"docType"</span>, <span class="s">"name"</span>, <span class="s">"address"</span>, <span class="s">"status"</span>],
+  <span class="k">"if"</span>: { <span class="k">"properties"</span>: { <span class="k">"docType"</span>: { <span class="k">"const"</span>: <span class="s">"Account"</span> } } },
+  <span class="k">"then"</span>: { <span class="k">"required"</span>: [<span class="s">"accountNumber"</span>] },
+  <span class="k">"else"</span>: {
+    <span class="k">"if"</span>: { <span class="k">"properties"</span>: { <span class="k">"docType"</span>: { <span class="k">"const"</span>: <span class="s">"Customer"</span> } } },
+    <span class="k">"then"</span>: { <span class="k">"required"</span>: [<span class="s">"customerId"</span>] }
+  }
+}</pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== FIELD MAPPING ===================== -->
+  <section class="section" id="mapping">
+    <div class="section-header">
+      <div class="section-icon" style="background:rgba(124,58,237,0.1);">🔄</div>
+      <div>
+        <h2>Field Name Mapping</h2>
+        <div class="subtitle">camelCase (API) → snake_case (Database)</div>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table class="mapping-table">
+        <thead>
+          <tr>
+            <th>OpenAPI / API (camelCase)</th>
+            <th>Database / Store (snake_case)</th>
+            <th>Type</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>docType</td><td>doc_type</td><td>String / Enum</td><td>Account or Customer</td></tr>
+          <tr><td>accountNumber</td><td>account_number</td><td>Integer / Long</td><td>Document key for Account</td></tr>
+          <tr><td>customerId</td><td>customer_id</td><td>Integer / Long</td><td>Document key for Customer</td></tr>
+          <tr><td>name.legalName</td><td>name.legal_name</td><td>String (max 20)</td><td>Required field</td></tr>
+          <tr><td>name.dbaName</td><td>name.dba_name</td><td>String (max 20)</td><td>Optional</td></tr>
+          <tr><td>address.line1</td><td>address.line1</td><td>String (max 20)</td><td>Required field — no change</td></tr>
+          <tr><td>address.city</td><td>address.city</td><td>String (max 20)</td><td>No change — single word</td></tr>
+          <tr><td>address.state</td><td>address.state</td><td>String (2 chars)</td><td>^[A-Z]{2}$ pattern</td></tr>
+          <tr><td>address.countryCode</td><td>address.country_code</td><td>String (3 chars)</td><td>^[A-Z]{3}$ pattern</td></tr>
+          <tr><td>dob</td><td>dob</td><td>String</td><td>MM-DD-CCYY format — no change</td></tr>
+          <tr><td>status</td><td>status</td><td>Enum</td><td>ACTIVE/INACTIVE/SUSPENDED/CLOSED/PENDING/CANCEL</td></tr>
+          <tr><td>lastUpdateDate</td><td>last_update_date</td><td>Date</td><td>YYYY-MM-DD</td></tr>
+          <tr><td>lastUpdateTimestamp</td><td>last_update_timestamp</td><td>Timestamp</td><td>ISO 8601</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+
+  <!-- ===================== COUCHBASE CONCEPTS ===================== -->
+  <section class="section" id="cb-concepts">
+    <div class="section-header">
+      <div class="section-icon" style="background:rgba(0,212,255,0.1);">🧠</div>
+      <div>
+        <h2>Couchbase — Core Concepts</h2>
+        <div class="subtitle">Cluster · Node · Bucket · TTL · Architecture</div>
+      </div>
+    </div>
+
+    <div class="store-section" style="margin-bottom:28px;">
+      <div class="store-header bg-cb">
+        <div class="store-dot dot-cb"></div>
+        <h3 class="c-cb">Infrastructure — Cluster, Node, Bucket</h3>
+        <span class="store-type">Physical Architecture</span>
+      </div>
+      <div class="code-full">
+        <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#00d4ff;"></div> Couchbase Infrastructure Hierarchy</div>
+        <pre><span class="c">CLUSTER — The entire Couchbase deployment</span>
+  A Cluster is a group of Nodes (servers) working together as one system.
+  All nodes share the same data and workload. The cluster appears as a
+  single endpoint to your Spring Boot application — you connect to the
+  cluster, not to individual nodes.
+
+  Example:  couchbase-cluster.company.com  ← single connection string
+                     |
+         ┌───────────┼───────────┐
+         ▼           ▼           ▼
+      <span class="t">Node 1</span>      <span class="t">Node 2</span>      <span class="t">Node 3</span>     ← 3-node cluster
+
+<span class="c">NODE — A single server (machine) inside the cluster</span>
+  Each Node holds a portion of the data called vBuckets (virtual partitions).
+  Couchbase has 1024 vBuckets distributed across all nodes.
+  If you have 3 nodes, each node holds approximately 341 vBuckets.
+  Nodes also replicate data to each other for fault tolerance.
+
+  Node services:
+    Data Service    → stores and retrieves documents
+    Index Service   → maintains indexes for N1QL queries
+    Query Service   → executes N1QL query engine
+    Search Service  → full-text search capability
+
+<span class="c">BUCKET — A logical container for documents (like a database)</span>
+  A Bucket is a named grouping of documents within the cluster.
+  You can have multiple buckets in one cluster.
+  Documents in different buckets are completely isolated from each other.
+
+  Your schema uses:   <span class="t">customer_bucket</span>
+    → stores both Account and Customer documents (distinguished by doc_type)
+    → has its own memory quota, replica count, and TTL settings
+
+<span class="c">SCOPE — A namespace inside a bucket (like a schema in SQL)</span>
+  Introduced in Couchbase 7.0 for multi-tenancy inside a bucket.
+  Example:  customer_bucket → retail_scope → account_collection
+
+<span class="c">COLLECTION — A sub-grouping inside a scope (like a table in SQL)</span>
+  Documents of the same type live in a collection.
+  Example:  retail_scope → accounts  (Account documents)
+            retail_scope → customers (Customer documents)
+
+<span class="c">FULL HIERARCHY:</span>
+  Cluster
+    └── Bucket (customer_bucket)
+          └── Scope (retail_scope)
+                ├── Collection (accounts)
+                └── Collection (customers)</pre>
+      </div>
+    </div>
+
+    <div class="store-section" style="margin-bottom:28px;">
+      <div class="store-header bg-cb">
+        <div class="store-dot dot-cb"></div>
+        <h3 class="c-cb">TTL (Time To Live) — Document Expiry</h3>
+        <span class="store-type">Bucket Level · Document Level · Spring Boot</span>
+      </div>
+      <div class="code-grid">
+        <div class="code-pane">
+          <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#00d4ff;"></div> What is TTL?</div>
+          <pre><span class="c">TTL (Time To Live) tells Couchbase to automatically
+delete a document after a set period of time.
+Couchbase checks expiry lazily — expired documents
+are removed during the next access or by a background
+compaction process.</span>
+
+<span class="c">TTL can be set at two levels:</span>
+
+<span class="t">1. BUCKET LEVEL</span> — applies to ALL documents in bucket
+   Set in Couchbase Admin UI or CLI
+   Every document expires after this time unless
+   the document sets its own TTL
+
+<span class="t">2. DOCUMENT LEVEL</span> — set per individual document
+   Overrides bucket-level TTL for that document
+   Set in your Spring Boot code when saving
+
+<span class="c">Common use cases for TTL in your C360 schema:</span>
+  → Cache documents that mirror Valkey (short TTL)
+  → Session records that auto-expire
+  → Temporary processing documents
+  → Audit records with retention policy</pre>
+        </div>
+        <div class="code-pane">
+          <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#00d4ff;"></div> Setting TTL in Spring Boot + Couchbase SDK</div>
+          <pre><span class="c">// Option 1 — Set TTL via @Document annotation
+// Document expires after 3600 seconds (1 hour)</span>
+<span class="k">@Document</span>(expiry = <span class="n">3600</span>)
+<span class="kw">public class</span> CustomerAccount { ... }
+
+<span class="c">// Option 2 — Set TTL programmatically per document
+// Useful when different docs need different TTLs</span>
+<span class="k">@Autowired</span>
+<span class="kw">private</span> CouchbaseTemplate couchbaseTemplate;
+
+<span class="kw">public void</span> saveWithTTL(
+    CustomerAccount account, <span class="kw">int</span> ttlSeconds) {
+
+  couchbaseTemplate.upsertById(
+    CustomerAccount.class)
+    .withExpiry(Duration.ofSeconds(ttlSeconds))
+    .one(account);
+}
+
+<span class="c">// Option 3 — Raw SDK with expiry</span>
+collection.upsert(
+  key,
+  document,
+  UpsertOptions.upsertOptions()
+    .expiry(Duration.ofHours(<span class="n">24</span>))
+);
+
+<span class="c">// Option 4 — Touch to reset TTL on existing doc</span>
+collection.touch(
+  key,
+  Duration.ofHours(<span class="n">24</span>)
+);
+
+<span class="c">// Option 5 — Get and reset TTL simultaneously</span>
+collection.getAndTouch(
+  key,
+  Duration.ofHours(<span class="n">24</span>)
+);</pre>
+        </div>
+      </div>
+      <div class="code-full" style="border-top:1px solid var(--border);">
+        <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#00d4ff;"></div> Bucket-Level TTL — Admin CLI Setup</div>
+        <pre><span class="c"># Set bucket-level TTL of 86400 seconds (24 hours) via Couchbase CLI</span>
+couchbase-cli bucket-edit   --cluster localhost:8091   --username admin --password password   --bucket customer_bucket   --max-ttl <span class="n">86400</span>
+
+<span class="c"># Or via REST API</span>
+curl -X POST http://localhost:8091/pools/default/buckets/customer_bucket   -u admin:password   -d maxTTL=86400
+
+<span class="c"># TTL values:
+#   0       = documents never expire (default — permanent storage)
+#   3600    = 1 hour
+#   86400   = 24 hours
+#   604800  = 7 days
+#   2592000 = 30 days</span></pre>
+      </div>
+    </div>
+
+    <div class="store-section" style="margin-bottom:0;">
+      <div class="store-header bg-cb">
+        <div class="store-dot dot-cb"></div>
+        <h3 class="c-cb">Document Key Design</h3>
+        <span class="store-type">Best Practices for your C360 Schema</span>
+      </div>
+      <div class="code-full">
+        <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#00d4ff;"></div> Key Naming Conventions</div>
+        <pre><span class="c">Couchbase document keys are strings. Best practice is to use a prefix
+that identifies the document type so keys are globally unique across buckets.</span>
+
+<span class="c">For your schema:</span>
+  Account documents:   <span class="t">ACCOUNT::123456789</span>    (account_number as key)
+  Customer documents:  <span class="t">CUSTOMER::987654321</span>   (customer_id as key)
+
+<span class="c">Benefits of prefix pattern:</span>
+  → Prevents key collision if account_number and customer_id share same value
+  → Makes the key self-describing — you know the doc type from the key alone
+  → Easier to manage and debug in Couchbase UI
+
+<span class="c">In Spring Boot:</span>
+<span class="kw">public</span> String buildKey(CustomerAccount account) {
+  <span class="kw">if</span> (<span class="s">"Account"</span>.equals(account.getDocType())) {
+    <span class="kw">return</span> <span class="s">"ACCOUNT::"</span> + account.getAccountNumber();
+  }
+  <span class="kw">return</span> <span class="s">"CUSTOMER::"</span> + account.getCustomerId();
+}</pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== COUCHBASE ===================== -->
+  <section class="section" id="couchbase">
+    <div class="section-header">
+      <div class="section-icon" style="background:rgba(0,212,255,0.1);">🗄️</div>
+      <div>
+        <h2>Couchbase</h2>
+        <div class="subtitle">snake_case · Document Store · Schemaless · N1QL</div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>Key Design:</strong> Couchbase is schemaless — no mapping file needed. The document key is the <code>account_number</code> or <code>customer_id</code> and also stored inside the JSON body. Use <code>doc_type</code> to filter documents in N1QL queries across the same bucket.
+    </div>
+
+    <div class="store-section">
+      <div class="store-header bg-cb">
+        <div class="store-dot dot-cb"></div>
+        <h3 class="c-cb">Couchbase Documents</h3>
+        <span class="store-type">snake_case · No Schema File</span>
+      </div>
+      <div class="code-grid">
+        <div class="code-pane">
+          <div class="code-pane-header"><div class="dot dot-cb" style="width:8px;height:8px;border-radius:50%;background:#00d4ff;"></div> Account Document — Key: 123456789</div>
+          <pre>{
+  <span class="k">"doc_type"</span>: <span class="e">"Account"</span>,
+  <span class="k">"account_number"</span>: <span class="n">123456789</span>,
+  <span class="k">"name"</span>: {
+    <span class="k">"legal_name"</span>: <span class="s">"Acme Corporation"</span>,
+    <span class="k">"dba_name"</span>: <span class="s">"Acme Corp"</span>
+  },
+  <span class="k">"address"</span>: {
+    <span class="k">"line1"</span>: <span class="s">"123 Main Street"</span>,
+    <span class="k">"city"</span>: <span class="s">"Dallas"</span>,
+    <span class="k">"state"</span>: <span class="s">"TX"</span>,
+    <span class="k">"country_code"</span>: <span class="s">"USA"</span>
+  },
+  <span class="k">"dob"</span>: <span class="s">"01-15-1990"</span>,
+  <span class="k">"status"</span>: <span class="e">"ACTIVE"</span>,
+  <span class="k">"last_update_date"</span>: <span class="s">"2026-03-01"</span>,
+  <span class="k">"last_update_timestamp"</span>: <span class="s">"2026-03-01T10:30:00Z"</span>
+}</pre>
+        </div>
+        <div class="code-pane">
+          <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#00d4ff;"></div> Customer Document — Key: 987654321</div>
+          <pre>{
+  <span class="k">"doc_type"</span>: <span class="e">"Customer"</span>,
+  <span class="k">"customer_id"</span>: <span class="n">987654321</span>,
+  <span class="k">"name"</span>: {
+    <span class="k">"legal_name"</span>: <span class="s">"John Doe"</span>,
+    <span class="k">"dba_name"</span>: <span class="s">"JD Enterprises"</span>
+  },
+  <span class="k">"address"</span>: {
+    <span class="k">"line1"</span>: <span class="s">"456 Elm Street"</span>,
+    <span class="k">"city"</span>: <span class="s">"Houston"</span>,
+    <span class="k">"state"</span>: <span class="s">"TX"</span>,
+    <span class="k">"country_code"</span>: <span class="s">"USA"</span>
+  },
+  <span class="k">"dob"</span>: <span class="s">"06-20-1985"</span>,
+  <span class="k">"status"</span>: <span class="e">"ACTIVE"</span>,
+  <span class="k">"last_update_date"</span>: <span class="s">"2026-03-01"</span>,
+  <span class="k">"last_update_timestamp"</span>: <span class="s">"2026-03-01T10:30:00Z"</span>
+}</pre>
+        </div>
+      </div>
+      <div class="code-single">
+        <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#00d4ff;"></div> N1QL Query Examples</div>
+        <pre><span class="c">-- Query by status</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> customer_bucket <span class="kw">WHERE</span> doc_type = <span class="s">"Account"</span> <span class="kw">AND</span> status = <span class="s">"ACTIVE"</span>;
+
+<span class="c">-- Query by state inside nested address</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> customer_bucket <span class="kw">WHERE</span> doc_type = <span class="s">"Account"</span> <span class="kw">AND</span> address.state = <span class="s">"TX"</span>;
+
+<span class="c">-- Query by timestamp range</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> customer_bucket
+<span class="kw">WHERE</span> doc_type = <span class="s">"Account"</span>
+<span class="kw">AND</span> last_update_timestamp <span class="kw">BETWEEN</span> <span class="s">"2026-01-01T00:00:00Z"</span> <span class="kw">AND</span> <span class="s">"2026-03-01T23:59:59Z"</span>;</pre>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ===================== ELASTICSEARCH CONCEPTS ===================== -->
+  <section class="section" id="es-concepts">
+    <div class="section-header">
+      <div class="section-icon" style="background:rgba(245,158,11,0.1);">🧠</div>
+      <div>
+        <h2>Elasticsearch — Core Concepts</h2>
+        <div class="subtitle">Cluster · Node · Index · Mapping · keyword vs text · copy_to</div>
+      </div>
+    </div>
+
+    <div class="store-section" style="margin-bottom:28px;">
+      <div class="store-header bg-es">
+        <div class="store-dot dot-es"></div>
+        <h3 class="c-es">Infrastructure — Cluster, Node, Index, Shard</h3>
+        <span class="store-type">Physical Architecture</span>
+      </div>
+      <div class="code-full">
+        <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#f59e0b;"></div> Elasticsearch Infrastructure Hierarchy</div>
+        <pre><span class="c">CLUSTER — The entire Elasticsearch deployment</span>
+  A Cluster is a group of Nodes. All nodes work together as one search engine.
+  Your Spring Boot application connects to the cluster via a single URL.
+  Example:  http://elasticsearch-cluster.company.com:9200
+
+<span class="c">NODE — A single server (machine) inside the cluster</span>
+  Each Node holds some Shards of data. Nodes come in different roles:
+    Master Node   → manages cluster state, tracks which shards go where
+    Data Node     → stores shards and handles search/indexing operations
+    Ingest Node   → pre-processes documents before indexing
+    Coordinating  → routes requests, merges results (every node can do this)
+
+<span class="c">INDEX — A logical container for documents (like a database table)</span>
+  Your schema uses index:  <span class="t">customer_account</span>
+  An index holds all Account and Customer documents.
+  Each index has its own Mapping (schema definition) and Settings.
+
+<span class="c">SHARD — A physical slice of an index stored on a node</span>
+  Elasticsearch splits each index into multiple Shards for scalability.
+  Primary Shards  → the main copy of the data
+  Replica Shards  → backup copies stored on different nodes for redundancy
+  Example with 3 nodes, 3 primary shards, 1 replica each:
+
+                     <span class="t">Node 1</span>          <span class="t">Node 2</span>          <span class="t">Node 3</span>
+                  ┌──────────┐    ┌──────────┐    ┌──────────┐
+  Primary Shards  │  P1  P2  │    │    P3    │    │          │
+  Replica Shards  │          │    │  R1      │    │  R2  R3  │
+                  └──────────┘    └──────────┘    └──────────┘
+
+  If Node 2 fails → R1 (replica of P1) on Node 3 is promoted to primary.
+  Data is never lost as long as at least one replica exists on a healthy node.
+
+<span class="c">DOCUMENT — A single JSON record stored in an index</span>
+  Equivalent to one row in a database or one document in Couchbase.
+  Each document has an _id field (like Couchbase document key).
+  In your schema, _id = account_number or customer_id.</pre>
+      </div>
+    </div>
+
+    <div class="store-section" style="margin-bottom:28px;">
+      <div class="store-header bg-es">
+        <div class="store-dot dot-es"></div>
+        <h3 class="c-es">What is a Mapping?</h3>
+        <span class="store-type">Schema Definition for Elasticsearch</span>
+      </div>
+      <div class="code-full">
+        <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#f59e0b;"></div> Mapping Explained</div>
+        <pre><span class="c">A Mapping is Elasticsearch's schema definition file.
+It tells Elasticsearch:</span>
+  → What fields exist in your documents
+  → What data type each field is (text, keyword, long, date, object...)
+  → How each field should be indexed and searched
+  → Which fields should be copied into combined search fields
+
+<span class="c">CRITICAL: Mappings are defined BEFORE you insert data.
+Once data exists, changing field types requires reindexing (recreating the index).
+This is different from Couchbase which is fully schemaless.</span>
+
+<span class="c">Example — without a mapping, Elasticsearch auto-detects types (dynamic mapping):</span>
+  "status": "ACTIVE"        → Elasticsearch guesses type: text  (WRONG for our use)
+  "account_number": 123456  → Elasticsearch guesses type: long  (correct)
+  "last_update_date": "2026-03-01" → guesses type: text (WRONG — should be date)
+
+<span class="c">With our explicit mapping:</span>
+  "status"            → keyword   (exact match only — correct)
+  "account_number"    → long      (number — correct)
+  "last_update_date"  → date with format "yyyy-MM-dd" (correct, enables range queries)
+  "legal_name"        → text + keyword multi-field (both full-text and exact — correct)</pre>
+      </div>
+    </div>
+
+    <div class="store-section" style="margin-bottom:28px;">
+      <div class="store-header bg-es">
+        <div class="store-dot dot-es"></div>
+        <h3 class="c-es">keyword vs text — The Most Important Elasticsearch Concept</h3>
+        <span class="store-type">Exact Match vs Full-Text Search</span>
+      </div>
+      <div class="code-grid">
+        <div class="code-pane">
+          <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#f59e0b;"></div> keyword — Exact Match</div>
+          <pre><span class="c">keyword stores the value exactly as-is.
+It does NOT break the value into words.
+Use for: filtering, sorting, aggregating,
+         exact value matching.</span>
+
+<span class="c">When you index this document:</span>
+{
+  "status": "ACTIVE",
+  "country_code": "USA",
+  "state": "TX"
+}
+
+<span class="c">Elasticsearch stores exact strings.
+Queries that WORK with keyword:</span>
+{ "term": { "status": "ACTIVE" }}    <span class="t">✓ works</span>
+{ "term": { "state": "TX" }}         <span class="t">✓ works</span>
+
+<span class="c">Queries that FAIL with keyword:</span>
+{ "term": { "status": "active" }}    <span class="e">✗ fails (case sensitive)</span>
+{ "match": { "status": "ACT" }}      <span class="e">✗ fails (no partial match)</span>
+
+<span class="c">Fields using keyword in our schema:</span>
+  doc_type, status, state,
+  country_code, dob</pre>
+        </div>
+        <div class="code-pane">
+          <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#f59e0b;"></div> text — Full-Text Search</div>
+          <pre><span class="c">text breaks the value into individual tokens
+(words) using an analyzer, then indexes each
+token separately.
+Use for: searching within content, partial
+         word matching, relevance ranking.</span>
+
+<span class="c">When you index this document:</span>
+{
+  "legal_name": "Acme Corporation"
+}
+
+<span class="c">Standard analyzer tokenizes it as:</span>
+  ["acme", "corporation"]
+  (lowercased, split on spaces)
+
+<span class="c">Queries that WORK with text:</span>
+{ "match": { "legal_name": "Acme" }}      <span class="t">✓ works</span>
+{ "match": { "legal_name": "acme" }}      <span class="t">✓ works (case insensitive)</span>
+{ "match": { "legal_name": "corporation" }}<span class="t">✓ works</span>
+
+<span class="c">Queries that FAIL with text:</span>
+{ "term": { "legal_name": "Acme Corporation" }}<span class="e">✗ fails</span>
+<span class="c">(term query needs exact — use .keyword for that)</span>
+
+<span class="c">Fields using text in our schema:</span>
+  legal_name, dba_name, line1, city,
+  full_text_srch</pre>
+        </div>
+      </div>
+      <div class="code-full" style="border-top:1px solid var(--border);">
+        <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#f59e0b;"></div> Multi-Field — text AND keyword on the Same Field</div>
+        <pre><span class="c">Our legal_name and dba_name use BOTH types via the fields (multi-field) feature.
+This lets you do both full-text AND exact match on the same field.</span>
+
+<span class="c">Mapping definition:</span>
+"legal_name": {
+  "type": "text",               <span class="c">← main field is text (full-text search)</span>
+  "analyzer": "standard",
+  "fields": {
+    "keyword": {
+      "type": "keyword",        <span class="c">← sub-field for exact match</span>
+      "ignore_above": 20
+    }
+  }
+}
+
+<span class="c">How to query each sub-type:</span>
+  Full-text search:   { "match": { "name.legal_name": "Acme" }}               <span class="t">→ finds "Acme Corporation"</span>
+  Exact match:        { "term":  { "name.legal_name.keyword": "Acme Corporation" }} <span class="t">→ exact only</span>
+  Sort alphabetically: { "sort": [{ "name.legal_name.keyword": "asc" }]}      <span class="t">→ must use .keyword for sort</span></pre>
+      </div>
+    </div>
+
+    <div class="store-section" style="margin-bottom:0;">
+      <div class="store-header bg-es">
+        <div class="store-dot dot-es"></div>
+        <h3 class="c-es">copy_to — The Combined Search Field Explained</h3>
+        <span class="store-type">full_text_srch — How It Works</span>
+      </div>
+      <div class="code-full">
+        <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#f59e0b;"></div> copy_to Explained Step by Step</div>
+        <pre><span class="c">copy_to is an Elasticsearch feature that copies the value of one field
+into another field at index time. The destination field is virtual —
+it exists ONLY inside Elasticsearch for search purposes.
+It is NOT stored in the document and NOT returned in API responses.</span>
+
+<span class="c">In our mapping, 4 fields copy their values into full_text_srch:</span>
+  name.legal_name  ─┐
+  name.dba_name    ─┤
+  address.line1    ─┤──► full_text_srch  (combined search field)
+  address.city     ─┘
+
+<span class="c">When this document is indexed:</span>
+{
+  "name": { "legal_name": "Acme Corporation", "dba_name": "Acme Corp" },
+  "address": { "line1": "123 Main Street", "city": "Dallas" }
+}
+
+<span class="c">Elasticsearch internally creates a full_text_srch field containing:</span>
+  "Acme Corporation Acme Corp 123 Main Street Dallas"
+  (all 4 field values concatenated and tokenized together)
+
+<span class="c">Now a single query searches all 4 fields at once:</span>
+  { "match": { "full_text_srch": "Acme Dallas" }}
+  → finds the document because both "Acme" and "Dallas" appear in full_text_srch
+
+<span class="c">Without copy_to you would need a multi_match query instead:</span>
+  { "multi_match": {
+    "query": "Acme Dallas",
+    "fields": ["name.legal_name", "name.dba_name", "address.line1", "address.city"]
+  }}
+
+<span class="c">copy_to is more efficient — the combined index is pre-built at write time,
+not computed at query time, so searches on full_text_srch are faster.</span></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== ELASTICSEARCH ===================== -->
+  <section class="section" id="elasticsearch">
+    <div class="section-header">
+      <div class="section-icon" style="background:rgba(245,158,11,0.1);">🔍</div>
+      <div>
+        <h2>Elasticsearch</h2>
+        <div class="subtitle">snake_case · Search Engine · Mappings Required · Query DSL</div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>Key Design:</strong> Elasticsearch requires an explicit <code>mappings</code> block. String fields use <code>keyword</code> for exact match or <code>text</code> for full-text search. <code>legal_name</code> and <code>dba_name</code> use multi-fields (both). <code>copy_to</code> feeds <code>full_text_srch</code> for single-field cross-search.
+    </div>
+
+    <div class="store-section">
+      <div class="store-header bg-es">
+        <div class="store-dot dot-es"></div>
+        <h3 class="c-es">Elasticsearch Index Mapping</h3>
+        <span class="store-type">snake_case · Mappings Required</span>
+      </div>
+      <div class="code-full">
+        <pre>{
+  <span class="k">"mappings"</span>: {
+    <span class="k">"properties"</span>: {
+      <span class="k">"doc_type"</span>:           { <span class="k">"type"</span>: <span class="t">"keyword"</span> },
+      <span class="k">"account_number"</span>:    { <span class="k">"type"</span>: <span class="t">"long"</span> },
+      <span class="k">"customer_id"</span>:       { <span class="k">"type"</span>: <span class="t">"long"</span> },
+      <span class="k">"name"</span>: {
+        <span class="k">"type"</span>: <span class="t">"object"</span>,
+        <span class="k">"properties"</span>: {
+          <span class="k">"legal_name"</span>: {
+            <span class="k">"type"</span>: <span class="t">"text"</span>,
+            <span class="k">"analyzer"</span>: <span class="s">"standard"</span>,
+            <span class="k">"fields"</span>: {
+              <span class="k">"keyword"</span>: { <span class="k">"type"</span>: <span class="t">"keyword"</span>, <span class="k">"ignore_above"</span>: <span class="n">20</span> }
+            },
+            <span class="k">"copy_to"</span>: <span class="s">"full_text_srch"</span>
+          },
+          <span class="k">"dba_name"</span>: {
+            <span class="k">"type"</span>: <span class="t">"text"</span>,
+            <span class="k">"analyzer"</span>: <span class="s">"standard"</span>,
+            <span class="k">"fields"</span>: {
+              <span class="k">"keyword"</span>: { <span class="k">"type"</span>: <span class="t">"keyword"</span>, <span class="k">"ignore_above"</span>: <span class="n">20</span> }
+            },
+            <span class="k">"copy_to"</span>: <span class="s">"full_text_srch"</span>
+          }
+        }
+      },
+      <span class="k">"address"</span>: {
+        <span class="k">"type"</span>: <span class="t">"object"</span>,
+        <span class="k">"properties"</span>: {
+          <span class="k">"line1"</span>: {
+            <span class="k">"type"</span>: <span class="t">"text"</span>, <span class="k">"analyzer"</span>: <span class="s">"standard"</span>,
+            <span class="k">"fields"</span>: { <span class="k">"keyword"</span>: { <span class="k">"type"</span>: <span class="t">"keyword"</span>, <span class="k">"ignore_above"</span>: <span class="n">20</span> } },
+            <span class="k">"copy_to"</span>: <span class="s">"full_text_srch"</span>
+          },
+          <span class="k">"city"</span>: {
+            <span class="k">"type"</span>: <span class="t">"text"</span>, <span class="k">"analyzer"</span>: <span class="s">"standard"</span>,
+            <span class="k">"fields"</span>: { <span class="k">"keyword"</span>: { <span class="k">"type"</span>: <span class="t">"keyword"</span>, <span class="k">"ignore_above"</span>: <span class="n">20</span> } },
+            <span class="k">"copy_to"</span>: <span class="s">"full_text_srch"</span>
+          },
+          <span class="k">"state"</span>:        { <span class="k">"type"</span>: <span class="t">"keyword"</span>, <span class="k">"ignore_above"</span>: <span class="n">2</span> },
+          <span class="k">"country_code"</span>: { <span class="k">"type"</span>: <span class="t">"keyword"</span>, <span class="k">"ignore_above"</span>: <span class="n">3</span> }
+        }
+      },
+      <span class="k">"dob"</span>:                  { <span class="k">"type"</span>: <span class="t">"keyword"</span>, <span class="k">"ignore_above"</span>: <span class="n">10</span> },
+      <span class="k">"status"</span>:               { <span class="k">"type"</span>: <span class="t">"keyword"</span> },
+      <span class="k">"last_update_date"</span>:     { <span class="k">"type"</span>: <span class="t">"date"</span>, <span class="k">"format"</span>: <span class="s">"yyyy-MM-dd"</span> },
+      <span class="k">"last_update_timestamp"</span>:{ <span class="k">"type"</span>: <span class="t">"date"</span>, <span class="k">"format"</span>: <span class="s">"yyyy-MM-dd'T'HH:mm:ssZ"</span> },
+      <span class="k">"full_text_srch"</span>:       { <span class="k">"type"</span>: <span class="t">"text"</span>, <span class="k">"analyzer"</span>: <span class="s">"standard"</span> }
+    }
+  }
+}</pre>
+      </div>
+      <div class="code-grid">
+        <div class="code-pane">
+          <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#f59e0b;"></div> Account Document</div>
+          <pre>{
+  <span class="k">"doc_type"</span>: <span class="e">"Account"</span>,
+  <span class="k">"account_number"</span>: <span class="n">123456789</span>,
+  <span class="k">"name"</span>: {
+    <span class="k">"legal_name"</span>: <span class="s">"Acme Corporation"</span>,
+    <span class="k">"dba_name"</span>: <span class="s">"Acme Corp"</span>
+  },
+  <span class="k">"address"</span>: {
+    <span class="k">"line1"</span>: <span class="s">"123 Main Street"</span>,
+    <span class="k">"city"</span>: <span class="s">"Dallas"</span>,
+    <span class="k">"state"</span>: <span class="s">"TX"</span>,
+    <span class="k">"country_code"</span>: <span class="s">"USA"</span>
+  },
+  <span class="k">"dob"</span>: <span class="s">"01-15-1990"</span>,
+  <span class="k">"status"</span>: <span class="e">"ACTIVE"</span>,
+  <span class="k">"last_update_date"</span>: <span class="s">"2026-03-01"</span>,
+  <span class="k">"last_update_timestamp"</span>: <span class="s">"2026-03-01T10:30:00Z"</span>
+}</pre>
+        </div>
+        <div class="code-pane">
+          <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#f59e0b;"></div> Query Examples</div>
+          <pre><span class="c">// Full-text search on legal_name</span>
+{ <span class="k">"match"</span>: { <span class="k">"name.legal_name"</span>: <span class="s">"Acme"</span> } }
+
+<span class="c">// Exact match on legal_name</span>
+{ <span class="k">"term"</span>: { <span class="k">"name.legal_name.keyword"</span>: <span class="s">"Acme Corporation"</span> } }
+
+<span class="c">// Search across all copied fields at once</span>
+{ <span class="k">"match"</span>: { <span class="k">"full_text_srch"</span>: <span class="s">"Acme Dallas"</span> } }
+
+<span class="c">// Timestamp range query</span>
+{ <span class="k">"range"</span>: {
+  <span class="k">"last_update_timestamp"</span>: {
+    <span class="k">"gte"</span>: <span class="s">"2026-01-01T00:00:00Z"</span>,
+    <span class="k">"lte"</span>: <span class="s">"2026-03-01T23:59:59Z"</span>
+  }
+} }
+
+<span class="c">// Exact match on status</span>
+{ <span class="k">"term"</span>: { <span class="k">"status"</span>: <span class="s">"ACTIVE"</span> } }</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== FIRESTORE ===================== -->
+  <section class="section" id="firestore">
+    <div class="section-header">
+      <div class="section-icon" style="background:rgba(16,185,129,0.1);">🔥</div>
+      <div>
+        <h2>Firestore</h2>
+        <div class="subtitle">snake_case · Document Store · Schemaless · Collections → Documents</div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>Key Design:</strong> Firestore organizes data as Collections → Documents. Separate collections for <code>accounts</code> and <code>customers</code>. Nested objects become <strong>Maps</strong>. Native <code>Timestamp</code> type should be used for <code>last_update_timestamp</code> for proper date range queries.
+    </div>
+
+    <div class="store-section">
+      <div class="store-header bg-fs">
+        <div class="store-dot dot-fs"></div>
+        <h3 class="c-fs">Firestore Collections</h3>
+        <span class="store-type">snake_case · Map Type for Nested</span>
+      </div>
+      <div class="code-grid">
+        <div class="code-pane">
+          <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#10b981;"></div> accounts/123456789</div>
+          <pre>{
+  <span class="k">"doc_type"</span>: <span class="e">"Account"</span>,         <span class="c">// String</span>
+  <span class="k">"account_number"</span>: <span class="n">123456789</span>,  <span class="c">// Number</span>
+  <span class="k">"name"</span>: {                       <span class="c">// Map</span>
+    <span class="k">"legal_name"</span>: <span class="s">"Acme Corp"</span>,
+    <span class="k">"dba_name"</span>: <span class="s">"Acme"</span>
+  },
+  <span class="k">"address"</span>: {                    <span class="c">// Map</span>
+    <span class="k">"line1"</span>: <span class="s">"123 Main Street"</span>,
+    <span class="k">"city"</span>: <span class="s">"Dallas"</span>,
+    <span class="k">"state"</span>: <span class="s">"TX"</span>,
+    <span class="k">"country_code"</span>: <span class="s">"USA"</span>
+  },
+  <span class="k">"dob"</span>: <span class="s">"01-15-1990"</span>,           <span class="c">// String</span>
+  <span class="k">"status"</span>: <span class="e">"ACTIVE"</span>,            <span class="c">// String</span>
+  <span class="k">"last_update_date"</span>: <span class="s">"2026-03-01"</span>,
+  <span class="k">"last_update_timestamp"</span>: Timestamp
+}</pre>
+        </div>
+        <div class="code-pane">
+          <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#10b981;"></div> Firestore Query Examples (Java)</div>
+          <pre><span class="c">// Query by status</span>
+firestore.collection(<span class="s">"accounts"</span>)
+  .whereEqualTo(<span class="s">"status"</span>, <span class="s">"ACTIVE"</span>)
+  .get();
+
+<span class="c">// Query nested map field</span>
+firestore.collection(<span class="s">"accounts"</span>)
+  .whereEqualTo(<span class="s">"address.state"</span>, <span class="s">"TX"</span>)
+  .get();
+
+<span class="c">// Query by timestamp range</span>
+firestore.collection(<span class="s">"accounts"</span>)
+  .whereGreaterThan(
+    <span class="s">"last_update_timestamp"</span>,
+    startTimestamp)
+  .whereLessThan(
+    <span class="s">"last_update_timestamp"</span>,
+    endTimestamp)
+  .get();
+
+<span class="c">// Get by document ID (account_number)</span>
+firestore.collection(<span class="s">"accounts"</span>)
+  .document(<span class="s">"123456789"</span>)
+  .get();</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ===================== DYNAMODB CONCEPTS ===================== -->
+  <section class="section" id="ddb-concepts">
+    <div class="section-header">
+      <div class="section-icon" style="background:rgba(236,72,153,0.1);">🧠</div>
+      <div>
+        <h2>DynamoDB — Core Concepts</h2>
+        <div class="subtitle">Partition · PK · SK · GSI · Single Table Design · Billing</div>
+      </div>
+    </div>
+
+    <div class="store-section" style="margin-bottom:28px;">
+      <div class="store-header bg-ddb">
+        <div class="store-dot dot-ddb"></div>
+        <h3 class="c-ddb">How DynamoDB Stores Data — Partitions</h3>
+        <span class="store-type">Physical Storage Model</span>
+      </div>
+      <div class="code-full">
+        <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#ec4899;"></div> Partition Explained</div>
+        <pre><span class="c">PARTITION — A physical storage unit inside DynamoDB</span>
+  DynamoDB is fully managed — you never see servers, nodes, or clusters.
+  AWS handles all infrastructure. Internally, DynamoDB splits table data
+  into Partitions across many physical servers.
+
+  Each partition:
+    → Stores up to 10 GB of data
+    → Handles up to 3,000 read capacity units per second
+    → Handles up to 1,000 write capacity units per second
+    → Lives on AWS-managed SSDs in multiple availability zones
+
+<span class="c">HOW PARTITIONING WORKS:</span>
+  DynamoDB runs your PK (Partition Key) through a hash function.
+  The hash result determines which physical partition holds that record.
+
+  PK = "ACCOUNT#123456789"
+         ↓
+  Hash Function  →  hash value 847
+         ↓
+  Partition 3   (holds records with hash range 800-900)
+
+  This is why PK is called "Partition Key" — it determines the partition.
+
+<span class="c">WHY THIS MATTERS FOR DESIGN:</span>
+  All records with the same PK live on the SAME partition.
+  If you make all records have PK = "ALL_ACCOUNTS" every read and write
+  hits one partition — this is called a HOT PARTITION and kills performance.
+  Good PK design spreads data evenly across many partitions.
+
+  Good PK:   ACCOUNT#123456789 (unique per account — spread evenly)
+  Bad PK:    "Account"         (all accounts on one partition — HOT)</pre>
+      </div>
+    </div>
+
+    <div class="store-section" style="margin-bottom:28px;">
+      <div class="store-header bg-ddb">
+        <div class="store-dot dot-ddb"></div>
+        <h3 class="c-ddb">PK and SK — Partition Key and Sort Key</h3>
+        <span class="store-type">Primary Key Design</span>
+      </div>
+      <div class="code-grid">
+        <div class="code-pane">
+          <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#ec4899;"></div> PK — Partition Key (HASH)</div>
+          <pre><span class="c">PK is the first part of the primary key.
+It determines WHICH PARTITION stores the record.
+Think of it as the filing DRAWER.</span>
+
+  PK = "ACCOUNT#123456789"
+
+<span class="c">Rules for PK:</span>
+  → Must be UNIQUE per record (if no SK)
+  → If SK exists, PK can repeat — all records
+    with same PK live in the same partition
+    and are sorted by SK
+  → DynamoDB can only filter by PK using
+    equality (=) — no range queries on PK
+  → Type must be String (S), Number (N),
+    or Binary (B)
+
+<span class="c">In our schema PK design:</span>
+  Account:   pk = "ACCOUNT#123456789"
+  Customer:  pk = "CUSTOMER#987654321"
+
+<span class="c">KeyType: HASH means Partition Key</span>
+  { "AttributeName": "pk",
+    "KeyType": "HASH" }</pre>
+        </div>
+        <div class="code-pane">
+          <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#ec4899;"></div> SK — Sort Key (RANGE)</div>
+          <pre><span class="c">SK is the second part of the primary key.
+It determines ORDER within a partition.
+Think of it as the order of files INSIDE the drawer.</span>
+
+  SK = "METADATA#123456789"
+
+<span class="c">Rules for SK:</span>
+  → Multiple records can share the same PK
+    as long as each has a different SK
+  → DynamoDB can query SK using:
+    =  begins_with  between  >  >=  <  <=
+  → Enables powerful range queries within
+    a partition
+
+<span class="c">Power of PK + SK together:</span>
+  All records for one account:
+  PK = "ACCOUNT#123456789"
+    SK = "METADATA#123456789"  → account record
+    SK = "ADDRESS#001"         → address record
+    SK = "AUDIT#2026-03-01"    → audit entry
+    SK = "AUDIT#2026-03-02"    → audit entry
+
+  One query fetches ALL related records:
+  pk = "ACCOUNT#123456789"
+  sk begins_with "AUDIT#"
+  → returns all audit entries for that account
+
+<span class="c">KeyType: RANGE means Sort Key</span>
+  { "AttributeName": "sk",
+    "KeyType": "RANGE" }</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="store-section" style="margin-bottom:28px;">
+      <div class="store-header bg-ddb">
+        <div class="store-dot dot-ddb"></div>
+        <h3 class="c-ddb">GSI — Global Secondary Index</h3>
+        <span class="store-type">Querying Non-Key Fields</span>
+      </div>
+      <div class="code-full">
+        <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#ec4899;"></div> Why GSI Exists and How It Works</div>
+        <pre><span class="c">PROBLEM: DynamoDB can ONLY query by PK and SK directly.
+If you want to find all ACTIVE accounts you cannot do:
+  SELECT * FROM table WHERE status = "ACTIVE"
+  This requires a full table scan — extremely slow and expensive.</span>
+
+<span class="c">SOLUTION: Global Secondary Index (GSI)</span>
+  A GSI is a complete copy of the table reorganized around a different key.
+  AWS maintains the GSI automatically — every write to the main table
+  is automatically propagated to all GSIs.
+
+  Main table:        PK = "ACCOUNT#123456789"  SK = "METADATA#123456789"
+  status-index GSI:  PK = "ACTIVE"             (points to same document)
+
+<span class="c">Our schema has 2 GSIs:</span>
+
+  <span class="t">status-index</span>
+    GSI PK = status
+    Query: "give me all ACTIVE accounts"
+    { "IndexName": "status-index",
+      "KeySchema": [{ "AttributeName": "status", "KeyType": "HASH" }] }
+
+  <span class="t">customer_id-index</span>
+    GSI PK = customer_id
+    Query: "give me the account linked to customer 987654321"
+    { "IndexName": "customer_id-index",
+      "KeySchema": [{ "AttributeName": "customer_id", "KeyType": "HASH" }] }
+
+<span class="c">Projection: ALL means the GSI includes ALL fields from the main table.
+Other options: KEYS_ONLY (just PK/SK), INCLUDE (specific fields only)</span>
+
+<span class="c">LSI (Local Secondary Index) — alternative to GSI:</span>
+  LSI must be created at table creation time (GSI can be added later)
+  LSI uses the same PK as main table but different SK
+  LSI is limited to 10 GB per PK value
+  For most use cases GSI is more flexible and preferred</pre>
+      </div>
+    </div>
+
+    <div class="store-section" style="margin-bottom:0;">
+      <div class="store-header bg-ddb">
+        <div class="store-dot dot-ddb"></div>
+        <h3 class="c-ddb">AttributeDefinitions · Data Types · BillingMode</h3>
+        <span class="store-type">DynamoDB Table Settings</span>
+      </div>
+      <div class="code-grid">
+        <div class="code-pane">
+          <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#ec4899;"></div> AttributeDefinitions — Key Fields Only</div>
+          <pre><span class="c">DynamoDB only requires type declarations
+for KEY fields (PK, SK, and GSI keys).
+All other fields are schemaless — send
+any field and DynamoDB stores it.</span>
+
+<span class="c">Only 3 attribute types exist in DynamoDB:</span>
+  <span class="t">S</span>  = String    "ACTIVE", "Account", "USA"
+  <span class="t">N</span>  = Number    123456789, 3.14
+  <span class="t">B</span>  = Binary    encrypted bytes, images
+
+<span class="c">Our key fields are all Strings (S):</span>
+"AttributeDefinitions": [
+  { "AttributeName": "pk",
+    "AttributeType": "S" },    <span class="c">← String</span>
+  { "AttributeName": "sk",
+    "AttributeType": "S" }     <span class="c">← String</span>
+]
+
+<span class="c">Note: account_number is a Number but our
+PK is "ACCOUNT#123456789" (String with prefix)
+so AttributeType is S, not N.</span></pre>
+        </div>
+        <div class="code-pane">
+          <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#ec4899;"></div> BillingMode — PAY_PER_REQUEST vs PROVISIONED</div>
+          <pre><span class="c">PROVISIONED — You declare capacity upfront:</span>
+  ReadCapacityUnits:  how many reads/sec
+  WriteCapacityUnits: how many writes/sec
+  AWS charges for declared capacity whether
+  you use it or not.
+  Good for: predictable, steady workloads
+
+  "BillingMode": "PROVISIONED",
+  "ProvisionedThroughput": {
+    "ReadCapacityUnits": 100,
+    "WriteCapacityUnits": 50
+  }
+
+<span class="c">PAY_PER_REQUEST — Serverless, auto-scales:</span>
+  No capacity planning needed.
+  DynamoDB scales instantly to any traffic.
+  You pay only for actual reads and writes.
+  Good for: unpredictable or spiky traffic
+  Perfect for Project Diamond scaling from
+  60M to 300M requests/day.
+
+  "BillingMode": "PAY_PER_REQUEST"
+
+<span class="c">For C360 at 300M requests/day:</span>
+  → PAY_PER_REQUEST is recommended
+  → No risk of throttling during traffic spikes
+  → No capacity planning overhead</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== DYNAMODB ===================== -->
+  <section class="section" id="dynamodb">
+    <div class="section-header">
+      <div class="section-icon" style="background:rgba(236,72,153,0.1);">⚡</div>
+      <div>
+        <h2>AWS DynamoDB</h2>
+        <div class="subtitle">snake_case · Key-Value + Document · PK/SK Pattern · GSI for Search</div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>Key Design:</strong> DynamoDB uses a <strong>Single Table Design</strong> with <code>pk</code> (Partition Key) and <code>sk</code> (Sort Key). <code>pk</code> = <code>ACCOUNT#123456789</code> physically partitions data. Global Secondary Indexes (GSI) enable queries on non-key fields like <code>status</code> and <code>customer_id</code>.
+    </div>
+
+    <div class="store-section">
+      <div class="store-header bg-ddb">
+        <div class="store-dot dot-ddb"></div>
+        <h3 class="c-ddb">DynamoDB Table Definition + Documents</h3>
+        <span class="store-type">snake_case · Single Table Design</span>
+      </div>
+      <div class="code-full">
+        <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#ec4899;"></div> Table Definition</div>
+        <pre>{
+  <span class="k">"TableName"</span>: <span class="s">"CustomerAccount"</span>,
+  <span class="k">"KeySchema"</span>: [
+    { <span class="k">"AttributeName"</span>: <span class="s">"pk"</span>, <span class="k">"KeyType"</span>: <span class="e">"HASH"</span> },   <span class="c">// Partition Key</span>
+    { <span class="k">"AttributeName"</span>: <span class="s">"sk"</span>, <span class="k">"KeyType"</span>: <span class="e">"RANGE"</span> }  <span class="c">// Sort Key</span>
+  ],
+  <span class="k">"AttributeDefinitions"</span>: [
+    { <span class="k">"AttributeName"</span>: <span class="s">"pk"</span>, <span class="k">"AttributeType"</span>: <span class="t">"S"</span> },  <span class="c">// S = String</span>
+    { <span class="k">"AttributeName"</span>: <span class="s">"sk"</span>, <span class="k">"AttributeType"</span>: <span class="t">"S"</span> }
+  ],
+  <span class="k">"GlobalSecondaryIndexes"</span>: [
+    {
+      <span class="k">"IndexName"</span>: <span class="s">"status-index"</span>,
+      <span class="k">"KeySchema"</span>: [{ <span class="k">"AttributeName"</span>: <span class="s">"status"</span>, <span class="k">"KeyType"</span>: <span class="e">"HASH"</span> }],
+      <span class="k">"Projection"</span>: { <span class="k">"ProjectionType"</span>: <span class="e">"ALL"</span> }
+    },
+    {
+      <span class="k">"IndexName"</span>: <span class="s">"customer_id-index"</span>,
+      <span class="k">"KeySchema"</span>: [{ <span class="k">"AttributeName"</span>: <span class="s">"customer_id"</span>, <span class="k">"KeyType"</span>: <span class="e">"HASH"</span> }],
+      <span class="k">"Projection"</span>: { <span class="k">"ProjectionType"</span>: <span class="e">"ALL"</span> }
+    }
+  ],
+  <span class="k">"BillingMode"</span>: <span class="e">"PAY_PER_REQUEST"</span>
+}</pre>
+      </div>
+      <div class="code-grid">
+        <div class="code-pane">
+          <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#ec4899;"></div> Account Document</div>
+          <pre>{
+  <span class="k">"pk"</span>: <span class="s">"ACCOUNT#123456789"</span>,
+  <span class="k">"sk"</span>: <span class="s">"METADATA#123456789"</span>,
+  <span class="k">"doc_type"</span>: <span class="e">"Account"</span>,
+  <span class="k">"account_number"</span>: <span class="n">123456789</span>,
+  <span class="k">"name"</span>: {
+    <span class="k">"legal_name"</span>: <span class="s">"Acme Corporation"</span>,
+    <span class="k">"dba_name"</span>: <span class="s">"Acme Corp"</span>
+  },
+  <span class="k">"address"</span>: {
+    <span class="k">"line1"</span>: <span class="s">"123 Main Street"</span>,
+    <span class="k">"city"</span>: <span class="s">"Dallas"</span>,
+    <span class="k">"state"</span>: <span class="s">"TX"</span>,
+    <span class="k">"country_code"</span>: <span class="s">"USA"</span>
+  },
+  <span class="k">"dob"</span>: <span class="s">"01-15-1990"</span>,
+  <span class="k">"status"</span>: <span class="e">"ACTIVE"</span>,
+  <span class="k">"last_update_date"</span>: <span class="s">"2026-03-01"</span>,
+  <span class="k">"last_update_timestamp"</span>: <span class="s">"2026-03-01T10:30:00Z"</span>
+}</pre>
+        </div>
+        <div class="code-pane">
+          <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#ec4899;"></div> Query Examples (Java SDK)</div>
+          <pre><span class="c">// Get by account number (direct key lookup)</span>
+Map&lt;String, AttributeValue&gt; key = Map.of(
+  <span class="s">"pk"</span>, AttributeValue.builder()
+         .s(<span class="s">"ACCOUNT#123456789"</span>).build(),
+  <span class="s">"sk"</span>, AttributeValue.builder()
+         .s(<span class="s">"METADATA#123456789"</span>).build()
+);
+
+<span class="c">// Query by status via GSI</span>
+QueryRequest.builder()
+  .tableName(<span class="s">"CustomerAccount"</span>)
+  .indexName(<span class="s">"status-index"</span>)
+  .keyConditionExpression(<span class="s">"status = :s"</span>)
+  .expressionAttributeValues(Map.of(
+    <span class="s">":s"</span>, AttributeValue.builder()
+           .s(<span class="s">"ACTIVE"</span>).build()))
+  .build();</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== KEYSPACES ===================== -->
+  <section class="section" id="keyspaces">
+    <div class="section-header">
+      <div class="section-icon" style="background:rgba(124,58,237,0.1);">🏛️</div>
+      <div>
+        <h2>AWS Keyspaces (Cassandra)</h2>
+        <div class="subtitle">snake_case · Wide Column · Strict CQL Schema · Flattened Structure</div>
+      </div>
+    </div>
+
+    <div class="callout callout-warn">
+      <strong>Important:</strong> Keyspaces uses CQL (Cassandra Query Language) and requires a strict schema upfront. Unlike other stores, Keyspaces does <strong>not support nested objects</strong> — the <code>name</code> and <code>address</code> objects must be flattened into individual columns like <code>legal_name</code>, <code>address_line1</code>, etc.
+    </div>
+
+    <div class="store-section">
+      <div class="store-header bg-ks">
+        <div class="store-dot dot-ks"></div>
+        <h3 class="c-ks">Keyspaces CQL Schema + Queries</h3>
+        <span class="store-type">snake_case · Flattened · CQL</span>
+      </div>
+      <div class="code-grid">
+        <div class="code-pane">
+          <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#7c3aed;"></div> Account Table DDL</div>
+          <pre><span class="c">-- Create Keyspace</span>
+<span class="kw">CREATE KEYSPACE IF NOT EXISTS</span> customer_ks
+<span class="kw">WITH REPLICATION</span> = {
+  <span class="s">'class'</span>: <span class="s">'SingleRegionStrategy'</span>
+};
+
+<span class="c">-- Account Table</span>
+<span class="kw">CREATE TABLE IF NOT EXISTS</span>
+  customer_ks.account (
+  account_number        <span class="t">BIGINT</span>,
+  doc_type              <span class="t">TEXT</span>,
+  legal_name            <span class="t">TEXT</span>,
+  dba_name              <span class="t">TEXT</span>,
+  address_line1         <span class="t">TEXT</span>,
+  city                  <span class="t">TEXT</span>,
+  state                 <span class="t">TEXT</span>,
+  country_code          <span class="t">TEXT</span>,
+  dob                   <span class="t">TEXT</span>,
+  status                <span class="t">TEXT</span>,
+  last_update_date      <span class="t">DATE</span>,
+  last_update_timestamp <span class="t">TIMESTAMP</span>,
+  <span class="kw">PRIMARY KEY</span> (account_number)
+);
+
+<span class="c">-- Secondary Index for status</span>
+<span class="kw">CREATE INDEX IF NOT EXISTS ON</span>
+  customer_ks.account (status);</pre>
+        </div>
+        <div class="code-pane">
+          <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#7c3aed;"></div> Insert + Query Examples</div>
+          <pre><span class="c">-- Insert Account</span>
+<span class="kw">INSERT INTO</span> customer_ks.account (
+  account_number, doc_type,
+  legal_name, dba_name,
+  address_line1, city,
+  state, country_code,
+  dob, status,
+  last_update_date,
+  last_update_timestamp
+) <span class="kw">VALUES</span> (
+  <span class="n">123456789</span>, <span class="s">'Account'</span>,
+  <span class="s">'Acme Corporation'</span>, <span class="s">'Acme Corp'</span>,
+  <span class="s">'123 Main Street'</span>, <span class="s">'Dallas'</span>,
+  <span class="s">'TX'</span>, <span class="s">'USA'</span>,
+  <span class="s">'01-15-1990'</span>, <span class="s">'ACTIVE'</span>,
+  <span class="s">'2026-03-01'</span>,
+  <span class="s">'2026-03-01T10:30:00Z'</span>
+);
+
+<span class="c">-- Query by status</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> customer_ks.account
+<span class="kw">WHERE</span> status = <span class="s">'ACTIVE'</span>;
+
+<span class="c">-- Get by primary key</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> customer_ks.account
+<span class="kw">WHERE</span> account_number = <span class="n">123456789</span>;</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== VALKEY ===================== -->
+  <section class="section" id="valkey">
+    <div class="section-header">
+      <div class="section-icon" style="background:rgba(239,68,68,0.1);">⚡</div>
+      <div>
+        <h2>AWS Valkey (ElastiCache)</h2>
+        <div class="subtitle">snake_case · In-Memory Cache · Hash Structure · TTL Support</div>
+      </div>
+    </div>
+
+    <div class="callout callout-warn">
+      <strong>Important:</strong> Valkey is best used as a <strong>cache layer</strong> on top of your primary datastore, not as a primary store itself. All values are stored as strings. Nested objects are flattened using colon notation e.g. <code>name:legal_name</code>. Set a TTL for automatic cache expiry.
+    </div>
+
+    <div class="store-section">
+      <div class="store-header bg-vk">
+        <div class="store-dot dot-vk"></div>
+        <h3 class="c-vk">Valkey Hash Structure + Commands</h3>
+        <span class="store-type">snake_case · Hash · In-Memory</span>
+      </div>
+      <div class="code-grid">
+        <div class="code-pane">
+          <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#ef4444;"></div> HSET Commands — Account</div>
+          <pre><span class="c"># Store Account as Hash</span>
+<span class="kw">HSET</span> ACCOUNT:<span class="n">123456789</span>
+  doc_type              <span class="s">"Account"</span>
+  account_number        <span class="s">"123456789"</span>
+  name:legal_name       <span class="s">"Acme Corporation"</span>
+  name:dba_name         <span class="s">"Acme Corp"</span>
+  address:line1         <span class="s">"123 Main Street"</span>
+  address:city          <span class="s">"Dallas"</span>
+  address:state         <span class="s">"TX"</span>
+  address:country_code  <span class="s">"USA"</span>
+  dob                   <span class="s">"01-15-1990"</span>
+  status                <span class="s">"ACTIVE"</span>
+  last_update_date      <span class="s">"2026-03-01"</span>
+  last_update_timestamp <span class="s">"2026-03-01T10:30:00Z"</span>
+
+<span class="c"># Set TTL — expire after 1 hour</span>
+<span class="kw">EXPIRE</span> ACCOUNT:<span class="n">123456789</span> <span class="n">3600</span>
+
+<span class="c"># Get all fields</span>
+<span class="kw">HGETALL</span> ACCOUNT:<span class="n">123456789</span>
+
+<span class="c"># Get single field</span>
+<span class="kw">HGET</span> ACCOUNT:<span class="n">123456789</span> status
+
+<span class="c"># Update single field</span>
+<span class="kw">HSET</span> ACCOUNT:<span class="n">123456789</span> status <span class="s">"INACTIVE"</span></pre>
+        </div>
+        <div class="code-pane">
+          <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#ef4444;"></div> Spring Boot Cache Pattern</div>
+          <pre><span class="c">// Store in Valkey cache</span>
+<span class="kw">public void</span> cacheAccount(
+    CustomerAccount account) {
+
+  String key = <span class="s">"ACCOUNT:"</span>
+    + account.getAccountNumber();
+  HashOperations&lt;String,String,String&gt;
+    hashOps = redisTemplate.opsForHash();
+
+  hashOps.put(key, <span class="s">"doc_type"</span>,
+    account.getDocType());
+  hashOps.put(key, <span class="s">"account_number"</span>,
+    account.getAccountNumber().toString());
+  hashOps.put(key, <span class="s">"name:legal_name"</span>,
+    account.getName().getLegalName());
+  hashOps.put(key, <span class="s">"status"</span>,
+    account.getStatus());
+
+  <span class="c">// Expire after 1 hour</span>
+  redisTemplate.expire(key,
+    Duration.ofHours(<span class="n">1</span>));
+}
+
+<span class="c">// Retrieve from Valkey</span>
+<span class="kw">public</span> Map&lt;String,String&gt; getAccount(
+    Long accountNumber) {
+  String key = <span class="s">"ACCOUNT:"</span> + accountNumber;
+  <span class="kw">return</span> redisTemplate
+    .opsForHash().entries(key);
+}</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== COMPARISON ===================== -->
+  <section class="section" id="comparison">
+    <div class="section-header">
+      <div class="section-icon" style="background:rgba(124,58,237,0.1);">📊</div>
+      <div>
+        <h2>Comprehensive Comparison</h2>
+        <div class="subtitle">All 6 Datastores Side by Side</div>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th class="c-cb">Couchbase</th>
+            <th class="c-es">Elasticsearch</th>
+            <th class="c-fs">Firestore</th>
+            <th class="c-ddb">DynamoDB</th>
+            <th class="c-ks">Keyspaces</th>
+            <th class="c-vk">Valkey</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Type</td>
+            <td>Document Store</td>
+            <td>Search Engine</td>
+            <td>Document Store</td>
+            <td>Key-Value + Doc</td>
+            <td>Wide Column</td>
+            <td>In-Memory Cache</td>
+          </tr>
+          <tr>
+            <td>Schema</td>
+            <td>Schemaless</td>
+            <td>Mappings required</td>
+            <td>Schemaless</td>
+            <td>Keys only</td>
+            <td>Strict CQL</td>
+            <td>Schemaless</td>
+          </tr>
+          <tr>
+            <td>Nested Objects</td>
+            <td class="yes">Native JSON</td>
+            <td class="yes">object / nested</td>
+            <td class="yes">Map type</td>
+            <td class="yes">Map type</td>
+            <td class="no">Flatten to columns</td>
+            <td class="partial">Colon notation</td>
+          </tr>
+          <tr>
+            <td>Primary Key</td>
+            <td>Document Key</td>
+            <td>_id field</td>
+            <td>Collection path</td>
+            <td>PK + SK</td>
+            <td>PRIMARY KEY (CQL)</td>
+            <td>Key with prefix</td>
+          </tr>
+          <tr>
+            <td>Query Language</td>
+            <td>N1QL / SQL++</td>
+            <td>Query DSL (JSON)</td>
+            <td>Firestore SDK</td>
+            <td>PartiQL / SDK</td>
+            <td>CQL</td>
+            <td>HGET / HSET</td>
+          </tr>
+          <tr>
+            <td>Full-Text Search</td>
+            <td class="partial">Via Search Service</td>
+            <td class="yes">Native text type</td>
+            <td class="no">Not supported</td>
+            <td class="no">Not supported</td>
+            <td class="no">Not supported</td>
+            <td class="no">Not supported</td>
+          </tr>
+          <tr>
+            <td>Exact Match Search</td>
+            <td class="yes">Yes</td>
+            <td class="yes">keyword type</td>
+            <td class="yes">Yes</td>
+            <td class="yes">Yes + GSI</td>
+            <td class="yes">Secondary Index</td>
+            <td class="yes">HGET</td>
+          </tr>
+          <tr>
+            <td>Range Queries</td>
+            <td class="yes">Yes</td>
+            <td class="yes">Yes</td>
+            <td class="yes">Yes</td>
+            <td class="yes">Yes</td>
+            <td class="yes">Yes</td>
+            <td class="no">No</td>
+          </tr>
+          <tr>
+            <td>Date / Timestamp</td>
+            <td>String</td>
+            <td>Native date type</td>
+            <td>Native Timestamp</td>
+            <td>String or Number</td>
+            <td>DATE / TIMESTAMP</td>
+            <td>String only</td>
+          </tr>
+          <tr>
+            <td>Enum Enforcement</td>
+            <td>App layer</td>
+            <td>App layer</td>
+            <td>App layer</td>
+            <td>App layer</td>
+            <td>App layer</td>
+            <td>App layer</td>
+          </tr>
+          <tr>
+            <td>Max Length</td>
+            <td>App layer</td>
+            <td>ignore_above</td>
+            <td>App layer</td>
+            <td>App layer</td>
+            <td>App layer</td>
+            <td>App layer</td>
+          </tr>
+          <tr>
+            <td>TTL / Expiry</td>
+            <td class="yes">Yes</td>
+            <td class="yes">Yes</td>
+            <td class="yes">Yes</td>
+            <td class="yes">Yes — Native</td>
+            <td class="yes">Yes</td>
+            <td class="yes">Yes — Native</td>
+          </tr>
+          <tr>
+            <td>Persistence</td>
+            <td class="yes">Disk</td>
+            <td class="yes">Disk</td>
+            <td class="yes">Disk</td>
+            <td class="yes">Disk</td>
+            <td class="yes">Disk</td>
+            <td class="partial">Memory (opt. disk)</td>
+          </tr>
+          <tr>
+            <td>Speed</td>
+            <td>Fast</td>
+            <td>Fast</td>
+            <td>Fast</td>
+            <td>Very Fast</td>
+            <td>Fast</td>
+            <td class="yes">Extremely Fast</td>
+          </tr>
+          <tr>
+            <td>Naming Convention</td>
+            <td>snake_case</td>
+            <td>snake_case</td>
+            <td>snake_case</td>
+            <td>snake_case</td>
+            <td>snake_case</td>
+            <td>snake_case + prefix</td>
+          </tr>
+          <tr>
+            <td>Hosting</td>
+            <td>Self / Cloud</td>
+            <td>Self / OpenSearch</td>
+            <td>Google Firebase</td>
+            <td>AWS Native</td>
+            <td>AWS Native</td>
+            <td>AWS Native</td>
+          </tr>
+          <tr>
+            <td>Spring Boot</td>
+            <td>Spring Data Couchbase</td>
+            <td>Spring Data ES</td>
+            <td>Firebase Admin SDK</td>
+            <td>AWS SDK v2</td>
+            <td>Spring Data Cassandra</td>
+            <td>Spring Data Redis</td>
+          </tr>
+          <tr>
+            <td>Cost Model</td>
+            <td>License / Cloud</td>
+            <td>License / OpenSearch</td>
+            <td>Per read/write</td>
+            <td>Per read/write</td>
+            <td>Per read/write</td>
+            <td>Per node/hour</td>
+          </tr>
+          <tr>
+            <td>Best Used For</td>
+            <td>C360 records</td>
+            <td>Search / analytics</td>
+            <td>Mobile / web apps</td>
+            <td>High scale key-value</td>
+            <td>Time series / audit</td>
+            <td>Caching / session</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===================== ARCHITECTURE ===================== -->
+  <section class="section" id="architecture">
+    <div class="section-header">
+      <div class="section-icon" style="background:rgba(16,185,129,0.1);">🏗️</div>
+      <div>
+        <h2>Recommended Architecture</h2>
+        <div class="subtitle">C360 / Project Diamond — 300M Requests/Day</div>
+      </div>
+    </div>
+
+    <div class="arch">
+      <div style="margin-bottom:32px;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:2px;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px;">Request Flow</div>
+        <div class="arch-flow">
+          <div class="arch-node">
+            <div class="node-label" style="color:#94a3b8;">API Request</div>
+            <div class="node-sub">Spring Boot</div>
+          </div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-node bg-vk">
+            <div class="node-label c-vk">Valkey</div>
+            <div class="node-sub">Cache Layer</div>
+          </div>
+          <div class="arch-arrow">→ miss →</div>
+          <div class="arch-node bg-cb">
+            <div class="node-label c-cb">Couchbase</div>
+            <div class="node-sub">Primary Store</div>
+          </div>
+          <div class="arch-arrow">→ sync →</div>
+          <div class="arch-node bg-es">
+            <div class="node-label c-es">Elasticsearch</div>
+            <div class="node-sub">Search Layer</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-wrap" style="text-align:left;">
+        <table>
+          <thead>
+            <tr>
+              <th>Layer</th>
+              <th>Datastore</th>
+              <th>Purpose</th>
+              <th>Why</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Cache</td>
+              <td class="c-vk">Valkey</td>
+              <td>First hit — sub-millisecond response</td>
+              <td>Handles traffic spikes at 300M requests/day with near-zero latency</td>
+            </tr>
+            <tr>
+              <td>Primary Store</td>
+              <td class="c-cb">Couchbase</td>
+              <td>Source of truth for C360 records</td>
+              <td>Native JSON, N1QL, nested objects — perfect fit for Customer 360</td>
+            </tr>
+            <tr>
+              <td>Search</td>
+              <td class="c-es">Elasticsearch</td>
+              <td>Full-text and advanced search</td>
+              <td>legal_name, dba_name, address search with full_text_srch field</td>
+            </tr>
+            <tr>
+              <td>Audit Trail</td>
+              <td class="c-ks">Keyspaces</td>
+              <td>Append-only history of changes</td>
+              <td>Cassandra excels at write-heavy time-series audit log workloads</td>
+            </tr>
+            <tr>
+              <td>Mobile / Web</td>
+              <td class="c-fs">Firestore</td>
+              <td>Client-facing app real-time access</td>
+              <td>Real-time listeners and offline support for mobile/web clients</td>
+            </tr>
+            <tr>
+              <td>Scale / Serverless</td>
+              <td class="c-ddb">DynamoDB</td>
+              <td>Auto-scaling key-value lookups</td>
+              <td>PAY_PER_REQUEST handles traffic growth from 60M to 300M seamlessly</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+  <!-- ===================== SPRING BOOT ===================== -->
+  <section class="section" id="springboot">
+    <div class="section-header">
+      <div class="section-icon" style="background:rgba(16,185,129,0.1);">🌱</div>
+      <div>
+        <h2>Spring Boot Integration</h2>
+        <div class="subtitle">Model Classes · camelCase↔snake_case · GET · POST · Search · All 6 Datastores</div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>Strategy:</strong> Spring Boot uses <code>camelCase</code> in Java model classes. Jackson serialization automatically converts to <code>snake_case</code> when writing to datastores and back to <code>camelCase</code> when returning API responses — with zero manual mapping code.
+    </div>
+
+    <!-- MODEL CLASSES -->
+    <div class="store-section" style="margin-bottom:32px;">
+      <div class="store-header" style="background:rgba(16,185,129,0.08);border-color:rgba(16,185,129,0.2);">
+        <div class="store-dot" style="background:#10b981;"></div>
+        <h3 style="color:#10b981;">Java Model Classes — camelCase ↔ snake_case</h3>
+        <span class="store-type">Jackson · @JsonNaming · Automatic Serialization</span>
+      </div>
+      <div class="code-grid">
+        <div class="code-pane">
+          <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#10b981;"></div> CustomerAccount.java</div>
+          <pre><span class="k">@JsonNaming</span>(PropertyNamingStrategies.SnakeCaseStrategy.class)
+<span class="k">@Document</span>
+<span class="kw">public class</span> CustomerAccount {
+
+  <span class="k">@Id</span>
+  <span class="kw">private</span> Long accountNumber;    <span class="c">// → account_number</span>
+
+  <span class="kw">private</span> String docType;         <span class="c">// → doc_type</span>
+  <span class="kw">private</span> Name name;
+  <span class="kw">private</span> Address address;
+  <span class="kw">private</span> String dob;
+  <span class="kw">private</span> String status;
+  <span class="kw">private</span> Long customerId;        <span class="c">// → customer_id</span>
+  <span class="kw">private</span> String lastUpdateDate;  <span class="c">// → last_update_date</span>
+  <span class="kw">private</span> String lastUpdateTimestamp; <span class="c">// → last_update_timestamp</span>
+
+  <span class="c">// Getters and Setters</span>
+}
+
+<span class="k">@JsonNaming</span>(PropertyNamingStrategies.SnakeCaseStrategy.class)
+<span class="kw">public class</span> Name {
+  <span class="kw">private</span> String legalName;      <span class="c">// → legal_name</span>
+  <span class="kw">private</span> String dbaName;        <span class="c">// → dba_name</span>
+  <span class="c">// Getters and Setters</span>
+}
+
+<span class="k">@JsonNaming</span>(PropertyNamingStrategies.SnakeCaseStrategy.class)
+<span class="kw">public class</span> Address {
+  <span class="kw">private</span> String line1;
+  <span class="kw">private</span> String city;
+  <span class="kw">private</span> String state;
+  <span class="kw">private</span> String countryCode;    <span class="c">// → country_code</span>
+  <span class="c">// Getters and Setters</span>
+}</pre>
+        </div>
+        <div class="code-pane">
+          <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#10b981;"></div> What the API sees vs What the DB sees</div>
+          <pre><span class="c">// API Request (camelCase — what caller sends)</span>
+{
+  <span class="k">"docType"</span>: <span class="e">"Account"</span>,
+  <span class="k">"accountNumber"</span>: <span class="n">123456789</span>,
+  <span class="k">"name"</span>: {
+    <span class="k">"legalName"</span>: <span class="s">"Acme Corporation"</span>,
+    <span class="k">"dbaName"</span>: <span class="s">"Acme Corp"</span>
+  },
+  <span class="k">"address"</span>: {
+    <span class="k">"line1"</span>: <span class="s">"123 Main Street"</span>,
+    <span class="k">"countryCode"</span>: <span class="s">"USA"</span>
+  },
+  <span class="k">"status"</span>: <span class="e">"ACTIVE"</span>
+}
+
+<span class="c">// Database Document (snake_case — what DB stores)</span>
+{
+  <span class="k">"doc_type"</span>: <span class="e">"Account"</span>,
+  <span class="k">"account_number"</span>: <span class="n">123456789</span>,
+  <span class="k">"name"</span>: {
+    <span class="k">"legal_name"</span>: <span class="s">"Acme Corporation"</span>,
+    <span class="k">"dba_name"</span>: <span class="s">"Acme Corp"</span>
+  },
+  <span class="k">"address"</span>: {
+    <span class="k">"line1"</span>: <span class="s">"123 Main Street"</span>,
+    <span class="k">"country_code"</span>: <span class="s">"USA"</span>
+  },
+  <span class="k">"status"</span>: <span class="e">"ACTIVE"</span>
+}
+
+<span class="c">// Spring Boot handles this conversion automatically
+// via @JsonNaming — zero manual mapping needed</span></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- REST CONTROLLER -->
+    <div class="store-section" style="margin-bottom:32px;">
+      <div class="store-header" style="background:rgba(0,212,255,0.08);border-color:rgba(0,212,255,0.2);">
+        <div class="store-dot dot-cb"></div>
+        <h3 class="c-cb">REST Controller — GET, POST, Search Endpoints</h3>
+        <span class="store-type">@RestController · @GetMapping · @PostMapping</span>
+      </div>
+      <div class="code-full">
+        <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#00d4ff;"></div> CustomerAccountController.java</div>
+        <pre><span class="k">@RestController</span>
+<span class="k">@RequestMapping</span>(<span class="s">"/api/v1/accounts"</span>)
+<span class="kw">public class</span> CustomerAccountController {
+
+  <span class="k">@Autowired</span>
+  <span class="kw">private</span> CustomerAccountService service;
+
+  <span class="c">// ─── GET by Account Number ───────────────────────────────────────</span>
+  <span class="k">@GetMapping</span>(<span class="s">"/{accountNumber}"</span>)
+  <span class="kw">public</span> ResponseEntity&lt;CustomerAccount&gt; getByAccountNumber(
+      <span class="k">@PathVariable</span> Long accountNumber) {
+
+    CustomerAccount account = service.findByAccountNumber(accountNumber);
+    <span class="kw">if</span> (account == <span class="kw">null</span>) {
+      <span class="kw">return</span> ResponseEntity.notFound().build();
+    }
+    <span class="kw">return</span> ResponseEntity.ok(account);  <span class="c">// Returns camelCase JSON</span>
+  }
+
+  <span class="c">// ─── POST — Create New Account ───────────────────────────────────</span>
+  <span class="k">@PostMapping</span>
+  <span class="kw">public</span> ResponseEntity&lt;CustomerAccount&gt; createAccount(
+      <span class="k">@RequestBody</span> <span class="k">@Valid</span> CustomerAccount account) {
+
+    account.setLastUpdateTimestamp(
+      Instant.now().toString());
+    account.setLastUpdateDate(
+      LocalDate.now().toString());
+
+    CustomerAccount saved = service.save(account);
+    <span class="kw">return</span> ResponseEntity
+      .status(HttpStatus.CREATED)
+      .body(saved);
+  }
+
+  <span class="c">// ─── PUT — Update Existing Account ───────────────────────────────</span>
+  <span class="k">@PutMapping</span>(<span class="s">"/{accountNumber}"</span>)
+  <span class="kw">public</span> ResponseEntity&lt;CustomerAccount&gt; updateAccount(
+      <span class="k">@PathVariable</span> Long accountNumber,
+      <span class="k">@RequestBody</span> <span class="k">@Valid</span> CustomerAccount account) {
+
+    account.setAccountNumber(accountNumber);
+    account.setLastUpdateTimestamp(Instant.now().toString());
+    CustomerAccount updated = service.save(account);
+    <span class="kw">return</span> ResponseEntity.ok(updated);
+  }
+
+  <span class="c">// ─── GET — Search by Status ───────────────────────────────────────</span>
+  <span class="k">@GetMapping</span>(<span class="s">"/search/status/{status}"</span>)
+  <span class="kw">public</span> ResponseEntity&lt;List&lt;CustomerAccount&gt;&gt; searchByStatus(
+      <span class="k">@PathVariable</span> String status) {
+
+    List&lt;CustomerAccount&gt; results = service.findByStatus(status);
+    <span class="kw">return</span> ResponseEntity.ok(results);
+  }
+
+  <span class="c">// ─── GET — Full-Text Search (via Elasticsearch) ───────────────────</span>
+  <span class="k">@GetMapping</span>(<span class="s">"/search"</span>)
+  <span class="kw">public</span> ResponseEntity&lt;List&lt;CustomerAccount&gt;&gt; fullTextSearch(
+      <span class="k">@RequestParam</span> String q,
+      <span class="k">@RequestParam</span>(defaultValue = <span class="s">"0"</span>) int page,
+      <span class="k">@RequestParam</span>(defaultValue = <span class="s">"20"</span>) int size) {
+
+    List&lt;CustomerAccount&gt; results =
+      service.fullTextSearch(q, page, size);
+    <span class="kw">return</span> ResponseEntity.ok(results);
+  }
+
+  <span class="c">// ─── GET — Search by Date Range ───────────────────────────────────</span>
+  <span class="k">@GetMapping</span>(<span class="s">"/search/daterange"</span>)
+  <span class="kw">public</span> ResponseEntity&lt;List&lt;CustomerAccount&gt;&gt; searchByDateRange(
+      <span class="k">@RequestParam</span> String from,
+      <span class="k">@RequestParam</span> String to) {
+
+    List&lt;CustomerAccount&gt; results =
+      service.findByTimestampRange(from, to);
+    <span class="kw">return</span> ResponseEntity.ok(results);
+  }
+
+  <span class="c">// ─── DELETE ───────────────────────────────────────────────────────</span>
+  <span class="k">@DeleteMapping</span>(<span class="s">"/{accountNumber}"</span>)
+  <span class="kw">public</span> ResponseEntity&lt;Void&gt; deleteAccount(
+      <span class="k">@PathVariable</span> Long accountNumber) {
+
+    service.delete(accountNumber);
+    <span class="kw">return</span> ResponseEntity.noContent().build();
+  }
+}</pre>
+      </div>
+    </div>
+
+    <!-- SERVICE LAYER -->
+    <div class="store-section" style="margin-bottom:32px;">
+      <div class="store-header" style="background:rgba(124,58,237,0.08);border-color:rgba(124,58,237,0.2);">
+        <div class="store-dot dot-ks"></div>
+        <h3 class="c-ks">Service Layer — Business Logic + Multi-Datastore Writes</h3>
+        <span class="store-type">@Service · Couchbase + Elasticsearch + Valkey</span>
+      </div>
+      <div class="code-full">
+        <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#7c3aed;"></div> CustomerAccountService.java</div>
+        <pre><span class="k">@Service</span>
+<span class="kw">public class</span> CustomerAccountService {
+
+  <span class="k">@Autowired</span> <span class="kw">private</span> CouchbaseRepository couchbaseRepo;
+  <span class="k">@Autowired</span> <span class="kw">private</span> ElasticsearchClient esClient;
+  <span class="k">@Autowired</span> <span class="kw">private</span> RedisTemplate&lt;String, String&gt; redisTemplate;
+
+  <span class="c">// ─── SAVE — Writes to Couchbase + Elasticsearch + Valkey Cache ───</span>
+  <span class="kw">public</span> CustomerAccount save(CustomerAccount account) {
+
+    <span class="c">// 1. Save to Couchbase (primary store)</span>
+    couchbaseRepo.save(account);
+
+    <span class="c">// 2. Index in Elasticsearch (for search)</span>
+    esClient.index(i -&gt; i
+      .index(<span class="s">"customer_account"</span>)
+      .id(account.getAccountNumber().toString())
+      .document(account));
+
+    <span class="c">// 3. Cache in Valkey (for fast reads)</span>
+    cacheInValkey(account);
+
+    <span class="kw">return</span> account;
+  }
+
+  <span class="c">// ─── FIND — Cache-first, fallback to Couchbase ────────────────────</span>
+  <span class="kw">public</span> CustomerAccount findByAccountNumber(Long accountNumber) {
+
+    String cacheKey = <span class="s">"ACCOUNT:"</span> + accountNumber;
+
+    <span class="c">// 1. Check Valkey cache first</span>
+    Map&lt;Object, Object&gt; cached =
+      redisTemplate.opsForHash().entries(cacheKey);
+
+    <span class="kw">if</span> (!cached.isEmpty()) {
+      <span class="kw">return</span> mapToAccount(cached);  <span class="c">// Cache hit — return immediately</span>
+    }
+
+    <span class="c">// 2. Cache miss — fetch from Couchbase</span>
+    CustomerAccount account =
+      couchbaseRepo.findById(accountNumber).orElse(<span class="kw">null</span>);
+
+    <span class="c">// 3. Populate cache for next request</span>
+    <span class="kw">if</span> (account != <span class="kw">null</span>) {
+      cacheInValkey(account);
+    }
+
+    <span class="kw">return</span> account;
+  }
+
+  <span class="c">// ─── SEARCH BY STATUS — via Couchbase N1QL ────────────────────────</span>
+  <span class="kw">public</span> List&lt;CustomerAccount&gt; findByStatus(String status) {
+    <span class="kw">return</span> couchbaseRepo.findByStatus(status);
+  }
+
+  <span class="c">// ─── FULL-TEXT SEARCH — via Elasticsearch ─────────────────────────</span>
+  <span class="kw">public</span> List&lt;CustomerAccount&gt; fullTextSearch(
+      String query, <span class="kw">int</span> page, <span class="kw">int</span> size) {
+
+    SearchResponse&lt;CustomerAccount&gt; response = esClient.search(s -&gt; s
+      .index(<span class="s">"customer_account"</span>)
+      .from(page * size)
+      .size(size)
+      .query(q -&gt; q
+        .match(m -&gt; m
+          .field(<span class="s">"full_text_srch"</span>)
+          .query(query))),
+      CustomerAccount.class);
+
+    <span class="kw">return</span> response.hits().hits().stream()
+      .map(Hit::source)
+      .collect(Collectors.toList());
+  }
+
+  <span class="c">// ─── DATE RANGE SEARCH — via Elasticsearch ────────────────────────</span>
+  <span class="kw">public</span> List&lt;CustomerAccount&gt; findByTimestampRange(
+      String from, String to) {
+
+    SearchResponse&lt;CustomerAccount&gt; response = esClient.search(s -&gt; s
+      .index(<span class="s">"customer_account"</span>)
+      .query(q -&gt; q
+        .range(r -&gt; r
+          .field(<span class="s">"last_update_timestamp"</span>)
+          .gte(JsonData.of(from))
+          .lte(JsonData.of(to)))),
+      CustomerAccount.class);
+
+    <span class="kw">return</span> response.hits().hits().stream()
+      .map(Hit::source)
+      .collect(Collectors.toList());
+  }
+
+  <span class="c">// ─── CACHE HELPER — Write to Valkey Hash ──────────────────────────</span>
+  <span class="kw">private void</span> cacheInValkey(CustomerAccount account) {
+    String key = <span class="s">"ACCOUNT:"</span> + account.getAccountNumber();
+    HashOperations&lt;String, String, String&gt; hashOps =
+      redisTemplate.opsForHash();
+
+    hashOps.put(key, <span class="s">"doc_type"</span>,       account.getDocType());
+    hashOps.put(key, <span class="s">"account_number"</span>, account.getAccountNumber().toString());
+    hashOps.put(key, <span class="s">"status"</span>,         account.getStatus());
+    hashOps.put(key, <span class="s">"name:legal_name"</span>,account.getName().getLegalName());
+    hashOps.put(key, <span class="s">"address:city"</span>,   account.getAddress().getCity());
+    hashOps.put(key, <span class="s">"last_update_timestamp"</span>,
+                                         account.getLastUpdateTimestamp());
+    redisTemplate.expire(key, Duration.ofHours(<span class="n">1</span>));
+  }
+}</pre>
+      </div>
+    </div>
+
+    <!-- COUCHBASE REPO -->
+    <div class="store-section" style="margin-bottom:32px;">
+      <div class="store-header bg-cb">
+        <div class="store-dot dot-cb"></div>
+        <h3 class="c-cb">Couchbase Repository</h3>
+        <span class="store-type">Spring Data Couchbase · N1QL Auto-Generated</span>
+      </div>
+      <div class="code-grid">
+        <div class="code-pane">
+          <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#00d4ff;"></div> CustomerAccountRepository.java</div>
+          <pre><span class="k">@Repository</span>
+<span class="kw">public interface</span> CustomerAccountRepository
+  <span class="kw">extends</span> CouchbaseRepository&lt;
+    CustomerAccount, Long&gt; {
+
+  <span class="c">// Spring auto-generates N1QL query:</span>
+  <span class="c">// SELECT * FROM bucket WHERE status = ?</span>
+  List&lt;CustomerAccount&gt; findByStatus(
+    String status);
+
+  <span class="c">// SELECT * FROM bucket</span>
+  <span class="c">// WHERE address.state = ?</span>
+  List&lt;CustomerAccount&gt; findByAddressState(
+    String state);
+
+  <span class="c">// SELECT * FROM bucket</span>
+  <span class="c">// WHERE name.legal_name LIKE ?</span>
+  List&lt;CustomerAccount&gt;
+    findByNameLegalNameContaining(
+      String name);
+
+  <span class="c">// Custom N1QL with @Query annotation</span>
+  <span class="k">@Query</span>(<span class="s">"SELECT * FROM #{#n1ql.bucket} "</span> +
+    <span class="s">"WHERE doc_type = 'Account' "</span> +
+    <span class="s">"AND status = $1 "</span> +
+    <span class="s">"AND address.state = $2"</span>)
+  List&lt;CustomerAccount&gt;
+    findByStatusAndState(
+      String status, String state);
+}</pre>
+        </div>
+        <div class="code-pane">
+          <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#00d4ff;"></div> application.yml — Couchbase Config</div>
+          <pre><span class="k">spring</span>:
+  <span class="k">couchbase</span>:
+    <span class="k">connection-string</span>: <span class="s">couchbase://localhost</span>
+    <span class="k">username</span>: <span class="s">admin</span>
+    <span class="k">password</span>: <span class="s">password</span>
+  <span class="k">data</span>:
+    <span class="k">couchbase</span>:
+      <span class="k">bucket-name</span>: <span class="s">customer_bucket</span>
+      <span class="k">auto-index</span>: <span class="kw">true</span>
+
+<span class="k">jackson</span>:
+  <span class="k">property-naming-strategy</span>: <span class="s">SNAKE_CASE</span>
+  <span class="k">default-property-inclusion</span>: <span class="s">NON_NULL</span>
+  <span class="k">serialization</span>:
+    <span class="k">write-dates-as-timestamps</span>: <span class="kw">false</span>
+
+<span class="c"># Elasticsearch Config</span>
+<span class="k">elasticsearch</span>:
+  <span class="k">uris</span>: <span class="s">http://localhost:9200</span>
+
+<span class="c"># Valkey / Redis Config</span>
+<span class="k">spring</span>:
+  <span class="k">redis</span>:
+    <span class="k">host</span>: <span class="s">localhost</span>
+    <span class="k">port</span>: <span class="n">6379</span>
+    <span class="k">timeout</span>: <span class="n">2000ms</span></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- API EXAMPLES -->
+    <div class="store-section" style="margin-bottom:32px;">
+      <div class="store-header" style="background:rgba(245,158,11,0.08);border-color:rgba(245,158,11,0.2);">
+        <div class="store-dot dot-es"></div>
+        <h3 class="c-es">API Endpoint Reference — HTTP Examples</h3>
+        <span class="store-type">REST · curl · Request and Response</span>
+      </div>
+      <div class="code-grid">
+        <div class="code-pane">
+          <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#f59e0b;"></div> POST — Create Account</div>
+          <pre><span class="c">### Request</span>
+<span class="kw">POST</span> /api/v1/accounts
+Content-Type: application/json
+
+{
+  <span class="k">"docType"</span>: <span class="e">"Account"</span>,
+  <span class="k">"accountNumber"</span>: <span class="n">123456789</span>,
+  <span class="k">"name"</span>: {
+    <span class="k">"legalName"</span>: <span class="s">"Acme Corporation"</span>,
+    <span class="k">"dbaName"</span>: <span class="s">"Acme Corp"</span>
+  },
+  <span class="k">"address"</span>: {
+    <span class="k">"line1"</span>: <span class="s">"123 Main Street"</span>,
+    <span class="k">"city"</span>: <span class="s">"Dallas"</span>,
+    <span class="k">"state"</span>: <span class="s">"TX"</span>,
+    <span class="k">"countryCode"</span>: <span class="s">"USA"</span>
+  },
+  <span class="k">"dob"</span>: <span class="s">"01-15-1990"</span>,
+  <span class="k">"status"</span>: <span class="e">"ACTIVE"</span>
+}
+
+<span class="c">### Response — 201 Created</span>
+{
+  <span class="k">"docType"</span>: <span class="e">"Account"</span>,
+  <span class="k">"accountNumber"</span>: <span class="n">123456789</span>,
+  <span class="k">"name"</span>: {
+    <span class="k">"legalName"</span>: <span class="s">"Acme Corporation"</span>,
+    <span class="k">"dbaName"</span>: <span class="s">"Acme Corp"</span>
+  },
+  <span class="k">"status"</span>: <span class="e">"ACTIVE"</span>,
+  <span class="k">"lastUpdateTimestamp"</span>: <span class="s">"2026-03-01T10:30:00Z"</span>
+}</pre>
+        </div>
+        <div class="code-pane">
+          <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#f59e0b;"></div> GET — Retrieve Account</div>
+          <pre><span class="c">### GET by Account Number</span>
+<span class="kw">GET</span> /api/v1/accounts/123456789
+
+<span class="c">### Response — 200 OK (camelCase)</span>
+{
+  <span class="k">"docType"</span>: <span class="e">"Account"</span>,
+  <span class="k">"accountNumber"</span>: <span class="n">123456789</span>,
+  <span class="k">"name"</span>: {
+    <span class="k">"legalName"</span>: <span class="s">"Acme Corporation"</span>,
+    <span class="k">"dbaName"</span>: <span class="s">"Acme Corp"</span>
+  },
+  <span class="k">"address"</span>: {
+    <span class="k">"line1"</span>: <span class="s">"123 Main Street"</span>,
+    <span class="k">"city"</span>: <span class="s">"Dallas"</span>,
+    <span class="k">"state"</span>: <span class="s">"TX"</span>,
+    <span class="k">"countryCode"</span>: <span class="s">"USA"</span>
+  },
+  <span class="k">"dob"</span>: <span class="s">"01-15-1990"</span>,
+  <span class="k">"status"</span>: <span class="e">"ACTIVE"</span>,
+  <span class="k">"lastUpdateDate"</span>: <span class="s">"2026-03-01"</span>,
+  <span class="k">"lastUpdateTimestamp"</span>: <span class="s">"2026-03-01T10:30:00Z"</span>
+}
+
+<span class="c">### GET — 404 Not Found</span>
+<span class="kw">GET</span> /api/v1/accounts/999999999
+→ <span class="n">404</span> Not Found</pre>
+        </div>
+      </div>
+      <div class="code-grid" style="border-top:1px solid var(--border);">
+        <div class="code-pane">
+          <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#f59e0b;"></div> GET — Search by Status</div>
+          <pre><span class="c">### Search by status</span>
+<span class="kw">GET</span> /api/v1/accounts/search/status/ACTIVE
+
+<span class="c">### Response — 200 OK</span>
+[
+  {
+    <span class="k">"docType"</span>: <span class="e">"Account"</span>,
+    <span class="k">"accountNumber"</span>: <span class="n">123456789</span>,
+    <span class="k">"name"</span>: {
+      <span class="k">"legalName"</span>: <span class="s">"Acme Corporation"</span>
+    },
+    <span class="k">"status"</span>: <span class="e">"ACTIVE"</span>
+  },
+  {
+    <span class="k">"docType"</span>: <span class="e">"Account"</span>,
+    <span class="k">"accountNumber"</span>: <span class="n">987654321</span>,
+    <span class="k">"name"</span>: {
+      <span class="k">"legalName"</span>: <span class="s">"Beta LLC"</span>
+    },
+    <span class="k">"status"</span>: <span class="e">"ACTIVE"</span>
+  }
+]</pre>
+        </div>
+        <div class="code-pane">
+          <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#f59e0b;"></div> GET — Full-Text Search + Date Range</div>
+          <pre><span class="c">### Full-text search across name + address</span>
+<span class="kw">GET</span> /api/v1/accounts/search?q=Acme+Dallas
+<span class="c">    &amp;page=0&amp;size=20</span>
+
+<span class="c">### Elasticsearch searches full_text_srch field
+### which contains legal_name + dba_name
+### + address.line1 + address.city combined
+### Response — 200 OK</span>
+[
+  {
+    <span class="k">"accountNumber"</span>: <span class="n">123456789</span>,
+    <span class="k">"name"</span>: {
+      <span class="k">"legalName"</span>: <span class="s">"Acme Corporation"</span>
+    },
+    <span class="k">"address"</span>: { <span class="k">"city"</span>: <span class="s">"Dallas"</span> }
+  }
+]
+
+<span class="c">### Date range search</span>
+<span class="kw">GET</span> /api/v1/accounts/search/daterange
+<span class="c">    ?from=2026-01-01T00:00:00Z
+    &amp;to=2026-03-01T23:59:59Z</span>
+
+<span class="c">### PUT — Update status</span>
+<span class="kw">PUT</span> /api/v1/accounts/123456789
+{ <span class="k">"status"</span>: <span class="e">"INACTIVE"</span> }
+→ <span class="n">200</span> OK
+
+<span class="c">### DELETE</span>
+<span class="kw">DELETE</span> /api/v1/accounts/123456789
+→ <span class="n">204</span> No Content</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- VALIDATION -->
+    <div class="store-section" style="margin-bottom:32px;">
+      <div class="store-header" style="background:rgba(239,68,68,0.08);border-color:rgba(239,68,68,0.2);">
+        <div class="store-dot dot-vk"></div>
+        <h3 class="c-vk">Input Validation — Enforcing OpenAPI Rules in Spring Boot</h3>
+        <span class="store-type">@Valid · @Pattern · @Size · Bean Validation</span>
+      </div>
+      <div class="code-grid">
+        <div class="code-pane">
+          <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#ef4444;"></div> Validation Annotations on Model</div>
+          <pre><span class="k">@JsonNaming</span>(PropertyNamingStrategies.SnakeCaseStrategy.class)
+<span class="kw">public class</span> CustomerAccount {
+
+  <span class="k">@NotNull</span>
+  <span class="kw">private</span> Long accountNumber;
+
+  <span class="k">@NotBlank</span>
+  <span class="k">@Pattern</span>(regexp = <span class="s">"^(Account|Customer)$"</span>)
+  <span class="kw">private</span> String docType;
+
+  <span class="k">@NotBlank</span>
+  <span class="k">@Pattern</span>(regexp =
+    <span class="s">"^(ACTIVE|INACTIVE|SUSPENDED|CLOSED|PENDING|CANCEL)$"</span>)
+  <span class="kw">private</span> String status;
+
+  <span class="k">@Pattern</span>(regexp =
+    <span class="s">"^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])-[0-9]{4}$"</span>,
+    message = <span class="s">"DOB must be in MM-DD-CCYY format"</span>)
+  <span class="kw">private</span> String dob;
+}
+
+<span class="k">@JsonNaming</span>(PropertyNamingStrategies.SnakeCaseStrategy.class)
+<span class="kw">public class</span> Name {
+
+  <span class="k">@NotBlank</span>
+  <span class="k">@Size</span>(max = <span class="n">20</span>, message =
+    <span class="s">"Legal name must not exceed 20 characters"</span>)
+  <span class="kw">private</span> String legalName;
+
+  <span class="k">@Size</span>(max = <span class="n">20</span>)
+  <span class="kw">private</span> String dbaName;
+}
+
+<span class="k">@JsonNaming</span>(PropertyNamingStrategies.SnakeCaseStrategy.class)
+<span class="kw">public class</span> Address {
+
+  <span class="k">@NotBlank</span>
+  <span class="k">@Size</span>(max = <span class="n">20</span>)
+  <span class="kw">private</span> String line1;
+
+  <span class="k">@Size</span>(max = <span class="n">20</span>)
+  <span class="kw">private</span> String city;
+
+  <span class="k">@Pattern</span>(regexp = <span class="s">"^[A-Z]{2}$"</span>,
+    message = <span class="s">"State must be 2 uppercase letters"</span>)
+  <span class="kw">private</span> String state;
+
+  <span class="k">@Pattern</span>(regexp = <span class="s">"^[A-Z]{3}$"</span>,
+    message = <span class="s">"Country code must be 3 uppercase letters"</span>)
+  <span class="kw">private</span> String countryCode;
+}</pre>
+        </div>
+        <div class="code-pane">
+          <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#ef4444;"></div> Validation Error Response</div>
+          <pre><span class="c">### Request with invalid data</span>
+<span class="kw">POST</span> /api/v1/accounts
+{
+  <span class="k">"docType"</span>: <span class="e">"Account"</span>,
+  <span class="k">"accountNumber"</span>: <span class="n">123456789</span>,
+  <span class="k">"name"</span>: {
+    <span class="k">"legalName"</span>: <span class="s">"This Name Is Way Too Long!!"</span>
+  },
+  <span class="k">"address"</span>: {
+    <span class="k">"line1"</span>: <span class="s">"123 Main"</span>,
+    <span class="k">"state"</span>: <span class="s">"texas"</span>,      <span class="c">// lowercase — invalid</span>
+    <span class="k">"countryCode"</span>: <span class="s">"US"</span>   <span class="c">// only 2 chars — invalid</span>
+  },
+  <span class="k">"dob"</span>: <span class="s">"1990-01-15"</span>,     <span class="c">// wrong format</span>
+  <span class="k">"status"</span>: <span class="e">"ACTIVE"</span>
+}
+
+<span class="c">### Response — 400 Bad Request</span>
+{
+  <span class="k">"status"</span>: <span class="n">400</span>,
+  <span class="k">"errors"</span>: [
+    {
+      <span class="k">"field"</span>: <span class="s">"name.legalName"</span>,
+      <span class="k">"message"</span>: <span class="s">"Legal name must not exceed 20 characters"</span>
+    },
+    {
+      <span class="k">"field"</span>: <span class="s">"address.state"</span>,
+      <span class="k">"message"</span>: <span class="s">"State must be 2 uppercase letters"</span>
+    },
+    {
+      <span class="k">"field"</span>: <span class="s">"address.countryCode"</span>,
+      <span class="k">"message"</span>: <span class="s">"Country code must be 3 uppercase letters"</span>
+    },
+    {
+      <span class="k">"field"</span>: <span class="s">"dob"</span>,
+      <span class="k">"message"</span>: <span class="s">"DOB must be in MM-DD-CCYY format"</span>
+    }
+  ]
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMPLETE FLOW SUMMARY -->
+    <div class="store-section">
+      <div class="store-header" style="background:rgba(0,212,255,0.05);border-color:rgba(0,212,255,0.15);">
+        <div class="store-dot" style="background:#00d4ff;"></div>
+        <h3 class="c-cb">Complete Request Flow — POST an Account</h3>
+        <span class="store-type">End-to-End · All Layers</span>
+      </div>
+      <div class="code-full">
+        <div class="code-pane-header"><div class="dot" style="width:8px;height:8px;border-radius:50%;background:#00d4ff;"></div> What happens when POST /api/v1/accounts is called</div>
+        <pre><span class="n">1.</span> <span class="c">Client sends camelCase JSON to Spring Boot API</span>
+   → { "accountNumber": 123456789, "name": { "legalName": "Acme" }, "status": "ACTIVE" }
+
+<span class="n">2.</span> <span class="c">@Valid runs bean validation — checks @Pattern, @Size, @NotBlank rules</span>
+   → If invalid → 400 Bad Request with field-level error messages returned immediately
+
+<span class="n">3.</span> <span class="c">@RequestBody + Jackson deserializes camelCase JSON → Java CustomerAccount object</span>
+   → accountNumber = 123456789, legalName = "Acme" (Java camelCase fields)
+
+<span class="n">4.</span> <span class="c">Service layer sets lastUpdateTimestamp = Instant.now()</span>
+
+<span class="n">5.</span> <span class="c">@JsonNaming(SnakeCaseStrategy) serializes Java object → snake_case JSON for Couchbase</span>
+   → { "account_number": 123456789, "name": { "legal_name": "Acme" }, "status": "ACTIVE" }
+
+<span class="n">6.</span> <span class="c">Couchbase saves document with key = "123456789"</span>
+
+<span class="n">7.</span> <span class="c">Elasticsearch indexes the same document in customer_account index</span>
+   → legal_name + dba_name + line1 + city copied into full_text_srch field automatically
+
+<span class="n">8.</span> <span class="c">Valkey caches the record as Hash with key ACCOUNT:123456789 + 1 hour TTL</span>
+
+<span class="n">9.</span> <span class="c">Spring Boot serializes Java object back to camelCase JSON for API response</span>
+   → { "accountNumber": 123456789, "name": { "legalName": "Acme" }, "status": "ACTIVE" }
+
+<span class="n">10.</span> <span class="c">Client receives 201 Created with camelCase response body</span>
+
+<span class="c">─────────────────────────────────────────────────────────────────────────────
+  Client (camelCase) → Spring Boot → Couchbase (snake_case)
+                                   → Elasticsearch (snake_case)
+                                   → Valkey Cache (snake_case hash)
+                     ← Spring Boot ← Response (camelCase)
+─────────────────────────────────────────────────────────────────────────────</span></pre>
+      </div>
+    </div>
+
+  </section>
+
+<footer>
+  Customer Account Datastore Reference Guide &nbsp;·&nbsp; OpenAPI + Couchbase + Elasticsearch + Firestore + DynamoDB + Keyspaces + Valkey &nbsp;·&nbsp; 2026
+</footer>
+
+</body>
+</html>

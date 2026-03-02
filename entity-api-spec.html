@@ -1,0 +1,1429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Entity API — OpenAPI Specification</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,600;1,400&family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ── TOKENS ──────────────────────────────────────────────────────── */
+  :root {
+    --bg:        #0a0d12;
+    --surface:   #0f1318;
+    --card:      #141920;
+    --border:    #1e2530;
+    --border2:   #252f3d;
+
+    --txt:       #e2e8f0;
+    --txt2:      #8b9ab0;
+    --txt3:      #556070;
+
+    --get:       #22c55e;
+    --get-bg:    rgba(34,197,94,0.08);
+    --get-bdr:   rgba(34,197,94,0.25);
+
+    --post:      #f59e0b;
+    --post-bg:   rgba(245,158,11,0.08);
+    --post-bdr:  rgba(245,158,11,0.25);
+
+    --ref:       #818cf8;
+    --ref-bg:    rgba(129,140,248,0.08);
+    --ref-bdr:   rgba(129,140,248,0.25);
+
+    --err4:      #f97316;
+    --err5:      #ef4444;
+    --err2:      #a78bfa;
+
+    --acc:       #38bdf8;
+    --acc-bg:    rgba(56,189,248,0.08);
+
+    --tag-acct:  #34d399;
+    --tag-cust:  #f472b6;
+
+    --radius:    10px;
+    --mono: 'IBM Plex Mono', monospace;
+  }
+
+  /* ── RESET ───────────────────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--txt);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+
+  /* ── NAV ─────────────────────────────────────────────────────────── */
+  .nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(10,13,18,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 4px;
+    padding: 0 28px; height: 52px;
+    overflow-x: auto;
+  }
+  .nav-brand {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800; font-size: 15px;
+    color: var(--acc);
+    white-space: nowrap;
+    margin-right: 20px;
+    letter-spacing: -0.3px;
+  }
+  .nav a {
+    font-size: 12px; font-weight: 500;
+    color: var(--txt3);
+    text-decoration: none;
+    padding: 5px 11px; border-radius: 6px;
+    white-space: nowrap;
+    transition: color .15s, background .15s;
+  }
+  .nav a:hover { color: var(--txt); background: var(--border); }
+
+  /* ── LAYOUT ──────────────────────────────────────────────────────── */
+  .hero {
+    padding: 60px 40px 44px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(160deg, rgba(56,189,248,0.04) 0%, transparent 60%);
+    position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; top: -80px; right: -80px;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(56,189,248,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: var(--acc-bg); border: 1px solid rgba(56,189,248,0.2);
+    color: var(--acc); font-size: 11px; font-weight: 600;
+    padding: 4px 12px; border-radius: 20px;
+    margin-bottom: 20px; letter-spacing: 0.5px; text-transform: uppercase;
+  }
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 38px; font-weight: 800;
+    line-height: 1.1; letter-spacing: -1px;
+    margin-bottom: 14px;
+  }
+  .hero h1 span { color: var(--acc); }
+  .hero-sub {
+    color: var(--txt2); font-size: 15px; max-width: 560px; line-height: 1.6;
+  }
+  .hero-meta {
+    display: flex; gap: 24px; margin-top: 28px; flex-wrap: wrap;
+  }
+  .meta-pill {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; color: var(--txt2);
+  }
+  .meta-pill strong { color: var(--txt); font-weight: 600; }
+  .meta-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 28px 80px; }
+
+  /* ── SECTION ─────────────────────────────────────────────────────── */
+  .section { padding: 52px 0 0; }
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px; font-weight: 700;
+    letter-spacing: -0.4px; margin-bottom: 6px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .section-title .ico {
+    width: 32px; height: 32px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0;
+  }
+  .section-sub { color: var(--txt2); font-size: 13px; margin-bottom: 28px; padding-left: 44px; }
+
+  /* ── ENDPOINT CARDS ──────────────────────────────────────────────── */
+  .endpoint-group { margin-bottom: 32px; }
+  .group-label {
+    font-size: 11px; font-weight: 700; letter-spacing: 1.2px;
+    text-transform: uppercase; color: var(--txt3);
+    margin-bottom: 10px; padding-left: 4px;
+  }
+  .endpoint {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 10px;
+    overflow: hidden;
+    transition: border-color .2s;
+  }
+  .endpoint:hover { border-color: var(--border2); }
+
+  .ep-header {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 18px; cursor: pointer;
+    background: var(--card);
+    user-select: none;
+  }
+  .ep-header:hover { background: #161c24; }
+  .method {
+    font-family: var(--mono); font-size: 11px; font-weight: 600;
+    padding: 3px 10px; border-radius: 5px; letter-spacing: 0.5px;
+    flex-shrink: 0; min-width: 52px; text-align: center;
+  }
+  .method.get  { background: var(--get-bg);  color: var(--get);  border: 1px solid var(--get-bdr); }
+  .method.post { background: var(--post-bg); color: var(--post); border: 1px solid var(--post-bdr);}
+  .ep-path {
+    font-family: var(--mono); font-size: 13px; color: var(--txt);
+    flex: 1;
+  }
+  .ep-path .path-param { color: var(--ref); }
+  .ep-summary { font-size: 12px; color: var(--txt2); flex-shrink: 0; }
+  .ep-tag {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.4px;
+    padding: 2px 8px; border-radius: 4px; flex-shrink: 0;
+  }
+  .ep-tag.acct { background: rgba(52,211,153,0.1); color: var(--tag-acct); }
+  .ep-tag.cust { background: rgba(244,114,182,0.1); color: var(--tag-cust); }
+  .ep-chevron { color: var(--txt3); font-size: 11px; flex-shrink: 0; transition: transform .2s; }
+  .ep-chevron.open { transform: rotate(180deg); }
+
+  .ep-body {
+    display: none;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .ep-body.open { display: block; }
+  .ep-section { padding: 18px 20px; border-bottom: 1px solid var(--border); }
+  .ep-section:last-child { border-bottom: none; }
+  .ep-section-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--txt3); margin-bottom: 10px;
+  }
+
+  /* ── PARAMS TABLE ────────────────────────────────────────────────── */
+  .param-table { width: 100%; border-collapse: collapse; }
+  .param-table th {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.8px;
+    text-transform: uppercase; color: var(--txt3);
+    text-align: left; padding: 6px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .param-table td { padding: 8px 10px; vertical-align: top; font-size: 12px; }
+  .param-table tr:not(:last-child) td { border-bottom: 1px solid #161c24; }
+  .param-name { font-family: var(--mono); color: var(--acc); font-size: 12px; }
+  .param-loc  { font-size: 10px; color: var(--txt3); font-style: italic; }
+  .required-badge {
+    font-size: 9px; font-weight: 700; letter-spacing: 0.4px;
+    background: rgba(239,68,68,0.1); color: #f87171;
+    border: 1px solid rgba(239,68,68,0.2);
+    padding: 1px 5px; border-radius: 3px; margin-left: 4px;
+  }
+  .optional-badge {
+    font-size: 9px; font-weight: 700;
+    background: rgba(100,116,139,0.1); color: var(--txt3);
+    border: 1px solid var(--border);
+    padding: 1px 5px; border-radius: 3px; margin-left: 4px;
+  }
+  .type-chip {
+    font-family: var(--mono); font-size: 10px;
+    background: rgba(129,140,248,0.08); color: var(--ref);
+    border: 1px solid rgba(129,140,248,0.15);
+    padding: 1px 6px; border-radius: 4px;
+  }
+
+  /* ── RESPONSE BADGES ─────────────────────────────────────────────── */
+  .resp-list { display: flex; flex-direction: column; gap: 8px; }
+  .resp-item { display: flex; align-items: flex-start; gap: 12px; }
+  .resp-code {
+    font-family: var(--mono); font-size: 12px; font-weight: 600;
+    padding: 3px 10px; border-radius: 5px; flex-shrink: 0; min-width: 52px; text-align: center;
+  }
+  .resp-code.r200 { background: rgba(34,197,94,0.1);  color: var(--get);  border:1px solid rgba(34,197,94,0.2); }
+  .resp-code.r201 { background: rgba(56,189,248,0.1); color: var(--acc);  border:1px solid rgba(56,189,248,0.2);}
+  .resp-code.r400 { background: rgba(249,115,22,0.1); color: var(--err4); border:1px solid rgba(249,115,22,0.2);}
+  .resp-code.r404 { background: rgba(167,139,250,0.1);color: var(--err2); border:1px solid rgba(167,139,250,0.2);}
+  .resp-code.r500 { background: rgba(239,68,68,0.1);  color: var(--err5); border:1px solid rgba(239,68,68,0.2); }
+  .resp-desc { font-size: 12px; color: var(--txt2); padding-top: 3px; }
+  .resp-ref  { font-size: 11px; font-family: var(--mono); color: var(--ref); margin-top: 2px; }
+
+  /* ── CODE BLOCKS ─────────────────────────────────────────────────── */
+  .code-wrap {
+    background: #0d1117; border: 1px solid var(--border);
+    border-radius: 8px; overflow: hidden; margin-top: 12px;
+  }
+  .code-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 14px; background: #111820; border-bottom: 1px solid var(--border);
+    font-size: 11px; color: var(--txt3);
+  }
+  .code-bar span { font-family: var(--mono); }
+  .copy-btn {
+    font-size: 10px; padding: 3px 10px; border-radius: 4px;
+    border: 1px solid var(--border2); background: transparent;
+    color: var(--txt3); cursor: pointer; font-family: 'Inter', sans-serif;
+    transition: color .15s, border-color .15s;
+  }
+  .copy-btn:hover { color: var(--txt); border-color: var(--txt3); }
+  pre {
+    font-family: var(--mono); font-size: 12px; line-height: 1.65;
+    padding: 18px; overflow-x: auto; color: #c9d1d9;
+  }
+  /* YAML syntax colours */
+  .yk  { color: #79c0ff; }   /* key */
+  .yv  { color: #a5d6ff; }   /* value string */
+  .yn  { color: #ffa657; }   /* number */
+  .ys  { color: #7ee787; }   /* string value */
+  .yc  { color: #8b949e; font-style: italic; } /* comment */
+  .yr  { color: var(--ref); } /* $ref */
+  .ye  { color: #f8a5c2; }   /* enum value */
+  .ybold { font-weight: 600; }
+
+  /* ── SCHEMA CARDS ────────────────────────────────────────────────── */
+  .schema-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media(max-width:700px){ .schema-grid { grid-template-columns: 1fr; } }
+
+  .schema-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden;
+  }
+  .schema-card-head {
+    padding: 12px 16px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .schema-name {
+    font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--ref);
+  }
+  .schema-desc { font-size: 11px; color: var(--txt2); margin-left: auto; }
+  .schema-card .code-wrap { margin: 0; border: none; border-radius: 0; }
+  .schema-card pre { font-size: 11.5px; padding: 14px; }
+
+  /* ── RESPONSE CARDS ──────────────────────────────────────────────── */
+  .resp-cards { display: flex; flex-direction: column; gap: 16px; }
+  .resp-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden;
+  }
+  .resp-card-head {
+    padding: 12px 18px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .resp-card-name { font-family: var(--mono); font-size: 13px; font-weight: 600; }
+  .resp-card-name.r400 { color: var(--err4); }
+  .resp-card-name.r404 { color: var(--err2); }
+  .resp-card-name.r500 { color: var(--err5); }
+  .resp-card-desc { font-size: 12px; color: var(--txt2); }
+  .resp-card-body { padding: 16px 18px; }
+  .usage-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .usage-pill {
+    font-size: 11px; font-family: var(--mono);
+    padding: 3px 9px; border-radius: 5px;
+    background: var(--border); color: var(--txt2);
+  }
+  .usage-pill .m { font-weight: 600; }
+  .usage-pill .m.g { color: var(--get); }
+  .usage-pill .m.p { color: var(--post); }
+
+  /* ── DESIGN PRINCIPLES ───────────────────────────────────────────── */
+  .principle-list { display: flex; flex-direction: column; gap: 14px; }
+  .principle {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 18px 20px;
+    display: grid; grid-template-columns: 36px 1fr; gap: 14px;
+    align-items: start; transition: border-color .2s;
+  }
+  .principle:hover { border-color: var(--border2); }
+  .principle-num {
+    font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800;
+    color: var(--border2); line-height: 1;
+    padding-top: 2px;
+  }
+  .principle-title {
+    font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700;
+    color: var(--txt); margin-bottom: 6px;
+  }
+  .principle-title .keyword {
+    font-family: var(--mono); font-size: 12px; font-weight: 600;
+    background: var(--ref-bg); color: var(--ref);
+    border: 1px solid var(--ref-bdr);
+    padding: 1px 7px; border-radius: 4px; margin-left: 6px;
+  }
+  .principle p { font-size: 13px; color: var(--txt2); line-height: 1.65; }
+  .principle p code {
+    font-family: var(--mono); font-size: 11.5px;
+    background: rgba(129,140,248,0.08); color: var(--ref);
+    padding: 1px 5px; border-radius: 3px;
+  }
+
+  /* ── FULL YAML SECTION ───────────────────────────────────────────── */
+  .yaml-full .code-wrap { margin: 0; }
+  .yaml-full pre { max-height: 600px; overflow-y: auto; font-size: 12px; }
+  .yaml-full pre::-webkit-scrollbar { width: 6px; height: 6px; }
+  .yaml-full pre::-webkit-scrollbar-track { background: transparent; }
+  .yaml-full pre::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  /* ── CALLOUT ─────────────────────────────────────────────────────── */
+  .callout {
+    background: var(--acc-bg); border: 1px solid rgba(56,189,248,0.15);
+    border-radius: 8px; padding: 12px 16px;
+    font-size: 12.5px; color: var(--txt2);
+    margin-bottom: 20px; line-height: 1.6;
+  }
+  .callout strong { color: var(--acc); }
+  .callout code {
+    font-family: var(--mono); font-size: 11.5px;
+    background: rgba(56,189,248,0.08); color: var(--acc);
+    padding: 1px 5px; border-radius: 3px;
+  }
+
+  /* ── DIVIDER ─────────────────────────────────────────────────────── */
+  .divider { height: 1px; background: var(--border); margin: 52px 0 0; }
+
+  /* ── FOOTER ──────────────────────────────────────────────────────── */
+  footer {
+    text-align: center; padding: 32px;
+    font-size: 11px; color: var(--txt3);
+    border-top: 1px solid var(--border);
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-brand">Entity API</div>
+  <a href="#endpoints">Endpoints</a>
+  <a href="#schemas">Schemas</a>
+  <a href="#responses">Responses</a>
+  <a href="#principles">Design Principles</a>
+  <a href="#yaml">Full YAML</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">⚡ OpenAPI 3.0.3</div>
+  <h1>Entity API<br><span>Specification</span></h1>
+  <p class="hero-sub">OpenAPI / Swagger reference for the Customer Account REST API. Covers endpoints, reusable schemas, error responses, and key design decisions.</p>
+  <div class="hero-meta">
+    <div class="meta-pill"><div class="meta-dot" style="background:var(--get)"></div> <strong>3 GET</strong> operations</div>
+    <div class="meta-pill"><div class="meta-dot" style="background:var(--post)"></div> <strong>2 POST</strong> upsert operations</div>
+    <div class="meta-pill"><div class="meta-dot" style="background:var(--ref)"></div> <strong>5 Schemas</strong> in components</div>
+    <div class="meta-pill"><div class="meta-dot" style="background:var(--err4)"></div> <strong>3 Responses</strong> reusable</div>
+    <div class="meta-pill"><div class="meta-dot" style="background:var(--txt3)"></div> <strong>v1.0.0</strong></div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- ENDPOINTS                                                       -->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <div class="section" id="endpoints">
+    <div class="section-title">
+      <div class="ico" style="background:rgba(56,189,248,0.1);">🔗</div>
+      Endpoints
+    </div>
+    <div class="section-sub">All paths, methods, parameters, and response codes defined in this spec</div>
+
+    <!-- ACCOUNT GROUP -->
+    <div class="endpoint-group">
+      <div class="group-label">Account Resource — /entity/account</div>
+
+      <!-- GET /entity/account -->
+      <div class="endpoint">
+        <div class="ep-header" onclick="toggle(this)">
+          <span class="method get">GET</span>
+          <span class="ep-path">/entity/account</span>
+          <span class="ep-summary">Retrieve all Account records</span>
+          <span class="ep-tag acct">Account</span>
+          <span class="ep-chevron">▼</span>
+        </div>
+        <div class="ep-body">
+          <div class="ep-section">
+            <div class="ep-section-label">Description</div>
+            <p style="font-size:13px;color:var(--txt2)">Returns all Account records. Supports optional filtering by <code style="font-family:var(--mono);font-size:11px;color:var(--ref)">status</code> query parameter. Results are paginated using <code style="font-family:var(--mono);font-size:11px;color:var(--ref)">page</code> and <code style="font-family:var(--mono);font-size:11px;color:var(--ref)">size</code>. Response is wrapped in a pagination envelope — not a raw array.</p>
+          </div>
+          <div class="ep-section">
+            <div class="ep-section-label">Query Parameters</div>
+            <table class="param-table">
+              <thead><tr><th>Name</th><th>In</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td><span class="param-name">status</span></td><td><span class="param-loc">query</span></td><td><span class="type-chip">string enum</span></td><td><span class="optional-badge">optional</span></td><td style="color:var(--txt2);font-size:12px">Filter by status — ACTIVE, INACTIVE, SUSPENDED, CLOSED, PENDING, CANCEL</td></tr>
+                <tr><td><span class="param-name">page</span></td><td><span class="param-loc">query</span></td><td><span class="type-chip">integer</span></td><td><span class="optional-badge">optional</span></td><td style="color:var(--txt2);font-size:12px">Page number, 0-based. Default: 0</td></tr>
+                <tr><td><span class="param-name">size</span></td><td><span class="param-loc">query</span></td><td><span class="type-chip">integer</span></td><td><span class="optional-badge">optional</span></td><td style="color:var(--txt2);font-size:12px">Records per page, 1–100. Default: 20</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="ep-section">
+            <div class="ep-section-label">Responses</div>
+            <div class="resp-list">
+              <div class="resp-item"><span class="resp-code r200">200</span><div><div class="resp-desc">Paginated list of AccountRecord objects — <code style="font-family:var(--mono);font-size:11px;color:var(--ref)">{totalRecords, page, size, records[]}</code></div></div></div>
+              <div class="resp-item"><span class="resp-code r400">400</span><div><div class="resp-desc">Invalid query parameter value</div><div class="resp-ref">→ $ref: BadRequest</div></div></div>
+              <div class="resp-item"><span class="resp-code r500">500</span><div><div class="resp-desc">Server error</div><div class="resp-ref">→ $ref: InternalServerError</div></div></div>
+            </div>
+          </div>
+          <div class="ep-section">
+            <div class="ep-section-label">operationId</div>
+            <code style="font-family:var(--mono);font-size:12px;color:var(--ref)">getAllAccounts</code>
+          </div>
+        </div>
+      </div>
+
+      <!-- POST /entity/account -->
+      <div class="endpoint">
+        <div class="ep-header" onclick="toggle(this)">
+          <span class="method post">POST</span>
+          <span class="ep-path">/entity/account</span>
+          <span class="ep-summary">Insert or Update an Account (Upsert)</span>
+          <span class="ep-tag acct">Account</span>
+          <span class="ep-chevron">▼</span>
+        </div>
+        <div class="ep-body">
+          <div class="ep-section">
+            <div class="ep-section-label">Description</div>
+            <p style="font-size:13px;color:var(--txt2)">Creates a new Account or updates an existing one. If <code style="font-family:var(--mono);font-size:11px;color:var(--ref)">accountNumber</code> already exists → update → <strong style="color:var(--get)">200</strong>. If it does not exist → insert → <strong style="color:var(--acc)">201</strong>. <code style="font-family:var(--mono);font-size:11px;color:var(--ref)">docType</code> must be <code style="font-family:var(--mono);font-size:11px;color:var(--ye)">"Account"</code>. Timestamps are server-set — never send them in the request.</p>
+          </div>
+          <div class="ep-section">
+            <div class="ep-section-label">Request Body — $ref: AccountRecord</div>
+            <div class="code-wrap">
+              <div class="code-bar"><span>Example — Insert</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+              <pre>{
+  <span class="yk">"docType"</span>:      <span class="ys">"Account"</span>,
+  <span class="yk">"accountNumber"</span>: <span class="yn">123456789</span>,
+  <span class="yk">"name"</span>: {
+    <span class="yk">"legalName"</span>: <span class="ys">"Acme Corporation"</span>,
+    <span class="yk">"dbaName"</span>:   <span class="ys">"Acme Corp"</span>
+  },
+  <span class="yk">"address"</span>: {
+    <span class="yk">"line1"</span>:       <span class="ys">"123 Main Street"</span>,
+    <span class="yk">"city"</span>:        <span class="ys">"Dallas"</span>,
+    <span class="yk">"state"</span>:       <span class="ys">"TX"</span>,
+    <span class="yk">"countryCode"</span>: <span class="ys">"USA"</span>
+  },
+  <span class="yk">"dob"</span>:    <span class="ys">"01-15-1990"</span>,
+  <span class="yk">"status"</span>: <span class="ys">"ACTIVE"</span>
+}</pre>
+            </div>
+          </div>
+          <div class="ep-section">
+            <div class="ep-section-label">Required Fields</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;">
+              <span class="type-chip" style="color:var(--err4);border-color:rgba(249,115,22,0.25)">docType = "Account"</span>
+              <span class="type-chip" style="color:var(--err4);border-color:rgba(249,115,22,0.25)">accountNumber</span>
+              <span class="type-chip" style="color:var(--err4);border-color:rgba(249,115,22,0.25)">name.legalName</span>
+              <span class="type-chip" style="color:var(--err4);border-color:rgba(249,115,22,0.25)">address.line1</span>
+              <span class="type-chip" style="color:var(--err4);border-color:rgba(249,115,22,0.25)">status</span>
+            </div>
+          </div>
+          <div class="ep-section">
+            <div class="ep-section-label">Responses</div>
+            <div class="resp-list">
+              <div class="resp-item"><span class="resp-code r200">200</span><div><div class="resp-desc">Account updated successfully — returns full AccountRecord with server-set timestamps</div></div></div>
+              <div class="resp-item"><span class="resp-code r201">201</span><div><div class="resp-desc">Account created successfully — returns full AccountRecord</div></div></div>
+              <div class="resp-item"><span class="resp-code r400">400</span><div><div class="resp-desc">Validation failure — field errors returned</div><div class="resp-ref">→ $ref: BadRequest</div></div></div>
+              <div class="resp-item"><span class="resp-code r500">500</span><div><div class="resp-desc">Server error</div><div class="resp-ref">→ $ref: InternalServerError</div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GET /entity/account/{accountId} -->
+      <div class="endpoint">
+        <div class="ep-header" onclick="toggle(this)">
+          <span class="method get">GET</span>
+          <span class="ep-path">/entity/account/<span class="path-param">{accountId}</span></span>
+          <span class="ep-summary">Retrieve one Account by ID</span>
+          <span class="ep-tag acct">Account</span>
+          <span class="ep-chevron">▼</span>
+        </div>
+        <div class="ep-body">
+          <div class="ep-section">
+            <div class="ep-section-label">Path Parameter</div>
+            <table class="param-table">
+              <thead><tr><th>Name</th><th>In</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td><span class="param-name">accountId</span></td><td><span class="param-loc">path</span></td><td><span class="type-chip">integer int64</span></td><td><span class="required-badge">required</span></td><td style="color:var(--txt2);font-size:12px">Unique Account Number — the document key. Example: 123456789</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="ep-section">
+            <div class="ep-section-label">Responses</div>
+            <div class="resp-list">
+              <div class="resp-item"><span class="resp-code r200">200</span><div><div class="resp-desc">Single AccountRecord returned</div></div></div>
+              <div class="resp-item"><span class="resp-code r400">400</span><div><div class="resp-desc">Invalid accountId format</div><div class="resp-ref">→ $ref: BadRequest</div></div></div>
+              <div class="resp-item"><span class="resp-code r404">404</span><div><div class="resp-desc">No Account exists with that accountId</div><div class="resp-ref">→ $ref: NotFound</div></div></div>
+              <div class="resp-item"><span class="resp-code r500">500</span><div><div class="resp-desc">Server error</div><div class="resp-ref">→ $ref: InternalServerError</div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CUSTOMER GROUP -->
+    <div class="endpoint-group">
+      <div class="group-label">Customer Resource — /entity/customer</div>
+
+      <!-- GET /entity/customer -->
+      <div class="endpoint">
+        <div class="ep-header" onclick="toggle(this)">
+          <span class="method get">GET</span>
+          <span class="ep-path">/entity/customer</span>
+          <span class="ep-summary">Retrieve all Customer records</span>
+          <span class="ep-tag cust">Customer</span>
+          <span class="ep-chevron">▼</span>
+        </div>
+        <div class="ep-body">
+          <div class="ep-section">
+            <div class="ep-section-label">Description</div>
+            <p style="font-size:13px;color:var(--txt2)">Returns all Customer records. Supports optional filtering by <code style="font-family:var(--mono);font-size:11px;color:var(--ref)">status</code> and pagination via <code style="font-family:var(--mono);font-size:11px;color:var(--ref)">page</code> / <code style="font-family:var(--mono);font-size:11px;color:var(--ref)">size</code>. Response wrapped in pagination envelope.</p>
+          </div>
+          <div class="ep-section">
+            <div class="ep-section-label">Query Parameters</div>
+            <table class="param-table">
+              <thead><tr><th>Name</th><th>In</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td><span class="param-name">status</span></td><td><span class="param-loc">query</span></td><td><span class="type-chip">string enum</span></td><td><span class="optional-badge">optional</span></td><td style="color:var(--txt2);font-size:12px">Filter by ACTIVE, INACTIVE, SUSPENDED, CLOSED, PENDING, CANCEL</td></tr>
+                <tr><td><span class="param-name">page</span></td><td><span class="param-loc">query</span></td><td><span class="type-chip">integer</span></td><td><span class="optional-badge">optional</span></td><td style="color:var(--txt2);font-size:12px">Page number, 0-based. Default: 0</td></tr>
+                <tr><td><span class="param-name">size</span></td><td><span class="param-loc">query</span></td><td><span class="type-chip">integer</span></td><td><span class="optional-badge">optional</span></td><td style="color:var(--txt2);font-size:12px">Records per page, 1–100. Default: 20</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="ep-section">
+            <div class="ep-section-label">Responses</div>
+            <div class="resp-list">
+              <div class="resp-item"><span class="resp-code r200">200</span><div><div class="resp-desc">Paginated list of CustomerRecord objects</div></div></div>
+              <div class="resp-item"><span class="resp-code r400">400</span><div><div class="resp-desc">Invalid query parameter</div><div class="resp-ref">→ $ref: BadRequest</div></div></div>
+              <div class="resp-item"><span class="resp-code r500">500</span><div><div class="resp-desc">Server error</div><div class="resp-ref">→ $ref: InternalServerError</div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- POST /entity/customer -->
+      <div class="endpoint">
+        <div class="ep-header" onclick="toggle(this)">
+          <span class="method post">POST</span>
+          <span class="ep-path">/entity/customer</span>
+          <span class="ep-summary">Insert or Update a Customer (Upsert)</span>
+          <span class="ep-tag cust">Customer</span>
+          <span class="ep-chevron">▼</span>
+        </div>
+        <div class="ep-body">
+          <div class="ep-section">
+            <div class="ep-section-label">Description</div>
+            <p style="font-size:13px;color:var(--txt2)">Creates a new Customer or updates an existing one. If <code style="font-family:var(--mono);font-size:11px;color:var(--ref)">customerId</code> exists → update → <strong style="color:var(--get)">200</strong>. If not → insert → <strong style="color:var(--acc)">201</strong>. <code style="font-family:var(--mono);font-size:11px;color:var(--ref)">docType</code> must be <code style="font-family:var(--mono);font-size:11px;color:var(--ye)">"Customer"</code>.</p>
+          </div>
+          <div class="ep-section">
+            <div class="ep-section-label">Request Body — $ref: CustomerRecord</div>
+            <div class="code-wrap">
+              <div class="code-bar"><span>Example — Insert</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+              <pre>{
+  <span class="yk">"docType"</span>:    <span class="ys">"Customer"</span>,
+  <span class="yk">"customerId"</span>: <span class="yn">987654321</span>,
+  <span class="yk">"name"</span>: {
+    <span class="yk">"legalName"</span>: <span class="ys">"John Doe"</span>,
+    <span class="yk">"dbaName"</span>:   <span class="ys">"JD Enterprises"</span>
+  },
+  <span class="yk">"address"</span>: {
+    <span class="yk">"line1"</span>:       <span class="ys">"456 Elm Street"</span>,
+    <span class="yk">"city"</span>:        <span class="ys">"Houston"</span>,
+    <span class="yk">"state"</span>:       <span class="ys">"TX"</span>,
+    <span class="yk">"countryCode"</span>: <span class="ys">"USA"</span>
+  },
+  <span class="yk">"dob"</span>:    <span class="ys">"06-20-1985"</span>,
+  <span class="yk">"status"</span>: <span class="ys">"ACTIVE"</span>
+}</pre>
+            </div>
+          </div>
+          <div class="ep-section">
+            <div class="ep-section-label">Required Fields</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;">
+              <span class="type-chip" style="color:var(--err4);border-color:rgba(249,115,22,0.25)">docType = "Customer"</span>
+              <span class="type-chip" style="color:var(--err4);border-color:rgba(249,115,22,0.25)">customerId</span>
+              <span class="type-chip" style="color:var(--err4);border-color:rgba(249,115,22,0.25)">name.legalName</span>
+              <span class="type-chip" style="color:var(--err4);border-color:rgba(249,115,22,0.25)">address.line1</span>
+              <span class="type-chip" style="color:var(--err4);border-color:rgba(249,115,22,0.25)">status</span>
+            </div>
+          </div>
+          <div class="ep-section">
+            <div class="ep-section-label">Responses</div>
+            <div class="resp-list">
+              <div class="resp-item"><span class="resp-code r200">200</span><div><div class="resp-desc">Customer updated — returns full CustomerRecord with timestamps</div></div></div>
+              <div class="resp-item"><span class="resp-code r201">201</span><div><div class="resp-desc">Customer created — returns full CustomerRecord</div></div></div>
+              <div class="resp-item"><span class="resp-code r400">400</span><div><div class="resp-desc">Validation failure</div><div class="resp-ref">→ $ref: BadRequest</div></div></div>
+              <div class="resp-item"><span class="resp-code r500">500</span><div><div class="resp-desc">Server error</div><div class="resp-ref">→ $ref: InternalServerError</div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GET /entity/customer/{customerId} -->
+      <div class="endpoint">
+        <div class="ep-header" onclick="toggle(this)">
+          <span class="method get">GET</span>
+          <span class="ep-path">/entity/customer/<span class="path-param">{customerId}</span></span>
+          <span class="ep-summary">Retrieve one Customer by ID</span>
+          <span class="ep-tag cust">Customer</span>
+          <span class="ep-chevron">▼</span>
+        </div>
+        <div class="ep-body">
+          <div class="ep-section">
+            <div class="ep-section-label">Path Parameter</div>
+            <table class="param-table">
+              <thead><tr><th>Name</th><th>In</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td><span class="param-name">customerId</span></td><td><span class="param-loc">path</span></td><td><span class="type-chip">integer int64</span></td><td><span class="required-badge">required</span></td><td style="color:var(--txt2);font-size:12px">Unique Customer ID — the document key. Example: 987654321</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="ep-section">
+            <div class="ep-section-label">Responses</div>
+            <div class="resp-list">
+              <div class="resp-item"><span class="resp-code r200">200</span><div><div class="resp-desc">Single CustomerRecord returned</div></div></div>
+              <div class="resp-item"><span class="resp-code r400">400</span><div><div class="resp-desc">Invalid customerId format</div><div class="resp-ref">→ $ref: BadRequest</div></div></div>
+              <div class="resp-item"><span class="resp-code r404">404</span><div><div class="resp-desc">No Customer exists with that customerId</div><div class="resp-ref">→ $ref: NotFound</div></div></div>
+              <div class="resp-item"><span class="resp-code r500">500</span><div><div class="resp-desc">Server error</div><div class="resp-ref">→ $ref: InternalServerError</div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- SCHEMAS                                                         -->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <div class="section" id="schemas">
+    <div class="section-title">
+      <div class="ico" style="background:rgba(129,140,248,0.1);">🧩</div>
+      Reusable Schemas — <code style="font-family:var(--mono);font-size:16px;color:var(--ref)">components/schemas</code>
+    </div>
+    <div class="section-sub">Defined once, referenced everywhere via <code style="font-family:var(--mono);font-size:11px">$ref: '#/components/schemas/Name'</code> — change in one place, all endpoints update automatically</div>
+
+    <div class="callout">
+      <strong>Why components/schemas?</strong> Without a shared component, the <code>Name</code> and <code>Address</code> definitions would be copy-pasted into both AccountRecord and CustomerRecord. If you later added a <code>line2</code> field to Address you would have to find and change it in every place. With <code>$ref</code> you define it once and reference it everywhere.
+    </div>
+
+    <div class="schema-grid">
+
+      <!-- Name -->
+      <div class="schema-card">
+        <div class="schema-card-head">
+          <span class="schema-name">Name</span>
+          <span class="schema-desc">Shared by AccountRecord + CustomerRecord</span>
+        </div>
+        <div class="code-wrap">
+          <pre><span class="yk">Name</span>:
+  <span class="yk">type</span>: <span class="yv">object</span>
+  <span class="yk">description</span>: <span class="ys">Customer name details</span>
+  <span class="yk">properties</span>:
+    <span class="yk">legalName</span>:
+      <span class="yk">type</span>: <span class="yv">string</span>
+      <span class="yk">maxLength</span>: <span class="yn">20</span>
+      <span class="yk">description</span>: <span class="ys">Legal name of customer</span>
+      <span class="yk">example</span>: <span class="ys">Acme Corporation</span>
+    <span class="yk">dbaName</span>:
+      <span class="yk">type</span>: <span class="yv">string</span>
+      <span class="yk">maxLength</span>: <span class="yn">20</span>
+      <span class="yk">description</span>: <span class="ys">Doing Business As name</span>
+      <span class="yk">example</span>: <span class="ys">Acme Corp</span>
+  <span class="yk">required</span>:
+    - <span class="ys">legalName</span></pre>
+        </div>
+        <div style="padding:10px 14px;border-top:1px solid var(--border);font-size:11px;color:var(--txt3)">
+          Referenced by: <code style="font-family:var(--mono);color:var(--ref)">AccountRecord</code> · <code style="font-family:var(--mono);color:var(--ref)">CustomerRecord</code>
+        </div>
+      </div>
+
+      <!-- Address -->
+      <div class="schema-card">
+        <div class="schema-card-head">
+          <span class="schema-name">Address</span>
+          <span class="schema-desc">Shared by AccountRecord + CustomerRecord</span>
+        </div>
+        <div class="code-wrap">
+          <pre><span class="yk">Address</span>:
+  <span class="yk">type</span>: <span class="yv">object</span>
+  <span class="yk">description</span>: <span class="ys">Customer address details</span>
+  <span class="yk">properties</span>:
+    <span class="yk">line1</span>:
+      <span class="yk">type</span>: <span class="yv">string</span>
+      <span class="yk">maxLength</span>: <span class="yn">20</span>
+    <span class="yk">city</span>:
+      <span class="yk">type</span>: <span class="yv">string</span>
+      <span class="yk">maxLength</span>: <span class="yn">20</span>
+    <span class="yk">state</span>:
+      <span class="yk">type</span>: <span class="yv">string</span>
+      <span class="yk">minLength</span>: <span class="yn">2</span>
+      <span class="yk">maxLength</span>: <span class="yn">2</span>
+      <span class="yk">pattern</span>: <span class="ys">'^[A-Z]{2}$'</span>
+    <span class="yk">countryCode</span>:
+      <span class="yk">type</span>: <span class="yv">string</span>
+      <span class="yk">minLength</span>: <span class="yn">3</span>
+      <span class="yk">maxLength</span>: <span class="yn">3</span>
+      <span class="yk">pattern</span>: <span class="ys">'^[A-Z]{3}$'</span>
+  <span class="yk">required</span>:
+    - <span class="ys">line1</span></pre>
+        </div>
+        <div style="padding:10px 14px;border-top:1px solid var(--border);font-size:11px;color:var(--txt3)">
+          Referenced by: <code style="font-family:var(--mono);color:var(--ref)">AccountRecord</code> · <code style="font-family:var(--mono);color:var(--ref)">CustomerRecord</code>
+        </div>
+      </div>
+
+      <!-- AccountRecord -->
+      <div class="schema-card">
+        <div class="schema-card-head">
+          <span class="schema-name">AccountRecord</span>
+          <span class="schema-desc">docType locked to "Account"</span>
+        </div>
+        <div class="code-wrap">
+          <pre><span class="yk">AccountRecord</span>:
+  <span class="yk">type</span>: <span class="yv">object</span>
+  <span class="yk">properties</span>:
+    <span class="yk">docType</span>:
+      <span class="yk">type</span>: <span class="yv">string</span>
+      <span class="yk">enum</span>: [<span class="ye">Account</span>] <span class="yc"># locked to Account only</span>
+    <span class="yk">accountNumber</span>:
+      <span class="yk">type</span>: <span class="yv">integer</span>
+      <span class="yk">format</span>: <span class="yv">int64</span>
+    <span class="yk">name</span>:
+      <span class="yr">$ref: '#/components/schemas/Name'</span>
+    <span class="yk">address</span>:
+      <span class="yr">$ref: '#/components/schemas/Address'</span>
+    <span class="yk">dob</span>:
+      <span class="yk">type</span>: <span class="yv">string</span>
+      <span class="yk">pattern</span>: <span class="ys">'^(0[1-9]|1[0-2])-...$'</span>
+    <span class="yk">status</span>:
+      <span class="yk">type</span>: <span class="yv">string</span>
+      <span class="yk">enum</span>: [<span class="ye">ACTIVE</span>, <span class="ye">INACTIVE</span>, ...]
+    <span class="yk">lastUpdateDate</span>:
+      <span class="yk">type</span>: <span class="yv">string</span>
+      <span class="yk">format</span>: <span class="yv">date</span>
+      <span class="yk">readOnly</span>: <span class="yv">true</span> <span class="yc"># server-set</span>
+    <span class="yk">lastUpdateTimestamp</span>:
+      <span class="yk">type</span>: <span class="yv">string</span>
+      <span class="yk">format</span>: <span class="yv">date-time</span>
+      <span class="yk">readOnly</span>: <span class="yv">true</span> <span class="yc"># server-set</span>
+  <span class="yk">required</span>:
+    - <span class="ys">docType</span>
+    - <span class="ys">accountNumber</span>
+    - <span class="ys">name</span>
+    - <span class="ys">address</span>
+    - <span class="ys">status</span></pre>
+        </div>
+        <div style="padding:10px 14px;border-top:1px solid var(--border);font-size:11px;color:var(--txt3)">
+          Used by: <code style="font-family:var(--mono);color:var(--tag-acct)">POST /entity/account</code> · <code style="font-family:var(--mono);color:var(--tag-acct)">GET /entity/account/{id}</code>
+        </div>
+      </div>
+
+      <!-- CustomerRecord -->
+      <div class="schema-card">
+        <div class="schema-card-head">
+          <span class="schema-name">CustomerRecord</span>
+          <span class="schema-desc">docType locked to "Customer"</span>
+        </div>
+        <div class="code-wrap">
+          <pre><span class="yk">CustomerRecord</span>:
+  <span class="yk">type</span>: <span class="yv">object</span>
+  <span class="yk">properties</span>:
+    <span class="yk">docType</span>:
+      <span class="yk">type</span>: <span class="yv">string</span>
+      <span class="yk">enum</span>: [<span class="ye">Customer</span>] <span class="yc"># locked to Customer only</span>
+    <span class="yk">customerId</span>:
+      <span class="yk">type</span>: <span class="yv">integer</span>
+      <span class="yk">format</span>: <span class="yv">int64</span>
+    <span class="yk">name</span>:
+      <span class="yr">$ref: '#/components/schemas/Name'</span>
+    <span class="yk">address</span>:
+      <span class="yr">$ref: '#/components/schemas/Address'</span>
+    <span class="yk">dob</span>:
+      <span class="yk">type</span>: <span class="yv">string</span>
+      <span class="yk">pattern</span>: <span class="ys">'^(0[1-9]|1[0-2])-...$'</span>
+    <span class="yk">status</span>:
+      <span class="yk">type</span>: <span class="yv">string</span>
+      <span class="yk">enum</span>: [<span class="ye">ACTIVE</span>, <span class="ye">INACTIVE</span>, ...]
+    <span class="yk">lastUpdateDate</span>:
+      <span class="yk">type</span>: <span class="yv">string</span>
+      <span class="yk">format</span>: <span class="yv">date</span>
+      <span class="yk">readOnly</span>: <span class="yv">true</span> <span class="yc"># server-set</span>
+    <span class="yk">lastUpdateTimestamp</span>:
+      <span class="yk">type</span>: <span class="yv">string</span>
+      <span class="yk">format</span>: <span class="yv">date-time</span>
+      <span class="yk">readOnly</span>: <span class="yv">true</span> <span class="yc"># server-set</span>
+  <span class="yk">required</span>:
+    - <span class="ys">docType</span>
+    - <span class="ys">customerId</span>
+    - <span class="ys">name</span>
+    - <span class="ys">address</span>
+    - <span class="ys">status</span></pre>
+        </div>
+        <div style="padding:10px 14px;border-top:1px solid var(--border);font-size:11px;color:var(--txt3)">
+          Used by: <code style="font-family:var(--mono);color:var(--tag-cust)">POST /entity/customer</code> · <code style="font-family:var(--mono);color:var(--tag-cust)">GET /entity/customer/{id}</code>
+        </div>
+      </div>
+
+      <!-- ErrorResponse spans full width -->
+      <div class="schema-card" style="grid-column: 1 / -1;">
+        <div class="schema-card-head">
+          <span class="schema-name">ErrorResponse</span>
+          <span class="schema-desc">Standard error body — used by all 3 reusable responses</span>
+        </div>
+        <div class="code-wrap">
+          <pre><span class="yk">ErrorResponse</span>:
+  <span class="yk">type</span>: <span class="yv">object</span>
+  <span class="yk">properties</span>:
+    <span class="yk">status</span>:      { <span class="yk">type</span>: <span class="yv">integer</span> }               <span class="yc"># HTTP code: 400, 404, 500</span>
+    <span class="yk">error</span>:       { <span class="yk">type</span>: <span class="yv">string</span>  }               <span class="yc"># "Bad Request", "Not Found", "Internal Server Error"</span>
+    <span class="yk">message</span>:     { <span class="yk">type</span>: <span class="yv">string</span>  }               <span class="yc"># Human-readable explanation</span>
+    <span class="yk">timestamp</span>:   { <span class="yk">type</span>: <span class="yv">string</span>, <span class="yk">format</span>: <span class="yv">date-time</span> } <span class="yc"># When the error occurred</span>
+    <span class="yk">path</span>:        { <span class="yk">type</span>: <span class="yv">string</span>  }               <span class="yc"># Request path that caused the error</span>
+    <span class="yk">errors</span>:                                       <span class="yc"># Array of field-level validation errors</span>
+      <span class="yk">type</span>: <span class="yv">array</span>
+      <span class="yk">items</span>:
+        <span class="yk">type</span>: <span class="yv">object</span>
+        <span class="yk">properties</span>:
+          <span class="yk">field</span>:   { <span class="yk">type</span>: <span class="yv">string</span> } <span class="yc"># e.g. "address.state"</span>
+          <span class="yk">message</span>: { <span class="yk">type</span>: <span class="yv">string</span> } <span class="yc"># e.g. "State must be 2 uppercase letters"</span>
+
+<span class="yc"># Example 400 error response body:</span>
+{
+  "status": 400, "error": "Bad Request",
+  "message": "Validation failed for one or more fields",
+  "timestamp": "2026-03-01T10:30:00Z",
+  "path": "/entity/account",
+  "errors": [
+    { "field": "address.state",   "message": "State must be 2 uppercase letters" },
+    { "field": "name.legalName",  "message": "Legal name must not exceed 20 characters" }
+  ]
+}</pre>
+        </div>
+        <div style="padding:10px 14px;border-top:1px solid var(--border);font-size:11px;color:var(--txt3)">
+          Referenced by: <code style="font-family:var(--mono);color:var(--err4)">BadRequest</code> · <code style="font-family:var(--mono);color:var(--err2)">NotFound</code> · <code style="font-family:var(--mono);color:var(--err5)">InternalServerError</code>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- RESPONSES                                                       -->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <div class="section" id="responses">
+    <div class="section-title">
+      <div class="ico" style="background:rgba(249,115,22,0.1);">📨</div>
+      Reusable Responses — <code style="font-family:var(--mono);font-size:16px;color:var(--ref)">components/responses</code>
+    </div>
+    <div class="section-sub">Pre-built HTTP response definitions shared across endpoints via $ref — ensures consistent error format everywhere</div>
+
+    <div class="callout">
+      <strong>Why components/responses?</strong> Every endpoint that can fail must define its error response. Without reusable responses you would copy-paste the same 400/404/500 definition into each of the 5 endpoints — 15+ repetitions. With <code>$ref: '#/components/responses/BadRequest'</code> you define it once. Change the error schema once and all 5 endpoints inherit it automatically.
+    </div>
+
+    <div class="resp-cards">
+
+      <!-- BadRequest -->
+      <div class="resp-card">
+        <div class="resp-card-head">
+          <span class="resp-code r400">400</span>
+          <span class="resp-card-name r400">BadRequest</span>
+          <span class="resp-card-desc">The request body or query parameters failed validation</span>
+        </div>
+        <div class="resp-card-body">
+          <p style="font-size:13px;color:var(--txt2);margin-bottom:10px;">Triggered when incoming data violates any schema rule — wrong pattern, value over maxLength, invalid enum value, missing required field, or wrong data type. The <code style="font-family:var(--mono);font-size:11px;color:var(--ref)">errors[]</code> array tells the caller exactly which fields failed and why, so they can fix the request without guessing.</p>
+          <div style="font-size:11px;color:var(--txt3);margin-bottom:6px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;">Common triggers</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;">
+            <span style="font-size:11px;background:rgba(249,115,22,0.08);color:var(--err4);border:1px solid rgba(249,115,22,0.15);padding:2px 8px;border-radius:4px;">state not ^[A-Z]{2}$</span>
+            <span style="font-size:11px;background:rgba(249,115,22,0.08);color:var(--err4);border:1px solid rgba(249,115,22,0.15);padding:2px 8px;border-radius:4px;">countryCode not ^[A-Z]{3}$</span>
+            <span style="font-size:11px;background:rgba(249,115,22,0.08);color:var(--err4);border:1px solid rgba(249,115,22,0.15);padding:2px 8px;border-radius:4px;">legalName over 20 chars</span>
+            <span style="font-size:11px;background:rgba(249,115,22,0.08);color:var(--err4);border:1px solid rgba(249,115,22,0.15);padding:2px 8px;border-radius:4px;">dob wrong format</span>
+            <span style="font-size:11px;background:rgba(249,115,22,0.08);color:var(--err4);border:1px solid rgba(249,115,22,0.15);padding:2px 8px;border-radius:4px;">status unknown value</span>
+            <span style="font-size:11px;background:rgba(249,115,22,0.08);color:var(--err4);border:1px solid rgba(249,115,22,0.15);padding:2px 8px;border-radius:4px;">missing required field</span>
+          </div>
+          <div style="font-size:11px;color:var(--txt3);margin-bottom:6px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;">Used by endpoints</div>
+          <div class="usage-list">
+            <span class="usage-pill"><span class="m g">GET</span> /entity/account</span>
+            <span class="usage-pill"><span class="m p">POST</span> /entity/account</span>
+            <span class="usage-pill"><span class="m g">GET</span> /entity/account/{id}</span>
+            <span class="usage-pill"><span class="m g">GET</span> /entity/customer</span>
+            <span class="usage-pill"><span class="m p">POST</span> /entity/customer</span>
+            <span class="usage-pill"><span class="m g">GET</span> /entity/customer/{id}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- NotFound -->
+      <div class="resp-card">
+        <div class="resp-card-head">
+          <span class="resp-code r404">404</span>
+          <span class="resp-card-name r404">NotFound</span>
+          <span class="resp-card-desc">No record exists with the provided ID</span>
+        </div>
+        <div class="resp-card-body">
+          <p style="font-size:13px;color:var(--txt2);margin-bottom:14px;">Only used by the two GET-by-ID endpoints. Returned when the path parameter ID does not match any document in the datastore. Not used on POST (upsert creates new if not found) or GET-all (returns empty array, not 404).</p>
+          <div style="font-size:11px;color:var(--txt3);margin-bottom:6px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;">Used by endpoints</div>
+          <div class="usage-list">
+            <span class="usage-pill"><span class="m g">GET</span> /entity/account/{accountId}</span>
+            <span class="usage-pill"><span class="m g">GET</span> /entity/customer/{customerId}</span>
+          </div>
+          <div style="margin-top:14px;">
+            <div class="code-wrap">
+              <div class="code-bar"><span>Example 404 body</span></div>
+              <pre style="padding:12px;">{
+  <span class="yk">"status"</span>:    <span class="yn">404</span>,
+  <span class="yk">"error"</span>:     <span class="ys">"Not Found"</span>,
+  <span class="yk">"message"</span>:   <span class="ys">"No Account found with accountNumber 999999999"</span>,
+  <span class="yk">"timestamp"</span>: <span class="ys">"2026-03-01T10:30:00Z"</span>,
+  <span class="yk">"path"</span>:      <span class="ys">"/entity/account/999999999"</span>
+}</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- InternalServerError -->
+      <div class="resp-card">
+        <div class="resp-card-head">
+          <span class="resp-code r500">500</span>
+          <span class="resp-card-name r500">InternalServerError</span>
+          <span class="resp-card-desc">Unexpected server-side failure</span>
+        </div>
+        <div class="resp-card-body">
+          <p style="font-size:13px;color:var(--txt2);margin-bottom:14px;">Returned when something fails that is outside the caller's control — database unreachable, unhandled exception, infrastructure fault. Message is intentionally generic to avoid leaking internal details. Every endpoint includes this because any operation can fail at the infrastructure level.</p>
+          <div style="font-size:11px;color:var(--txt3);margin-bottom:6px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;">Used by endpoints</div>
+          <div class="usage-list">
+            <span class="usage-pill"><span class="m g">GET</span> /entity/account</span>
+            <span class="usage-pill"><span class="m p">POST</span> /entity/account</span>
+            <span class="usage-pill"><span class="m g">GET</span> /entity/account/{id}</span>
+            <span class="usage-pill"><span class="m g">GET</span> /entity/customer</span>
+            <span class="usage-pill"><span class="m p">POST</span> /entity/customer</span>
+            <span class="usage-pill"><span class="m g">GET</span> /entity/customer/{id}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- DESIGN PRINCIPLES                                               -->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <div class="section" id="principles">
+    <div class="section-title">
+      <div class="ico" style="background:rgba(52,211,153,0.1);">📐</div>
+      Key Design Principles
+    </div>
+    <div class="section-sub">Architectural decisions made in this spec and the reasoning behind each one</div>
+
+    <div class="principle-list">
+
+      <div class="principle">
+        <div class="principle-num">01</div>
+        <div>
+          <div class="principle-title">readOnly on Server-Set Timestamps <span class="keyword">readOnly: true</span></div>
+          <p><code>lastUpdateDate</code> and <code>lastUpdateTimestamp</code> are marked <code>readOnly: true</code> in both AccountRecord and CustomerRecord. This means they appear in <strong>response bodies</strong> but Swagger UI strips them from the request body editor and code generators exclude them from request models. The server always sets these fields on every POST — the caller never sends them. If a caller does include them the server ignores them. This prevents stale or fabricated timestamps from being injected into the datastore.</p>
+        </div>
+      </div>
+
+      <div class="principle">
+        <div class="principle-num">02</div>
+        <div>
+          <div class="principle-title">docType Locked Per Endpoint <span class="keyword">enum: [Account]</span></div>
+          <p>On <code>AccountRecord</code> the <code>docType</code> enum contains only <code>"Account"</code>. On <code>CustomerRecord</code> it contains only <code>"Customer"</code>. This means if a caller POSTs to <code>/entity/account</code> with <code>docType: "Customer"</code> in the body, schema validation fails immediately with a 400 — no request reaches the service layer. The URL and the document type are always guaranteed to be in agreement. This eliminates an entire class of data corruption bug where Account documents could be written to the Customer path or vice versa.</p>
+        </div>
+      </div>
+
+      <div class="principle">
+        <div class="principle-num">03</div>
+        <div>
+          <div class="principle-title">GET All + POST Share the Same Path <span class="keyword">multi-method path</span></div>
+          <p>Both <code>GET /entity/account</code> and <code>POST /entity/account</code> live under the same path block in the YAML. This is standard REST design — the URL represents the resource collection, and different HTTP methods express different operations on that collection. GET retrieves the collection. POST adds to or updates within the collection. Having them on the same path is not a mistake — it is intentional REST convention.</p>
+        </div>
+      </div>
+
+      <div class="principle">
+        <div class="principle-num">04</div>
+        <div>
+          <div class="principle-title">Pagination Envelope on GET All <span class="keyword">wrapper object</span></div>
+          <p>The GET all endpoints return <code>&#123; totalRecords, page, size, records: [...] &#125;</code> rather than a raw JSON array <code>[...]</code>. A raw array gives the caller no way to know how many total records exist — they cannot calculate how many pages there are or whether they have reached the end. The wrapper object solves this. <code>totalRecords: 150</code> with <code>size: 20</code> tells the caller there are 8 pages total even though only 20 records were returned in this response.</p>
+        </div>
+      </div>
+
+      <div class="principle">
+        <div class="principle-num">05</div>
+        <div>
+          <div class="principle-title">POST as Upsert — 200 vs 201 Signal <span class="keyword">200 update · 201 insert</span></div>
+          <p>Rather than separate POST (create) and PUT (update) endpoints, POST handles both via upsert logic. The response code distinguishes the outcome — <strong>200</strong> means the record already existed and was updated, <strong>201</strong> means a new record was created. This lets the caller know whether they performed an insert or an update without needing to first do a GET to check existence. It also reduces the API surface from 7 endpoints down to 5.</p>
+        </div>
+      </div>
+
+      <div class="principle">
+        <div class="principle-num">06</div>
+        <div>
+          <div class="principle-title">Name + Address Extracted as Shared Schemas <span class="keyword">$ref reuse</span></div>
+          <p>The <code>Name</code> and <code>Address</code> objects are defined once in <code>components/schemas</code> and referenced in both <code>AccountRecord</code> and <code>CustomerRecord</code> via <code>$ref</code>. If a new field like <code>line2</code> is added to Address it is changed in one place and both record types automatically pick it up. Without this the same definition would be duplicated — two places to keep in sync, two places to forget to update, two places where field-level rules like the <code>^[A-Z]{2}$</code> state pattern could drift out of sync.</p>
+        </div>
+      </div>
+
+      <div class="principle">
+        <div class="principle-num">07</div>
+        <div>
+          <div class="principle-title">ErrorResponse Schema Centralised <span class="keyword">consistent error contract</span></div>
+          <p>All three reusable responses — BadRequest, NotFound, InternalServerError — use the same <code>ErrorResponse</code> schema. Every error the API returns has the same shape: <code>status</code>, <code>error</code>, <code>message</code>, <code>timestamp</code>, <code>path</code>, and <code>errors[]</code>. This gives callers a consistent contract — they can write one error handler that works for every endpoint and every error type, rather than special-casing each one. The <code>errors[]</code> array carries field-level detail on 400s so the caller knows exactly which fields to fix.</p>
+        </div>
+      </div>
+
+      <div class="principle">
+        <div class="principle-num">08</div>
+        <div>
+          <div class="principle-title">404 Only on GET-by-ID, Not on GET-All <span class="keyword">empty array not 404</span></div>
+          <p><code>NotFound</code> is only referenced by <code>GET /entity/account/{accountId}</code> and <code>GET /entity/customer/{customerId}</code>. The GET-all endpoints do not include 404 — if no records match the filter they return <code>200</code> with an empty <code>records: []</code> array. Returning 404 for an empty collection would be wrong — the collection itself exists, it just has no matching members. 404 means the specific <em>resource</em> identified by the path does not exist, which only applies to the single-ID lookup.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- FULL YAML                                                       -->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <div class="section yaml-full" id="yaml">
+    <div class="section-title">
+      <div class="ico" style="background:rgba(129,140,248,0.1);">📄</div>
+      Full YAML — entity-api.yaml
+    </div>
+    <div class="section-sub">Complete OpenAPI 3.0.3 specification — copy and paste into editor.swagger.io to render the interactive Swagger UI</div>
+    <div class="code-wrap" style="margin-top:20px;">
+      <div class="code-bar">
+        <span>entity-api.yaml · OpenAPI 3.0.3</span>
+        <button class="copy-btn" onclick="copyYaml()">Copy All</button>
+      </div>
+      <pre id="yaml-content">openapi: 3.0.3
+
+info:
+  title: Entity API
+  description: |
+    REST API for managing Customer Account entities.
+
+    <span class="yk">URL Structure:</span>
+    - Account resource:    /entity/account
+    - Customer resource:   /entity/customer
+
+    <span class="yk">Operations:</span>
+    - GET  /entity/account               — Retrieve all Account records
+    - GET  /entity/account/{accountId}   — Retrieve one Account by ID
+    - POST /entity/account               — Insert or Update an Account
+    - GET  /entity/customer              — Retrieve all Customer records
+    - GET  /entity/customer/{customerId} — Retrieve one Customer by ID
+    - POST /entity/customer              — Insert or Update a Customer
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: api-support@company.com
+
+servers:
+  - url: https://api.company.com/v1
+    description: Production server
+  - url: https://api-dev.company.com/v1
+    description: Development server
+
+tags:
+  - name: Account
+    description: Account sub-resource operations
+  - name: Customer
+    description: Customer sub-resource operations
+
+<span class="yc"># ─────────────────────────────────────────────────────────────────</span>
+<span class="yc"># PATHS</span>
+<span class="yc"># ─────────────────────────────────────────────────────────────────</span>
+paths:
+
+  <span class="yc"># GET /entity/account + POST /entity/account</span>
+  <span class="yk">/entity/account</span>:
+    <span class="yk">get</span>:
+      <span class="yk">tags</span>: [<span class="yv">Account</span>]
+      <span class="yk">summary</span>: <span class="ys">Retrieve all Account records</span>
+      <span class="yk">operationId</span>: <span class="yv">getAllAccounts</span>
+      <span class="yk">parameters</span>:
+        - <span class="yk">name</span>: <span class="yv">status</span>
+          <span class="yk">in</span>: <span class="yv">query</span>
+          <span class="yk">required</span>: <span class="yv">false</span>
+          <span class="yk">schema</span>:
+            <span class="yk">type</span>: <span class="yv">string</span>
+            <span class="yk">enum</span>: [<span class="ye">ACTIVE</span>, <span class="ye">INACTIVE</span>, <span class="ye">SUSPENDED</span>, <span class="ye">CLOSED</span>, <span class="ye">PENDING</span>, <span class="ye">CANCEL</span>]
+        - <span class="yk">name</span>: <span class="yv">page</span>
+          <span class="yk">in</span>: <span class="yv">query</span>
+          <span class="yk">schema</span>: { <span class="yk">type</span>: <span class="yv">integer</span>, <span class="yk">default</span>: <span class="yn">0</span>, <span class="yk">minimum</span>: <span class="yn">0</span> }
+        - <span class="yk">name</span>: <span class="yv">size</span>
+          <span class="yk">in</span>: <span class="yv">query</span>
+          <span class="yk">schema</span>: { <span class="yk">type</span>: <span class="yv">integer</span>, <span class="yk">default</span>: <span class="yn">20</span>, <span class="yk">minimum</span>: <span class="yn">1</span>, <span class="yk">maximum</span>: <span class="yn">100</span> }
+      <span class="yk">responses</span>:
+        <span class="yk">'200'</span>:
+          <span class="yk">description</span>: <span class="ys">Paginated list of Account records</span>
+          <span class="yk">content</span>:
+            <span class="yk">application/json</span>:
+              <span class="yk">schema</span>:
+                <span class="yk">type</span>: <span class="yv">object</span>
+                <span class="yk">properties</span>:
+                  <span class="yk">totalRecords</span>: { <span class="yk">type</span>: <span class="yv">integer</span> }
+                  <span class="yk">page</span>:         { <span class="yk">type</span>: <span class="yv">integer</span> }
+                  <span class="yk">size</span>:         { <span class="yk">type</span>: <span class="yv">integer</span> }
+                  <span class="yk">records</span>:
+                    <span class="yk">type</span>: <span class="yv">array</span>
+                    <span class="yk">items</span>:
+                      <span class="yr">$ref: '#/components/schemas/AccountRecord'</span>
+        <span class="yk">'400'</span>: { <span class="yr">$ref: '#/components/responses/BadRequest'</span> }
+        <span class="yk">'500'</span>: { <span class="yr">$ref: '#/components/responses/InternalServerError'</span> }
+
+    <span class="yk">post</span>:
+      <span class="yk">tags</span>: [<span class="yv">Account</span>]
+      <span class="yk">summary</span>: <span class="ys">Insert or Update an Account (Upsert)</span>
+      <span class="yk">operationId</span>: <span class="yv">upsertAccount</span>
+      <span class="yk">requestBody</span>:
+        <span class="yk">required</span>: <span class="yv">true</span>
+        <span class="yk">content</span>:
+          <span class="yk">application/json</span>:
+            <span class="yk">schema</span>:
+              <span class="yr">$ref: '#/components/schemas/AccountRecord'</span>
+      <span class="yk">responses</span>:
+        <span class="yk">'200'</span>:
+          <span class="yk">description</span>: <span class="ys">Account updated successfully</span>
+          <span class="yk">content</span>:
+            <span class="yk">application/json</span>:
+              <span class="yk">schema</span>: { <span class="yr">$ref: '#/components/schemas/AccountRecord'</span> }
+        <span class="yk">'201'</span>:
+          <span class="yk">description</span>: <span class="ys">Account created successfully</span>
+          <span class="yk">content</span>:
+            <span class="yk">application/json</span>:
+              <span class="yk">schema</span>: { <span class="yr">$ref: '#/components/schemas/AccountRecord'</span> }
+        <span class="yk">'400'</span>: { <span class="yr">$ref: '#/components/responses/BadRequest'</span> }
+        <span class="yk">'500'</span>: { <span class="yr">$ref: '#/components/responses/InternalServerError'</span> }
+
+  <span class="yc"># GET /entity/account/{accountId}</span>
+  <span class="yk">/entity/account/{accountId}</span>:
+    <span class="yk">get</span>:
+      <span class="yk">tags</span>: [<span class="yv">Account</span>]
+      <span class="yk">summary</span>: <span class="ys">Retrieve one Account by ID</span>
+      <span class="yk">operationId</span>: <span class="yv">getAccountById</span>
+      <span class="yk">parameters</span>:
+        - <span class="yk">name</span>: <span class="yv">accountId</span>
+          <span class="yk">in</span>: <span class="yv">path</span>
+          <span class="yk">required</span>: <span class="yv">true</span>
+          <span class="yk">schema</span>: { <span class="yk">type</span>: <span class="yv">integer</span>, <span class="yk">format</span>: <span class="yv">int64</span> }
+          <span class="yk">example</span>: <span class="yn">123456789</span>
+      <span class="yk">responses</span>:
+        <span class="yk">'200'</span>:
+          <span class="yk">description</span>: <span class="ys">Account record found</span>
+          <span class="yk">content</span>:
+            <span class="yk">application/json</span>:
+              <span class="yk">schema</span>: { <span class="yr">$ref: '#/components/schemas/AccountRecord'</span> }
+        <span class="yk">'400'</span>: { <span class="yr">$ref: '#/components/responses/BadRequest'</span> }
+        <span class="yk">'404'</span>: { <span class="yr">$ref: '#/components/responses/NotFound'</span> }
+        <span class="yk">'500'</span>: { <span class="yr">$ref: '#/components/responses/InternalServerError'</span> }
+
+  <span class="yc"># GET /entity/customer + POST /entity/customer</span>
+  <span class="yk">/entity/customer</span>:
+    <span class="yk">get</span>:
+      <span class="yk">tags</span>: [<span class="yv">Customer</span>]
+      <span class="yk">summary</span>: <span class="ys">Retrieve all Customer records</span>
+      <span class="yk">operationId</span>: <span class="yv">getAllCustomers</span>
+      <span class="yk">parameters</span>:
+        - <span class="yk">name</span>: <span class="yv">status</span>
+          <span class="yk">in</span>: <span class="yv">query</span>
+          <span class="yk">required</span>: <span class="yv">false</span>
+          <span class="yk">schema</span>:
+            <span class="yk">type</span>: <span class="yv">string</span>
+            <span class="yk">enum</span>: [<span class="ye">ACTIVE</span>, <span class="ye">INACTIVE</span>, <span class="ye">SUSPENDED</span>, <span class="ye">CLOSED</span>, <span class="ye">PENDING</span>, <span class="ye">CANCEL</span>]
+        - <span class="yk">name</span>: <span class="yv">page</span>
+          <span class="yk">in</span>: <span class="yv">query</span>
+          <span class="yk">schema</span>: { <span class="yk">type</span>: <span class="yv">integer</span>, <span class="yk">default</span>: <span class="yn">0</span> }
+        - <span class="yk">name</span>: <span class="yv">size</span>
+          <span class="yk">in</span>: <span class="yv">query</span>
+          <span class="yk">schema</span>: { <span class="yk">type</span>: <span class="yv">integer</span>, <span class="yk">default</span>: <span class="yn">20</span>, <span class="yk">maximum</span>: <span class="yn">100</span> }
+      <span class="yk">responses</span>:
+        <span class="yk">'200'</span>:
+          <span class="yk">description</span>: <span class="ys">Paginated list of Customer records</span>
+          <span class="yk">content</span>:
+            <span class="yk">application/json</span>:
+              <span class="yk">schema</span>:
+                <span class="yk">type</span>: <span class="yv">object</span>
+                <span class="yk">properties</span>:
+                  <span class="yk">totalRecords</span>: { <span class="yk">type</span>: <span class="yv">integer</span> }
+                  <span class="yk">page</span>:         { <span class="yk">type</span>: <span class="yv">integer</span> }
+                  <span class="yk">size</span>:         { <span class="yk">type</span>: <span class="yv">integer</span> }
+                  <span class="yk">records</span>:
+                    <span class="yk">type</span>: <span class="yv">array</span>
+                    <span class="yk">items</span>:
+                      <span class="yr">$ref: '#/components/schemas/CustomerRecord'</span>
+        <span class="yk">'400'</span>: { <span class="yr">$ref: '#/components/responses/BadRequest'</span> }
+        <span class="yk">'500'</span>: { <span class="yr">$ref: '#/components/responses/InternalServerError'</span> }
+
+    <span class="yk">post</span>:
+      <span class="yk">tags</span>: [<span class="yv">Customer</span>]
+      <span class="yk">summary</span>: <span class="ys">Insert or Update a Customer (Upsert)</span>
+      <span class="yk">operationId</span>: <span class="yv">upsertCustomer</span>
+      <span class="yk">requestBody</span>:
+        <span class="yk">required</span>: <span class="yv">true</span>
+        <span class="yk">content</span>:
+          <span class="yk">application/json</span>:
+            <span class="yk">schema</span>:
+              <span class="yr">$ref: '#/components/schemas/CustomerRecord'</span>
+      <span class="yk">responses</span>:
+        <span class="yk">'200'</span>:
+          <span class="yk">description</span>: <span class="ys">Customer updated successfully</span>
+          <span class="yk">content</span>:
+            <span class="yk">application/json</span>:
+              <span class="yk">schema</span>: { <span class="yr">$ref: '#/components/schemas/CustomerRecord'</span> }
+        <span class="yk">'201'</span>:
+          <span class="yk">description</span>: <span class="ys">Customer created successfully</span>
+          <span class="yk">content</span>:
+            <span class="yk">application/json</span>:
+              <span class="yk">schema</span>: { <span class="yr">$ref: '#/components/schemas/CustomerRecord'</span> }
+        <span class="yk">'400'</span>: { <span class="yr">$ref: '#/components/responses/BadRequest'</span> }
+        <span class="yk">'500'</span>: { <span class="yr">$ref: '#/components/responses/InternalServerError'</span> }
+
+  <span class="yc"># GET /entity/customer/{customerId}</span>
+  <span class="yk">/entity/customer/{customerId}</span>:
+    <span class="yk">get</span>:
+      <span class="yk">tags</span>: [<span class="yv">Customer</span>]
+      <span class="yk">summary</span>: <span class="ys">Retrieve one Customer by ID</span>
+      <span class="yk">operationId</span>: <span class="yv">getCustomerById</span>
+      <span class="yk">parameters</span>:
+        - <span class="yk">name</span>: <span class="yv">customerId</span>
+          <span class="yk">in</span>: <span class="yv">path</span>
+          <span class="yk">required</span>: <span class="yv">true</span>
+          <span class="yk">schema</span>: { <span class="yk">type</span>: <span class="yv">integer</span>, <span class="yk">format</span>: <span class="yv">int64</span> }
+          <span class="yk">example</span>: <span class="yn">987654321</span>
+      <span class="yk">responses</span>:
+        <span class="yk">'200'</span>:
+          <span class="yk">description</span>: <span class="ys">Customer record found</span>
+          <span class="yk">content</span>:
+            <span class="yk">application/json</span>:
+              <span class="yk">schema</span>: { <span class="yr">$ref: '#/components/schemas/CustomerRecord'</span> }
+        <span class="yk">'400'</span>: { <span class="yr">$ref: '#/components/responses/BadRequest'</span> }
+        <span class="yk">'404'</span>: { <span class="yr">$ref: '#/components/responses/NotFound'</span> }
+        <span class="yk">'500'</span>: { <span class="yr">$ref: '#/components/responses/InternalServerError'</span> }
+
+<span class="yc"># ─────────────────────────────────────────────────────────────────</span>
+<span class="yc"># COMPONENTS</span>
+<span class="yc"># ─────────────────────────────────────────────────────────────────</span>
+components:
+  schemas:
+
+    <span class="yk">Name</span>:
+      <span class="yk">type</span>: <span class="yv">object</span>
+      <span class="yk">properties</span>:
+        <span class="yk">legalName</span>: { <span class="yk">type</span>: <span class="yv">string</span>, <span class="yk">maxLength</span>: <span class="yn">20</span> }
+        <span class="yk">dbaName</span>:   { <span class="yk">type</span>: <span class="yv">string</span>, <span class="yk">maxLength</span>: <span class="yn">20</span> }
+      <span class="yk">required</span>: [<span class="ys">legalName</span>]
+
+    <span class="yk">Address</span>:
+      <span class="yk">type</span>: <span class="yv">object</span>
+      <span class="yk">properties</span>:
+        <span class="yk">line1</span>:       { <span class="yk">type</span>: <span class="yv">string</span>, <span class="yk">maxLength</span>: <span class="yn">20</span> }
+        <span class="yk">city</span>:        { <span class="yk">type</span>: <span class="yv">string</span>, <span class="yk">maxLength</span>: <span class="yn">20</span> }
+        <span class="yk">state</span>:       { <span class="yk">type</span>: <span class="yv">string</span>, <span class="yk">minLength</span>: <span class="yn">2</span>, <span class="yk">maxLength</span>: <span class="yn">2</span>, <span class="yk">pattern</span>: <span class="ys">'^[A-Z]{2}$'</span> }
+        <span class="yk">countryCode</span>: { <span class="yk">type</span>: <span class="yv">string</span>, <span class="yk">minLength</span>: <span class="yn">3</span>, <span class="yk">maxLength</span>: <span class="yn">3</span>, <span class="yk">pattern</span>: <span class="ys">'^[A-Z]{3}$'</span> }
+      <span class="yk">required</span>: [<span class="ys">line1</span>]
+
+    <span class="yk">AccountRecord</span>:
+      <span class="yk">type</span>: <span class="yv">object</span>
+      <span class="yk">properties</span>:
+        <span class="yk">docType</span>:             { <span class="yk">type</span>: <span class="yv">string</span>, <span class="yk">enum</span>: [<span class="ye">Account</span>] }
+        <span class="yk">accountNumber</span>:       { <span class="yk">type</span>: <span class="yv">integer</span>, <span class="yk">format</span>: <span class="yv">int64</span> }
+        <span class="yk">name</span>:                { <span class="yr">$ref: '#/components/schemas/Name'</span> }
+        <span class="yk">address</span>:             { <span class="yr">$ref: '#/components/schemas/Address'</span> }
+        <span class="yk">dob</span>:                 { <span class="yk">type</span>: <span class="yv">string</span>, <span class="yk">pattern</span>: <span class="ys">'^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])-[0-9]{4}$'</span> }
+        <span class="yk">status</span>:              { <span class="yk">type</span>: <span class="yv">string</span>, <span class="yk">enum</span>: [<span class="ye">ACTIVE</span>, <span class="ye">INACTIVE</span>, <span class="ye">SUSPENDED</span>, <span class="ye">CLOSED</span>, <span class="ye">PENDING</span>, <span class="ye">CANCEL</span>] }
+        <span class="yk">lastUpdateDate</span>:      { <span class="yk">type</span>: <span class="yv">string</span>, <span class="yk">format</span>: <span class="yv">date</span>,      <span class="yk">readOnly</span>: <span class="yv">true</span> }
+        <span class="yk">lastUpdateTimestamp</span>: { <span class="yk">type</span>: <span class="yv">string</span>, <span class="yk">format</span>: <span class="yv">date-time</span>, <span class="yk">readOnly</span>: <span class="yv">true</span> }
+      <span class="yk">required</span>: [<span class="ys">docType</span>, <span class="ys">accountNumber</span>, <span class="ys">name</span>, <span class="ys">address</span>, <span class="ys">status</span>]
+
+    <span class="yk">CustomerRecord</span>:
+      <span class="yk">type</span>: <span class="yv">object</span>
+      <span class="yk">properties</span>:
+        <span class="yk">docType</span>:             { <span class="yk">type</span>: <span class="yv">string</span>, <span class="yk">enum</span>: [<span class="ye">Customer</span>] }
+        <span class="yk">customerId</span>:          { <span class="yk">type</span>: <span class="yv">integer</span>, <span class="yk">format</span>: <span class="yv">int64</span> }
+        <span class="yk">name</span>:                { <span class="yr">$ref: '#/components/schemas/Name'</span> }
+        <span class="yk">address</span>:             { <span class="yr">$ref: '#/components/schemas/Address'</span> }
+        <span class="yk">dob</span>:                 { <span class="yk">type</span>: <span class="yv">string</span>, <span class="yk">pattern</span>: <span class="ys">'^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])-[0-9]{4}$'</span> }
+        <span class="yk">status</span>:              { <span class="yk">type</span>: <span class="yv">string</span>, <span class="yk">enum</span>: [<span class="ye">ACTIVE</span>, <span class="ye">INACTIVE</span>, <span class="ye">SUSPENDED</span>, <span class="ye">CLOSED</span>, <span class="ye">PENDING</span>, <span class="ye">CANCEL</span>] }
+        <span class="yk">lastUpdateDate</span>:      { <span class="yk">type</span>: <span class="yv">string</span>, <span class="yk">format</span>: <span class="yv">date</span>,      <span class="yk">readOnly</span>: <span class="yv">true</span> }
+        <span class="yk">lastUpdateTimestamp</span>: { <span class="yk">type</span>: <span class="yv">string</span>, <span class="yk">format</span>: <span class="yv">date-time</span>, <span class="yk">readOnly</span>: <span class="yv">true</span> }
+      <span class="yk">required</span>: [<span class="ys">docType</span>, <span class="ys">customerId</span>, <span class="ys">name</span>, <span class="ys">address</span>, <span class="ys">status</span>]
+
+    <span class="yk">ErrorResponse</span>:
+      <span class="yk">type</span>: <span class="yv">object</span>
+      <span class="yk">properties</span>:
+        <span class="yk">status</span>:    { <span class="yk">type</span>: <span class="yv">integer</span> }
+        <span class="yk">error</span>:     { <span class="yk">type</span>: <span class="yv">string</span> }
+        <span class="yk">message</span>:   { <span class="yk">type</span>: <span class="yv">string</span> }
+        <span class="yk">timestamp</span>: { <span class="yk">type</span>: <span class="yv">string</span>, <span class="yk">format</span>: <span class="yv">date-time</span> }
+        <span class="yk">path</span>:      { <span class="yk">type</span>: <span class="yv">string</span> }
+        <span class="yk">errors</span>:
+          <span class="yk">type</span>: <span class="yv">array</span>
+          <span class="yk">items</span>:
+            <span class="yk">type</span>: <span class="yv">object</span>
+            <span class="yk">properties</span>:
+              <span class="yk">field</span>:   { <span class="yk">type</span>: <span class="yv">string</span> }
+              <span class="yk">message</span>: { <span class="yk">type</span>: <span class="yv">string</span> }
+
+  <span class="yk">responses</span>:
+
+    <span class="yk">BadRequest</span>:
+      <span class="yk">description</span>: <span class="ys">Bad Request — validation failed</span>
+      <span class="yk">content</span>:
+        <span class="yk">application/json</span>:
+          <span class="yk">schema</span>: { <span class="yr">$ref: '#/components/schemas/ErrorResponse'</span> }
+
+    <span class="yk">NotFound</span>:
+      <span class="yk">description</span>: <span class="ys">Not Found — no record with that ID</span>
+      <span class="yk">content</span>:
+        <span class="yk">application/json</span>:
+          <span class="yk">schema</span>: { <span class="yr">$ref: '#/components/schemas/ErrorResponse'</span> }
+
+    <span class="yk">InternalServerError</span>:
+      <span class="yk">description</span>: <span class="ys">Internal Server Error — unexpected server failure</span>
+      <span class="yk">content</span>:
+        <span class="yk">application/json</span>:
+          <span class="yk">schema</span>: { <span class="yr">$ref: '#/components/schemas/ErrorResponse'</span> }</pre>
+    </div>
+  </div>
+
+</div>
+
+<footer>Entity API Specification · OpenAPI 3.0.3 · v1.0.0 · Paste YAML into editor.swagger.io for interactive Swagger UI</footer>
+
+<script>
+  function toggle(header) {
+    const body = header.nextElementSibling;
+    const chevron = header.querySelector('.ep-chevron');
+    const isOpen = body.classList.contains('open');
+    body.classList.toggle('open', !isOpen);
+    chevron.classList.toggle('open', !isOpen);
+  }
+
+  function copyCode(btn) {
+    const pre = btn.closest('.code-wrap').querySelector('pre');
+    navigator.clipboard.writeText(pre.innerText).then(() => {
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy', 1800);
+    });
+  }
+
+  function copyYaml() {
+    const pre = document.getElementById('yaml-content');
+    navigator.clipboard.writeText(pre.innerText).then(() => {
+      const btn = document.querySelector('.yaml-full .copy-btn');
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy All', 1800);
+    });
+  }
+</script>
+</body>
+</html>
