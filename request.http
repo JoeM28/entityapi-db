@@ -6,7 +6,7 @@ Content-Type: application/json
 
 {
   "docType": "Account",
-  "accountNumber": 124,
+  "accountNumber": 126,
   "status": "ACTIVE",
   "dob": "12-31-1972",
   "name": { "legalName": "Joe Mohan" },
@@ -14,4 +14,4 @@ Content-Type: application/json
 }
 
 ### Get the same account
-GET http://localhost:8080/entity/account/124
+GET http://localhost:8080/entity/account/126
