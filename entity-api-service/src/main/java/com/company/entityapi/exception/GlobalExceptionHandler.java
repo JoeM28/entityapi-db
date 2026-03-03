@@ -22,6 +22,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
     }
 
+    @ExceptionHandler(BadDataException.class)
+    public ResponseEntity<ErrorResponse> handleBadData(
+            BadDataException ex, HttpServletRequest request) {
+        ErrorResponse body = buildError(400, "Bad Request", ex.getMessage(), request.getRequestURI());
+        return ResponseEntity.badRequest().body(body);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(
             MethodArgumentNotValidException ex, HttpServletRequest request) {
