@@ -1,0 +1,8 @@
+.git
+.idea
+*.html
+PostManCollection
+skills
+dump_files.py
+couchbase
+entity-api-service/target

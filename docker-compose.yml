@@ -1,0 +1,67 @@
+services:
+
+  # ── 1. Couchbase ─────────────────────────────────────────────────────────────
+  couchbase:
+    image: couchbase:latest
+    container_name: couchbase-local
+    ports:
+      - "8091-8096:8091-8096"   # Management UI + REST API
+      - "11210:11210"            # Key-Value port
+    volumes:
+      - couchbase-data:/opt/couchbase/var   # Persists cluster config & data
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8091/ui/index.html"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    networks:
+      - entity-net
+    restart: unless-stopped
+
+  # ── 2. One-shot cluster + bucket initialiser (idempotent, safe to re-run) ───
+  couchbase-setup:
+    image: couchbase:latest
+    container_name: couchbase-setup
+    depends_on:
+      couchbase:
+        condition: service_healthy
+    volumes:
+      - ./couchbase/init.sh:/init.sh:ro
+    environment:
+      COUCHBASE_HOST: couchbase
+      CB_USERNAME: Administrator
+      CB_PASSWORD: password
+      CB_BUCKET: customer_bucket
+    entrypoint: ["sh", "-c", "tr -d '\\r' < /init.sh > /tmp/init.sh && bash /tmp/init.sh"]
+    restart: "no"
+    networks:
+      - entity-net
+
+  # ── 3. Spring Boot app ────────────────────────────────────────────────────────
+  entity-api:
+    build:
+      context: .              # repo root — Dockerfile + entity-api.yaml are both here
+      dockerfile: Dockerfile
+    container_name: entity-api-service
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_COUCHBASE_CONNECTION_STRING: couchbase   # resolves via Docker DNS to the couchbase service
+      SPRING_COUCHBASE_USERNAME: Administrator
+      SPRING_COUCHBASE_PASSWORD: password
+      SPRING_DATA_COUCHBASE_BUCKET_NAME: customer_bucket
+    depends_on:
+      couchbase-setup:
+        condition: service_completed_successfully     # waits for cluster + bucket to be ready
+    networks:
+      - entity-net
+    restart: unless-stopped
+
+# ── Networks & Volumes ──────────────────────────────────────────────────────────
+networks:
+  entity-net:
+    driver: bridge
+
+volumes:
+  couchbase-data:
