@@ -1,0 +1,21 @@
+name: Deploy to Local Docker
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: self-hosted          # runs on YOUR machine via the local runner
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build and deploy
+        working-directory: ${{ github.workspace }}
+        run: docker compose up --build -d
+
+      - name: Verify containers are running
+        run: docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
