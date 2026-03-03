@@ -8,6 +8,7 @@ import com.couchbase.client.java.kv.GetResult;
 import com.couchbase.client.java.kv.UpsertOptions;
 import com.company.entityapi.document.AccountDocument;
 import com.company.entityapi.exception.AccountNotFoundException;
+import com.company.entityapi.exception.BadDataException;
 import com.company.entityapi.model.AccountRecord;
 import com.company.entityapi.model.Address;
 import com.company.entityapi.model.Name;
@@ -71,6 +72,17 @@ public class AccountService {
     }
 
     public AccountRecord upsert(AccountRecord record) {
+        // Reject null record early to avoid NPEs and produce a consistent bad-data error
+        if (record == null) {
+            throw new BadDataException("Account record must not be null");
+        }
+        // Validate required address state
+        if (record != null && record.getAddress() != null) {
+            String state = record.getAddress().getState();
+            if (state == null || state.trim().isEmpty()) {
+                throw new BadDataException("Missing required state code on address for account: " + record.getAccountNumber());
+            }
+        }
         AccountDocument doc = toDocument(record);
         String key = String.valueOf(doc.getAccountNumber());
 
