@@ -15,9 +15,10 @@ import urllib.request
 import urllib.error
 from pathlib import Path
 
-REPO_ROOT   = Path(__file__).parent.parent
-SKILLS_MD   = REPO_ROOT / ".github" / "skills" / "pr-analysis" / "SKILLS.md"
-REPORT_FILE = REPO_ROOT / ".github" / "skills" / "pr-analysis" / "PR_ANALYSIS_REPORT.md"
+SCRIPT_DIR  = Path(__file__).parent                    # .github/skills/pr-analysis/
+REPO_ROOT   = SCRIPT_DIR.parent.parent.parent          # repo root
+SKILLS_MD   = SCRIPT_DIR / "SKILLS.md"                 # same folder as this script
+REPORT_FILE = SCRIPT_DIR / "PR_ANALYSIS_REPORT.md"     # same folder as this script
 MAX_DIFF    = 15000   # chars — keeps prompt within token limits
 
 GITHUB_MODELS_URL = "https://models.inference.ai.azure.com/chat/completions"

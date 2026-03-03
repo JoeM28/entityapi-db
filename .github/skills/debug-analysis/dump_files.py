@@ -9,7 +9,8 @@ import os
 import shutil
 from pathlib import Path
 
-REPO_ROOT    = Path(__file__).parent
+SCRIPT_DIR   = Path(__file__).parent                    # .github/skills/debug-analysis/
+REPO_ROOT    = SCRIPT_DIR.parent.parent.parent          # repo root
 SOURCE_DIR   = REPO_ROOT / "entity-api-service"
 DOWNLOAD_DIR = REPO_ROOT / "skills" / "download-sources"
 

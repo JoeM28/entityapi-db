@@ -32,17 +32,17 @@ jobs:
           HEAD_SHA:        ${{ github.event.pull_request.head.sha }}
           GITHUB_HEAD_REF: ${{ github.head_ref }}
           PR_NUMBER:       ${{ github.event.pull_request.number }}
-        run: python scripts\pr_analysis.py
+        run: python .github\skills\pr-analysis\pr_analysis.py
 
       - name: Commit report to PR branch
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add .github\skills\pr-analysis\PR_ANALYSIS_REPORT.md
+          git add .github/skills/pr-analysis/PR_ANALYSIS_REPORT.md
           git diff --cached --quiet && echo "No changes" || git commit -m "chore: update PR analysis report [skip ci]"
           git push
 
       - name: Post analysis report as PR comment
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh pr comment ${{ github.event.pull_request.number }} --body-file .github\skills\pr-analysis\PR_ANALYSIS_REPORT.md
+        run: gh pr comment ${{ github.event.pull_request.number }} --body-file .github/skills/pr-analysis/PR_ANALYSIS_REPORT.md
