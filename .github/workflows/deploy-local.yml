@@ -8,6 +8,9 @@ on:
 jobs:
   deploy:
     runs-on: self-hosted          # runs on YOUR machine via the local runner
+    defaults:
+      run:
+        shell: bash               # use Git Bash — avoids Windows PowerShell execution policy
 
     steps:
       - name: Checkout code
