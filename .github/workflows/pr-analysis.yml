@@ -7,7 +7,8 @@ on:
     types: [opened, synchronize, reopened]
 
 permissions:
-  pull-requests: write   # needed to post the PR comment
+  pull-requests: write   # post PR comment
+  models: read           # call GitHub Models (Copilot) API
 
 jobs:
   analyze:
@@ -20,17 +21,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0        # full history needed for git diff
+          fetch-depth: 0          # full history needed for git diff
 
-      - name: Run PR analysis
+      - name: Analyze PR using SKILLS.md + GitHub Copilot
         env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BASE_SHA:     ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA:     ${{ github.event.pull_request.head.sha }}
           GITHUB_HEAD_REF: ${{ github.head_ref }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: python scripts\pr_analysis.py > pr_report.md
+          PR_NUMBER:    ${{ github.event.pull_request.number }}
+          OUTPUT_FILE:  pr_report.md
+        run: python scripts\pr_analysis.py
 
-      - name: Post analysis as PR comment
+      - name: Post analysis report as PR comment
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh pr comment ${{ github.event.pull_request.number }} --body-file pr_report.md
