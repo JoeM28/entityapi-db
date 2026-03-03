@@ -25,6 +25,11 @@ jobs:
           ref: ${{ github.head_ref }}   # check out the PR branch, not merge commit
           fetch-depth: 0
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
       - name: Analyze PR using SKILLS.md + GitHub Copilot
         env:
           GITHUB_TOKEN:    ${{ secrets.GITHUB_TOKEN }}
