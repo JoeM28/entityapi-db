@@ -1,0 +1,21 @@
+spring:
+  couchbase:
+    connection-string: localhost
+    username: Administrator
+    password: password          # change if you used a different password during setup
+  data:
+    couchbase:
+      bucket-name: customer_bucket
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false   # serialize LocalDate/OffsetDateTime as ISO strings
+
+logging:
+  level:
+    root: INFO
+    com.company.entityapi: DEBUG      # Debug logs for your application code
+    com.couchbase.client: DEBUG        # Debug logs for Couchbase SDK operations
+
+server:
+  port: 8080
