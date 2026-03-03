@@ -1,84 +1,73 @@
 #!/usr/bin/env python3
 """
-Script to dump all Java files and yaml/html/xml/http files from entity-api-service
-to a download folder while preserving directory structure.
+Dumps all source files from entity-api-service into skills/download-sources/
+as a flat collection (no subdirectories) so GitHub Copilot Chat can reference them.
+Run this script whenever source files change to keep the skill context up to date.
 """
 
 import os
 import shutil
 from pathlib import Path
 
-# Define source and destination directories
-SOURCE_DIR = Path("C:/Users/mohan/entityapi-db/entity-api-service")
-DOWNLOAD_DIR = Path("C:/Users/mohan/Downloads/entityapi-dump")
+REPO_ROOT    = Path(__file__).parent
+SOURCE_DIR   = REPO_ROOT / "entity-api-service"
+DOWNLOAD_DIR = REPO_ROOT / "skills" / "download-sources"
 
-# File extensions to copy
-EXTENSIONS = {'.java', '.yaml', '.yml', '.html', '.xml', '.http'}
-
-def get_relative_path(file_path, source_dir):
-    """Get the relative path of a file from the source directory."""
-    return Path(file_path).relative_to(source_dir)
+# File extensions to include
+EXTENSIONS = {'.java', '.yaml', '.yml', '.xml', '.http'}
 
 def dump_files():
-    """Copy all matching files from source to download directory."""
-
     if not SOURCE_DIR.exists():
-        print(f"❌ Source directory does not exist: {SOURCE_DIR}")
+        print(f"ERROR: Source directory does not exist: {SOURCE_DIR}")
         return False
 
-    # Create download directory if it doesn't exist
-    DOWNLOAD_DIR.mkdir(parents=True, exist_ok=True)
-    print(f"📁 Download directory: {DOWNLOAD_DIR}")
+    # Clean destination so there are no stale or duplicate files
+    if DOWNLOAD_DIR.exists():
+        shutil.rmtree(DOWNLOAD_DIR)
+    DOWNLOAD_DIR.mkdir(parents=True)
+    print(f"Destination cleared and ready: {DOWNLOAD_DIR}\n")
 
-    copied_count = 0
-    file_list = []
+    copied   = []
+    skipped  = []
 
-    # Walk through the source directory
-    for file_path in SOURCE_DIR.rglob('*'):
-        if file_path.is_file():
-            # Check if file extension matches
-            if file_path.suffix.lower() in EXTENSIONS:
-                # Get relative path
-                rel_path = get_relative_path(file_path, SOURCE_DIR)
+    # Also include entity-api.yaml from repo root
+    extra_files = [REPO_ROOT / "entity-api.yaml"]
 
-                # Create destination path
-                dest_path = DOWNLOAD_DIR / rel_path
+    all_files = list(SOURCE_DIR.rglob('*')) + extra_files
 
-                # Create parent directories if they don't exist
-                dest_path.parent.mkdir(parents=True, exist_ok=True)
+    for file_path in all_files:
+        file_path = Path(file_path)
+        if not file_path.is_file():
+            continue
+        if file_path.suffix.lower() not in EXTENSIONS:
+            continue
+        # Skip generated model classes — they are derived from entity-api.yaml
+        if "generated-sources" in str(file_path) or "target" in str(file_path):
+            continue
 
-                # Copy file
-                try:
-                    shutil.copy2(file_path, dest_path)
-                    copied_count += 1
-                    file_list.append(str(rel_path))
-                    print(f"✓ Copied: {rel_path}")
-                except Exception as e:
-                    print(f"❌ Error copying {rel_path}: {e}")
+        dest = DOWNLOAD_DIR / file_path.name
+        try:
+            shutil.copy2(file_path, dest)
+            copied.append(file_path.name)
+            print(f"  copied: {file_path.name}")
+        except Exception as e:
+            skipped.append((file_path.name, str(e)))
+            print(f"  SKIP:   {file_path.name} — {e}")
 
-    # Print summary
-    print("\n" + "="*60)
-    print(f"📊 Summary:")
-    print(f"   Total files copied: {copied_count}")
-    print(f"   Destination: {DOWNLOAD_DIR}")
-    print("="*60)
+    # Write manifest
+    manifest = DOWNLOAD_DIR / "FILES_COPIED.txt"
+    with open(manifest, 'w') as f:
+        f.write("Entity API — Source Dump\n")
+        f.write(f"Source : {SOURCE_DIR}\n")
+        f.write(f"Files  : {len(copied)}\n\n")
+        for name in sorted(copied):
+            f.write(f"{name}\n")
 
-    # Create a summary file listing all copied files
-    summary_file = DOWNLOAD_DIR / "FILES_COPIED.txt"
-    with open(summary_file, 'w') as f:
-        f.write(f"Entity API Files Dump\n")
-        f.write(f"Generated from: {SOURCE_DIR}\n")
-        f.write(f"Total files copied: {copied_count}\n")
-        f.write(f"File extensions: {', '.join(sorted(EXTENSIONS))}\n")
-        f.write(f"\n{'='*60}\n")
-        f.write(f"Files copied:\n{'='*60}\n\n")
-        for file in sorted(file_list):
-            f.write(f"{file}\n")
-
-    print(f"📝 Summary saved to: {summary_file}")
+    print(f"\nDone — {len(copied)} files copied to {DOWNLOAD_DIR}")
+    if skipped:
+        print(f"Skipped {len(skipped)}: {[s[0] for s in skipped]}")
     return True
 
 if __name__ == "__main__":
     success = dump_files()
     exit(0 if success else 1)
-
