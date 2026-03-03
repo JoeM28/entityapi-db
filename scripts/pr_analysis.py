@@ -15,9 +15,10 @@ import urllib.request
 import urllib.error
 from pathlib import Path
 
-REPO_ROOT  = Path(__file__).parent.parent
-SKILLS_MD  = REPO_ROOT / ".github" / "skills" / "pr-analysis" / "SKILLS.md"
-MAX_DIFF   = 15000   # chars — keeps prompt within token limits
+REPO_ROOT   = Path(__file__).parent.parent
+SKILLS_MD   = REPO_ROOT / ".github" / "skills" / "pr-analysis" / "SKILLS.md"
+REPORT_FILE = REPO_ROOT / ".github" / "skills" / "pr-analysis" / "PR_ANALYSIS_REPORT.md"
+MAX_DIFF    = 15000   # chars — keeps prompt within token limits
 
 GITHUB_MODELS_URL = "https://models.inference.ai.azure.com/chat/completions"
 COPILOT_MODEL     = "gpt-4o"
@@ -97,7 +98,7 @@ def main():
     base_sha     = os.environ.get("BASE_SHA",          "origin/main")
     head_sha     = os.environ.get("HEAD_SHA",           "HEAD")
     pr_branch    = os.environ.get("GITHUB_HEAD_REF",    "feature branch")
-    out_file     = os.environ.get("OUTPUT_FILE",        "pr_report.md")
+    out_file     = os.environ.get("OUTPUT_FILE", str(REPORT_FILE))
 
     lines = []
 

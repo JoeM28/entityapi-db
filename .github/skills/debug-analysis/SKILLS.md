@@ -58,6 +58,30 @@ Respond with:
 3. **Root cause** — one sentence explanation
 4. **Fix** — corrected code snippet
 
+### Step 6 — Save the report
+Write the full analysis as a markdown file to:
+```
+.github/skills/debug-analysis/DEBUG_REPORT.md
+```
+Structure the file as:
+```markdown
+# Debug Analysis Report
+**Date:** <today>
+**Error:** <one-line summary of the error>
+
+## Signal Extracted
+...
+
+## Source File(s)
+...
+
+## Root Cause
+...
+
+## Recommended Fix
+...
+```
+
 ---
 
 ## Project Reference

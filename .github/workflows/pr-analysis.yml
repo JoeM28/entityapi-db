@@ -8,6 +8,7 @@ on:
 
 permissions:
   pull-requests: write   # post PR comment
+  contents: write        # commit report file back to PR branch
   models: read           # call GitHub Models (Copilot) API
 
 jobs:
@@ -18,22 +19,30 @@ jobs:
         shell: cmd
 
     steps:
-      - name: Checkout code
+      - name: Checkout PR branch
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0          # full history needed for git diff
+          ref: ${{ github.head_ref }}   # check out the PR branch, not merge commit
+          fetch-depth: 0
 
       - name: Analyze PR using SKILLS.md + GitHub Copilot
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BASE_SHA:     ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA:     ${{ github.event.pull_request.head.sha }}
+          GITHUB_TOKEN:    ${{ secrets.GITHUB_TOKEN }}
+          BASE_SHA:        ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA:        ${{ github.event.pull_request.head.sha }}
           GITHUB_HEAD_REF: ${{ github.head_ref }}
-          PR_NUMBER:    ${{ github.event.pull_request.number }}
-          OUTPUT_FILE:  pr_report.md
+          PR_NUMBER:       ${{ github.event.pull_request.number }}
         run: python scripts\pr_analysis.py
+
+      - name: Commit report to PR branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .github\skills\pr-analysis\PR_ANALYSIS_REPORT.md
+          git diff --cached --quiet && echo "No changes" || git commit -m "chore: update PR analysis report [skip ci]"
+          git push
 
       - name: Post analysis report as PR comment
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh pr comment ${{ github.event.pull_request.number }} --body-file pr_report.md
+        run: gh pr comment ${{ github.event.pull_request.number }} --body-file .github\skills\pr-analysis\PR_ANALYSIS_REPORT.md

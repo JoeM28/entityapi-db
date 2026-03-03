@@ -35,8 +35,19 @@ before merging.
 
 ---
 
+## Output
+
+The analysis report is written to:
+```
+.github/skills/pr-analysis/PR_ANALYSIS_REPORT.md
+```
+This file is committed to the PR branch automatically so the reviewer can read it
+directly in the repository before merging. It is also posted as a PR comment.
+
 ## How it works
 
 1. GitHub Actions workflow (`.github/workflows/pr-analysis.yml`) triggers on PR open/update
-2. `scripts/pr_analysis.py` diffs the PR against `main`, applies the checks above
-3. A markdown report is posted as a PR comment — reviewer reads it before merging
+2. `scripts/pr_analysis.py` reads this `SKILLS.md` as the criteria, diffs the PR against `main`
+3. Sends both to GitHub Copilot (GitHub Models API) for analysis
+4. Writes the markdown report to `.github/skills/pr-analysis/PR_ANALYSIS_REPORT.md`
+5. Commits the report file to the PR branch and posts it as a PR comment
