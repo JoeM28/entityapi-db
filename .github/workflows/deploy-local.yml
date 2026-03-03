@@ -10,7 +10,7 @@ jobs:
     runs-on: self-hosted          # runs on YOUR machine via the local runner
     defaults:
       run:
-        shell: bash               # use Git Bash — avoids Windows PowerShell execution policy
+        shell: 'C:\Program Files\Git\bin\bash.exe {0}'
 
     steps:
       - name: Checkout code
