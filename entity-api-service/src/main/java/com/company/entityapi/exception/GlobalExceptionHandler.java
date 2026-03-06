@@ -25,7 +25,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BadDataException.class)
     public ResponseEntity<ErrorResponse> handleBadData(
             BadDataException ex, HttpServletRequest request) {
-        ErrorResponse body = buildError(400, "Bad Request", ex.getMessage(), request.getRequestURI());
+        ErrorResponse body = buildError(400, "Bad Request Found", ex.getMessage(), request.getRequestURI());
         return ResponseEntity.badRequest().body(body);
     }
 
