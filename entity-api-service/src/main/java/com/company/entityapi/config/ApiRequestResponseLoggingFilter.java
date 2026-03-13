@@ -78,6 +78,8 @@ STATUS         : {}
 {}
 ---- RESPONSE BODY ----
 {}
+
+This API call log includes request/response headers and payloads, which can be very helpful for debugging. However, be cautious about logging sensitive information in production environments. You may want to implement filtering or redaction of certain headers or body content to avoid exposing sensitive data in logs.
 ===================================================
                     """,
                     startTime,
