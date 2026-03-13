@@ -17,5 +17,14 @@ logging:
     com.company.entityapi: DEBUG      # Debug logs for your application code
     com.couchbase.client: DEBUG        # Debug logs for Couchbase SDK operations
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: always
+
 server:
   port: 8080

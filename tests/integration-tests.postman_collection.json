@@ -1,0 +1,247 @@
+{
+  "info": {
+    "_postman_id": "integration-tests-v1",
+    "name": "Entity API — Integration Tests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Newman integration tests for Entity API Account endpoints.\nRun via GitHub Actions on every PR."
+  },
+  "item": [
+    {
+      "name": "POST Create Account (expect 201)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 201 Created', function () {",
+              "  pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test('Response is JSON', function () {",
+              "  pm.response.to.be.json;",
+              "});",
+              "",
+              "pm.test('Response contains accountNumber', function () {",
+              "  var body = pm.response.json();",
+              "  pm.expect(body).to.have.property('accountNumber');",
+              "  pm.expect(body.accountNumber).to.eql(900001);",
+              "});",
+              "",
+              "pm.test('Response contains correct status', function () {",
+              "  var body = pm.response.json();",
+              "  pm.expect(body.status).to.eql('ACTIVE');",
+              "});",
+              "",
+              "pm.test('Response contains legalName', function () {",
+              "  var body = pm.response.json();",
+              "  pm.expect(body.name.legalName).to.eql('Integration Test Co');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Accept",       "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"docType\": \"Account\",\n  \"accountNumber\": 900001,\n  \"status\": \"ACTIVE\",\n  \"dob\": \"01-15-1990\",\n  \"name\": {\n    \"legalName\": \"Integration Test Co\",\n    \"dbaName\": \"ITC\"\n  },\n  \"address\": {\n    \"line1\": \"1 Test Ave\",\n    \"city\": \"Miami\",\n    \"state\": \"FL\",\n    \"countryCode\": \"USA\"\n  }\n}\n",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/entity/account",
+          "host": ["{{baseUrl}}"],
+          "path": ["entity", "account"]
+        }
+      }
+    },
+    {
+      "name": "POST Upsert Same Account (expect 200)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 200 OK on upsert', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Updated legalName is reflected', function () {",
+              "  var body = pm.response.json();",
+              "  pm.expect(body.name.legalName).to.eql('Integration Test Co');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Accept",       "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"docType\": \"Account\",\n  \"accountNumber\": 900001,\n  \"status\": \"ACTIVE\",\n  \"dob\": \"01-15-1990\",\n  \"name\": {\n    \"legalName\": \"Integration Test Co\",\n    \"dbaName\": \"ITC\"\n  },\n  \"address\": {\n    \"line1\": \"1 Test Ave\",\n    \"city\": \"Miami\",\n    \"state\": \"FL\",\n    \"countryCode\": \"USA\"\n  }\n}\n",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/entity/account",
+          "host": ["{{baseUrl}}"],
+          "path": ["entity", "account"]
+        }
+      }
+    },
+    {
+      "name": "GET Account by ID (expect 200)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 200 OK', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response is JSON', function () {",
+              "  pm.response.to.be.json;",
+              "});",
+              "",
+              "pm.test('Correct accountNumber returned', function () {",
+              "  var body = pm.response.json();",
+              "  pm.expect(body.accountNumber).to.eql(900001);",
+              "});",
+              "",
+              "pm.test('docType is Account', function () {",
+              "  var body = pm.response.json();",
+              "  pm.expect(body.docType).to.eql('Account');",
+              "});",
+              "",
+              "pm.test('lastUpdateDate is set by server', function () {",
+              "  var body = pm.response.json();",
+              "  pm.expect(body).to.have.property('lastUpdateDate');",
+              "  pm.expect(body.lastUpdateDate).to.match(/^\\d{4}-\\d{2}-\\d{2}$/);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Accept", "value": "application/json" }],
+        "url": {
+          "raw": "{{baseUrl}}/entity/account/900001",
+          "host": ["{{baseUrl}}"],
+          "path": ["entity", "account", "900001"]
+        }
+      }
+    },
+    {
+      "name": "GET Non-existent Account (expect 404)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 404 Not Found', function () {",
+              "  pm.response.to.have.status(404);",
+              "});",
+              "",
+              "pm.test('Error response has status field', function () {",
+              "  var body = pm.response.json();",
+              "  pm.expect(body.status).to.eql(404);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Accept", "value": "application/json" }],
+        "url": {
+          "raw": "{{baseUrl}}/entity/account/999999999",
+          "host": ["{{baseUrl}}"],
+          "path": ["entity", "account", "999999999"]
+        }
+      }
+    },
+    {
+      "name": "POST Invalid Account — missing legalName (expect 400)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 400 Bad Request', function () {",
+              "  pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test('Error response body is present', function () {",
+              "  var body = pm.response.json();",
+              "  pm.expect(body.status).to.eql(400);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Accept",       "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"docType\": \"Account\",\n  \"accountNumber\": 900002,\n  \"status\": \"ACTIVE\",\n  \"name\": {},\n  \"address\": {\n    \"line1\": \"1 Test Ave\",\n    \"city\": \"Miami\",\n    \"state\": \"FL\",\n    \"countryCode\": \"USA\"\n  }\n}\n",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/entity/account",
+          "host": ["{{baseUrl}}"],
+          "path": ["entity", "account"]
+        }
+      }
+    },
+    {
+      "name": "GET Actuator Health (expect 200)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Health check is UP', function () {",
+              "  pm.response.to.have.status(200);",
+              "  var body = pm.response.json();",
+              "  pm.expect(body.status).to.eql('UP');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Accept", "value": "application/json" }],
+        "url": {
+          "raw": "{{baseUrl}}/actuator/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["actuator", "health"]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    }
+  ]
+}
