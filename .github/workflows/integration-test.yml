@@ -1,0 +1,76 @@
+name: Integration Tests
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+
+jobs:
+  integration-test:
+    name: API Integration Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Checkout ────────────────────────────────────────────────────────────
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+
+      # ── 2. Build and start all containers ──────────────────────────────────────
+      - name: Start services (Couchbase + Entity API)
+        run: docker compose up -d --build
+        # docker compose builds the Spring Boot image, starts Couchbase,
+        # runs couchbase-setup (init.sh), then starts entity-api-service.
+        # The depends_on / healthcheck chain in docker-compose.yml handles ordering.
+
+      # ── 3. Wait for the Spring Boot app to be healthy ──────────────────────────
+      - name: Wait for Entity API to be ready
+        run: |
+          echo "Waiting for http://localhost:8080/actuator/health ..."
+          for i in $(seq 1 30); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/actuator/health || true)
+            if [ "$STATUS" = "200" ]; then
+              echo "Entity API is UP (attempt $i)"
+              exit 0
+            fi
+            echo "  attempt $i — got HTTP $STATUS, retrying in 10s..."
+            sleep 10
+          done
+          echo "ERROR: Entity API did not become healthy within 5 minutes."
+          docker compose logs entity-api
+          exit 1
+
+      # ── 4. Install Newman (Postman CLI runner) ─────────────────────────────────
+      - name: Install Newman
+        run: npm install -g newman
+
+      # ── 5. Run integration tests ───────────────────────────────────────────────
+      - name: Run Newman integration tests
+        run: |
+          newman run tests/integration-tests.postman_collection.json \
+            --env-var "baseUrl=http://localhost:8080" \
+            --reporters cli,junit \
+            --reporter-junit-export newman-results.xml
+
+      # ── 6. Publish test results ────────────────────────────────────────────────
+      - name: Publish test results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()   # run even if Newman failed so we see the report
+        with:
+          files: newman-results.xml
+          comment_title: 'API Integration Test Results'
+          check_name: 'Integration Tests'
+
+      # ── 7. Dump logs on failure ────────────────────────────────────────────────
+      - name: Dump container logs on failure
+        if: failure()
+        run: |
+          echo "=== entity-api logs ==="
+          docker compose logs entity-api
+          echo "=== couchbase logs ==="
+          docker compose logs couchbase
+
+      # ── 8. Tear down ───────────────────────────────────────────────────────────
+      - name: Tear down containers
+        if: always()
+        run: docker compose down -v
