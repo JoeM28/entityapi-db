@@ -12,6 +12,7 @@ import com.company.entityapi.exception.BadDataException;
 import com.company.entityapi.model.AccountRecord;
 import com.company.entityapi.model.Address;
 import com.company.entityapi.model.Name;
+import com.company.validation.DobValidator;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -84,6 +85,10 @@ public class AccountService {
             if (state == null || state.trim().isEmpty()) {
                 throw new BadDataException("Missing required state code on address for account: " + record.getAccountNumber());
             }
+        }
+        // Validate DOB format (MM-DD-YYYY with a 4-digit year) via entity-dob-validation library
+        if (record.getDob() != null && !DobValidator.isValid(record.getDob())) {
+            throw new BadDataException("Invalid dob '" + record.getDob() + "'. Expected MM-DD-YYYY with a 4-digit year.");
         }
         AccountDocument doc = toDocument(record);
         String key = String.valueOf(doc.getAccountNumber());
