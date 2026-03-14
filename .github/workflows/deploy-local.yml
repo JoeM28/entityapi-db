@@ -5,9 +5,19 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'entity-api-service/src/**'
+      - 'entity-api-service/pom.xml'
+      - 'Dockerfile'
+      - 'docker-compose.yml'
   pull_request:
     branches:
       - main
+    paths:
+      - 'entity-api-service/src/**'
+      - 'entity-api-service/pom.xml'
+      - 'Dockerfile'
+      - 'docker-compose.yml'
       
 permissions:
   pull-requests: write   # post PR comment
