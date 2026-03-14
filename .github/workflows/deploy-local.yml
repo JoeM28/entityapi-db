@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - main
+permissions:
+  pull-requests: write   # post PR comment
+  contents: write        # commit report file back to PR branch
+  models: read           # call GitHub Models (Copilot) API
+
 
 jobs:
   deploy:
