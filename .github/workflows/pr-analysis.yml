@@ -1,39 +1,25 @@
 name: PR Analysis
-
 on:
   pull_request:
     branches:
       - main
     types: [opened, synchronize, reopened]
-
 permissions:
   pull-requests: write   # post PR comment
   contents: write        # commit report file back to PR branch
   models: read           # call GitHub Models (Copilot) API
-
 jobs:
   analyze:
     runs-on: self-hosted
     defaults:
       run:
         shell: cmd
-
     steps:
       - name: Checkout PR branch
         uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref }} # check out the PR branch, not merge commit
           fetch-depth: 0
-
-      - name: Allow PowerShell scripts
-        shell: powershell
-        run: Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process -Force
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
-
       - name: Analyze PR using SKILLS.md + GitHub Copilot
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -42,7 +28,6 @@ jobs:
           GITHUB_HEAD_REF: ${{ github.head_ref }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: python .github\skills\pr-analysis\pr_analysis.py
-
       - name: Commit report to PR branch
         run: |
           git config user.name "github-actions[bot]"
@@ -50,7 +35,6 @@ jobs:
           git add .github/skills/pr-analysis/PR_ANALYSIS_REPORT.md
           git diff --cached --quiet && echo "No changes" || git commit -m "chore: update PR analysis report [skip ci]"
           git push
-
       - name: Post analysis report as PR comment
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
