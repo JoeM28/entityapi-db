@@ -1,9 +1,14 @@
 name: Deploy to Local Docker
 
+
 on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
+      
 permissions:
   pull-requests: write   # post PR comment
   contents: write        # commit report file back to PR branch
