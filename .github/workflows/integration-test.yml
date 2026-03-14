@@ -1,10 +1,13 @@
 name: Integration Tests
 
+
 on:
+  push:
+    branches:
+      - main
   pull_request:
     branches:
       - main
-    types: [opened, synchronize, reopened]
 
 permissions:
   pull-requests: write   # post PR comment
