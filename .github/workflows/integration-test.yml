@@ -6,6 +6,11 @@ on:
       - main
     types: [opened, synchronize, reopened]
 
+permissions:
+  pull-requests: write   # post PR comment
+  contents: write        # commit report file back to PR branch
+  models: read           # call GitHub Models (Copilot) API
+
 jobs:
   integration-test:
     name: API Integration Tests
