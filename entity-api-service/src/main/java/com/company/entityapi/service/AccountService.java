@@ -6,6 +6,7 @@ import com.couchbase.client.java.kv.ExistsOptions;
 import com.couchbase.client.java.kv.GetOptions;
 import com.couchbase.client.java.kv.GetResult;
 import com.couchbase.client.java.kv.UpsertOptions;
+import com.company.entityapi.client.NameApiClient;
 import com.company.entityapi.document.AccountDocument;
 import com.company.entityapi.exception.AccountNotFoundException;
 import com.company.entityapi.exception.BadDataException;
@@ -43,9 +44,11 @@ import java.time.OffsetDateTime;
 public class AccountService {
 
     private final Collection collection;
+    private final NameApiClient nameApiClient;
 
-    public AccountService(Collection collection) {
+    public AccountService(Collection collection, NameApiClient nameApiClient) {
         this.collection = collection;
+        this.nameApiClient = nameApiClient;
     }
 
     // ── Read ──────────────────────────────────────────────────────────────
@@ -119,7 +122,9 @@ public class AccountService {
 
         if (r.getName() != null) {
             AccountDocument.NameDoc nameDoc = new AccountDocument.NameDoc();
-            nameDoc.setLegalName(r.getName().getLegalName());
+            // Call entity-name-api to capitalise legalName before persisting
+            String capitalised = nameApiClient.capitalize(r.getName().getLegalName());
+            nameDoc.setLegalName(capitalised);
             nameDoc.setDbaName(r.getName().getDbaName());
             doc.setName(nameDoc);
         }

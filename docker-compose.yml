@@ -38,7 +38,25 @@ services:
     networks:
       - entity-net
 
-  # ── 3. Spring Boot app ────────────────────────────────────────────────────────
+  # ── 3. entity-name-api (separate repo — cloned sibling directory) ────────────
+  entity-name-api:
+    build:
+      context: ../entity-name-api   # sibling repo on disk
+      dockerfile: Dockerfile
+    container_name: entity-name-api
+    ports:
+      - "8081:8081"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8081/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+    networks:
+      - entity-net
+    restart: unless-stopped
+
+  # ── 4. Spring Boot app ────────────────────────────────────────────────────────
   entity-api:
     build:
       context: .              # repo root — Dockerfile + entity-api.yaml are both here
@@ -51,9 +69,12 @@ services:
       SPRING_COUCHBASE_USERNAME: Administrator
       SPRING_COUCHBASE_PASSWORD: password
       SPRING_DATA_COUCHBASE_BUCKET_NAME: customer_bucket
+      ENTITY_NAME_API_URL: http://entity-name-api:8081  # resolves via Docker DNS
     depends_on:
       couchbase-setup:
         condition: service_completed_successfully     # waits for cluster + bucket to be ready
+      entity-name-api:
+        condition: service_healthy                    # waits for entity-name-api to be up
     networks:
       - entity-net
     restart: unless-stopped

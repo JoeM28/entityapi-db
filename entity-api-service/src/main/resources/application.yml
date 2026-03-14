@@ -28,3 +28,9 @@ management:
 
 server:
   port: 8080
+
+# Cross-service dependency: entity-name-api (separate repo/container)
+# Override with ENTITY_NAME_API_URL env var in Docker / CI
+entity:
+  name-api:
+    url: http://localhost:8081

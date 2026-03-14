@@ -2,6 +2,7 @@ package com.company.entityapi.service;
 
 import com.couchbase.client.java.Collection;
 import com.couchbase.client.java.kv.UpsertOptions;
+import com.company.entityapi.client.NameApiClient;
 import com.company.entityapi.document.AccountDocument;
 import com.company.entityapi.exception.BadDataException;
 import com.company.entityapi.model.AccountRecord;
@@ -20,6 +21,9 @@ class AccountServiceTest {
 
     @Mock
     Collection collection;
+
+    @Mock
+    NameApiClient nameApiClient;
 
     @InjectMocks
     AccountService service;
