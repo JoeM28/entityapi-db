@@ -58,6 +58,13 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <!-- Cross-repo validation library: entity-dob-validation -->
+        <dependency>
+            <groupId>com.company</groupId>
+            <artifactId>entity-dob-validation</artifactId>
+            <version>1.0.0</version>
+        </dependency>
     </dependencies>
 
     <build>
