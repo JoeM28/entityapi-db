@@ -163,7 +163,28 @@ services:
       - entity-net
     restart: unless-stopped
 
-  # ── 9. entity-kafka-service (Kafka consumer → email sink) ────────────────────
+  # ── 9. entityapi-vertx (Vert.x API — same data model, same Couchbase bucket) ─
+  entityapi-vertx:
+    build:
+      context: ../entityapi-vertx   # sibling repo on disk
+      dockerfile: Dockerfile
+    container_name: entityapi-vertx
+    ports:
+      - "8085:8085"
+    environment:
+      COUCHBASE_CONNECTION_STRING: couchbase
+      COUCHBASE_USERNAME: Administrator
+      COUCHBASE_PASSWORD: password
+      COUCHBASE_BUCKET: customer_bucket
+      HTTP_PORT: "8085"
+    depends_on:
+      couchbase-setup:
+        condition: service_completed_successfully
+    networks:
+      - entity-net
+    restart: unless-stopped
+
+  # ── 10. entity-kafka-service (Kafka consumer → email sink) ───────────────────
   entity-kafka-service:
     build:
       context: ../entity-kafka-service   # sibling repo on disk
