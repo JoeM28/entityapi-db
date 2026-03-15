@@ -7,10 +7,15 @@ WORKDIR /workspace
 # This ensures the maven-plugin can find it via relative paths (../entity-api.yaml)
 COPY entity-api.yaml ./
 
-# 2. Switch to the service directory for Maven commands
+# 2. Build and install entity-dob-validation (private lib, not in Maven Central)
+COPY sibling-repo/entity-dob-validation /workspace/entity-dob-validation
+WORKDIR /workspace/entity-dob-validation
+RUN mvn install -DskipTests -B
+
+# 3. Switch to the service directory for Maven commands
 WORKDIR /workspace/entity-api-service
 
-# 3. Copy pom first to cache dependencies independently of code changes
+# 4. Copy pom first to cache dependencies independently of code changes
 COPY entity-api-service/pom.xml ./
 RUN mvn dependency:go-offline -B
 

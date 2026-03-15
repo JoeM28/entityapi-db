@@ -67,8 +67,9 @@ Integration tests also run automatically on push/PR to `main` via `.github/workf
 ### Request flow
 ```
 HTTP → AccountController → AccountService → Couchbase SDK (Collection bean)
-                                ↓
-                    DobValidator (entity-dob-validation lib)
+                                ↓                    ↓
+                    DobValidator            NameApiClient → entity-name-api
+               (entity-dob-validation)      POST /name/capitalize (port 8081)
 ```
 
 ### Key design decisions
@@ -85,8 +86,11 @@ HTTP → AccountController → AccountService → Couchbase SDK (Collection bean
 
 **Server-set fields** — `lastUpdateDate` and `lastUpdateTimestamp` are set in `AccountService.toDocument()` on every write and are never accepted from the client.
 
-### Cross-repo dependency
-`entity-dob-validation` (`com.company:entity-dob-validation:1.0.0`) is a separate Maven library repo at `github.com/JoeM28/entity-dob-validation`. It provides `DobValidator.isValid(String)`, called in `AccountService.upsert()`. To work on it locally, run `sync-sibling-repos.py` to clone it into `sibling-repo/`, then `mvn install` inside that folder to publish to `~/.m2`.
+### Cross-repo dependencies
+
+**`entity-dob-validation`** (`com.company:entity-dob-validation:1.0.0`) — Maven library providing `DobValidator.isValid(String)`, called in `AccountService.upsert()`. To work on it locally, run `sync-sibling-repos.py` to clone it into `sibling-repo/`, then `mvn install` inside that folder to publish to `~/.m2`.
+
+**`entity-name-api`** — HTTP microservice called during every upsert to capitalise `legalName` (POST `/name/capitalize`). Configured via `entity.name-api.url` in `application.yml` (default `http://localhost:8081`); override with `ENTITY_NAME_API_URL` env var in Docker/CI. Failure is non-blocking — `NameApiClient` falls back to the original value if the downstream call fails. `sync-sibling-repos.py` clones it into `sibling-repo/` via `EXTRA_REPOS`.
 
 ### Exception handling
 `GlobalExceptionHandler` (`@ControllerAdvice`) maps:
