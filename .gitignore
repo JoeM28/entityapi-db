@@ -6,3 +6,6 @@ entity-api-service/target/
 
 # Cloned cross-repo sources (populated by sync-sibling-repos.py)
 sibling-repo/
+
+# Local environment variables — never commit credentials
+.env
