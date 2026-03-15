@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Entity API — Architecture Explained</title>
+  <style>
+    :root {
+      --bg:        #0f1117;
+      --surface:   #1a1d27;
+      --surface2:  #22263a;
+      --border:    #2e3350;
+      --blue:      #4f8ef7;
+      --purple:    #a78bfa;
+      --green:     #34d399;
+      --orange:    #fb923c;
+      --pink:      #f472b6;
+      --yellow:    #fbbf24;
+      --cyan:      #22d3ee;
+      --red:       #f87171;
+      --text:      #e2e8f0;
+      --muted:     #94a3b8;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      line-height: 1.7;
+      padding: 2rem;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      text-align: center;
+      padding: 3rem 1rem 2rem;
+      background: linear-gradient(135deg, #1a1d27 0%, #0f1117 100%);
+      border: 1px solid var(--border);
+      border-radius: 1.5rem;
+      margin-bottom: 3rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(79,142,247,0.15) 0%, transparent 70%);
+    }
+    .hero h1 {
+      font-size: 2.8rem;
+      font-weight: 800;
+      background: linear-gradient(90deg, var(--blue), var(--purple), var(--cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      position: relative;
+    }
+    .hero p {
+      color: var(--muted);
+      margin-top: 0.75rem;
+      font-size: 1.1rem;
+      position: relative;
+    }
+
+    /* ── TOC ── */
+    .toc {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      padding: 1.5rem 2rem;
+      margin-bottom: 3rem;
+    }
+    .toc h2 { color: var(--cyan); margin-bottom: 1rem; font-size: 1.1rem; letter-spacing: 0.05em; text-transform: uppercase; }
+    .toc ol { padding-left: 1.5rem; }
+    .toc li { margin: 0.4rem 0; }
+    .toc a { color: var(--blue); text-decoration: none; }
+    .toc a:hover { color: var(--cyan); text-decoration: underline; }
+
+    /* ── Sections ── */
+    section {
+      margin-bottom: 3.5rem;
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+    .section-num {
+      width: 2.2rem;
+      height: 2.2rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+    .section-header h2 {
+      font-size: 1.6rem;
+      font-weight: 700;
+    }
+
+    .color-blue   { background: rgba(79,142,247,0.2);  color: var(--blue);   border: 1px solid var(--blue); }
+    .color-purple { background: rgba(167,139,250,0.2); color: var(--purple); border: 1px solid var(--purple); }
+    .color-green  { background: rgba(52,211,153,0.2);  color: var(--green);  border: 1px solid var(--green); }
+    .color-orange { background: rgba(251,146,60,0.2);  color: var(--orange); border: 1px solid var(--orange); }
+    .color-pink   { background: rgba(244,114,182,0.2); color: var(--pink);   border: 1px solid var(--pink); }
+    .color-cyan   { background: rgba(34,211,238,0.2);  color: var(--cyan);   border: 1px solid var(--cyan); }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+    .card h3 {
+      font-size: 1.1rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .card p, .card li { color: var(--muted); }
+    .card ul { padding-left: 1.25rem; }
+    .card li { margin: 0.3rem 0; }
+
+    .card-blue   { border-left: 3px solid var(--blue);   }
+    .card-purple { border-left: 3px solid var(--purple); }
+    .card-green  { border-left: 3px solid var(--green);  }
+    .card-orange { border-left: 3px solid var(--orange); }
+    .card-pink   { border-left: 3px solid var(--pink);   }
+    .card-cyan   { border-left: 3px solid var(--cyan);   }
+
+    /* ── Diagram boxes ── */
+    .diagram {
+      background: #0a0c14;
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+      font-size: 0.82rem;
+      line-height: 1.8;
+      margin: 1.25rem 0;
+      overflow-x: auto;
+      white-space: pre;
+    }
+
+    /* ── Flow steps ── */
+    .flow {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      margin: 1.25rem 0;
+    }
+    .flow-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      padding: 1rem 1.25rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 0;
+      position: relative;
+    }
+    .flow-step:first-child { border-radius: 1rem 1rem 0 0; }
+    .flow-step:last-child  { border-radius: 0 0 1rem 1rem; }
+    .flow-step:not(:last-child) { border-bottom: none; }
+    .flow-step:not(:last-child)::after {
+      content: '▼';
+      position: absolute;
+      bottom: -1.1rem;
+      left: 1.5rem;
+      color: var(--muted);
+      font-size: 0.8rem;
+      z-index: 1;
+    }
+    .step-badge {
+      min-width: 1.8rem;
+      height: 1.8rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 0.1rem;
+    }
+    .step-content strong { color: var(--text); display: block; margin-bottom: 0.2rem; }
+    .step-content span   { color: var(--muted); font-size: 0.9rem; }
+
+    /* ── Tables ── */
+    .table-wrap { overflow-x: auto; margin: 1.25rem 0; border-radius: 0.75rem; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    thead tr { background: var(--surface2); }
+    thead th {
+      padding: 0.85rem 1rem;
+      text-align: left;
+      color: var(--cyan);
+      font-weight: 600;
+      border-bottom: 1px solid var(--border);
+    }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--surface2); }
+    tbody td { padding: 0.75rem 1rem; color: var(--muted); }
+    tbody td:first-child { color: var(--text); font-weight: 500; }
+    .yes { color: var(--green); font-weight: 600; }
+    .no  { color: var(--red);   font-weight: 600; }
+    .partial { color: var(--yellow); font-weight: 600; }
+
+    /* ── Highlight boxes ── */
+    .highlight {
+      border-radius: 0.75rem;
+      padding: 1rem 1.25rem;
+      margin: 1.25rem 0;
+      border-left: 4px solid;
+      font-size: 0.95rem;
+    }
+    .highlight-blue   { background: rgba(79,142,247,0.08);  border-color: var(--blue);   color: var(--blue); }
+    .highlight-green  { background: rgba(52,211,153,0.08);  border-color: var(--green);  color: var(--green); }
+    .highlight-orange { background: rgba(251,146,60,0.08);  border-color: var(--orange); color: var(--orange); }
+    .highlight-purple { background: rgba(167,139,250,0.08); border-color: var(--purple); color: var(--purple); }
+    .highlight-cyan   { background: rgba(34,211,238,0.08);  border-color: var(--cyan);   color: var(--cyan); }
+
+    /* ── Tag pills ── */
+    .pill {
+      display: inline-block;
+      padding: 0.2rem 0.65rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin: 0.15rem;
+    }
+    .pill-blue   { background: rgba(79,142,247,0.2);  color: var(--blue);   }
+    .pill-green  { background: rgba(52,211,153,0.2);  color: var(--green);  }
+    .pill-orange { background: rgba(251,146,60,0.2);  color: var(--orange); }
+    .pill-purple { background: rgba(167,139,250,0.2); color: var(--purple); }
+    .pill-pink   { background: rgba(244,114,182,0.2); color: var(--pink);   }
+    .pill-cyan   { background: rgba(34,211,238,0.2);  color: var(--cyan);   }
+
+    /* ── Code inline ── */
+    code {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid var(--border);
+      border-radius: 0.3rem;
+      padding: 0.1rem 0.4rem;
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      font-size: 0.85em;
+      color: var(--yellow);
+    }
+
+    /* ── Grid ── */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+    @media (max-width: 768px) {
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    }
+
+    /* ── Layer stack ── */
+    .layer-stack { display: flex; flex-direction: column; gap: 0.5rem; margin: 1.25rem 0; }
+    .layer {
+      padding: 1rem 1.5rem;
+      border-radius: 0.6rem;
+      text-align: center;
+      font-weight: 600;
+      font-size: 0.95rem;
+      border: 1px solid;
+      position: relative;
+    }
+    .layer small { display: block; font-weight: 400; font-size: 0.8rem; opacity: 0.8; margin-top: 0.2rem; }
+    .layer-arrow {
+      text-align: center;
+      color: var(--muted);
+      font-size: 1.2rem;
+      line-height: 1;
+    }
+
+    /* ── Divider ── */
+    hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 2.5rem 0;
+    }
+
+    /* ── Decision box ── */
+    .decision {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      margin: 1.25rem 0;
+    }
+    .decision h4 { color: var(--yellow); margin-bottom: 0.75rem; font-size: 1rem; }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <h1>Entity API — Architecture Explained</h1>
+  <p>3 repos · Docker networking · Validation flow · Kubernetes · Istio · Gloo Mesh</p>
+</div>
+
+<!-- TOC -->
+<div class="toc">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#repos">How the 3 Repos Work Together</a></li>
+    <li><a href="#docker">Docker — How Containers Connect</a></li>
+    <li><a href="#request">Full Request Flow &amp; Validation</a></li>
+    <li><a href="#scale">Scaling — Which Container Gets Hit?</a></li>
+    <li><a href="#istio">Kubernetes Service vs Istio</a></li>
+    <li><a href="#istio-scale">How Istio Helps entity-api → entity-name-api at Scale</a></li>
+    <li><a href="#gloo">Gloo Mesh vs Istio</a></li>
+    <li><a href="#summary">Big Picture Summary</a></li>
+  </ol>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 1 — 3 REPOS -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section id="repos">
+  <div class="section-header">
+    <div class="section-num color-blue">1</div>
+    <h2 style="color:var(--blue)">How the 3 Repos Work Together</h2>
+  </div>
+
+  <div class="diagram"><span style="color:var(--cyan)">Disk layout (all siblings on your machine)</span>
+
+<span style="color:var(--yellow)">~/</span>
+├── <span style="color:var(--blue)">entityapi-db/</span>             <span style="color:var(--muted)">← THIS repo — main Spring Boot service</span>
+├── <span style="color:var(--green)">entity-name-api/</span>          <span style="color:var(--muted)">← HTTP microservice (separate repo)</span>
+└── <span style="color:var(--purple)">entity-dob-validation/</span>    <span style="color:var(--muted)">← Maven library (separate repo)</span>
+
+<span style="color:var(--muted)">sync-sibling-repos.py clones the two sibling repos next to entityapi-db/</span></div>
+
+  <div class="grid-2">
+    <div class="card card-purple">
+      <h3><span style="color:var(--purple)">◆</span> entity-dob-validation — Maven Library</h3>
+      <p>A <strong style="color:var(--text)">compile-time</strong> dependency. Gets baked into the final JAR.</p>
+      <ul>
+        <li>Declared in <code>pom.xml</code> like any Maven dep</li>
+        <li>Not on Maven Central — lives in sibling repo</li>
+        <li>You must run <code>mvn install</code> inside it first → publishes to <code>~/.m2</code></li>
+        <li>Maven finds it in local cache at compile time</li>
+        <li>Used by: <code>DobValidator.isValid(record.getDob())</code></li>
+      </ul>
+    </div>
+    <div class="card card-green">
+      <h3><span style="color:var(--green)">◆</span> entity-name-api — HTTP Microservice</h3>
+      <p>A <strong style="color:var(--text)">runtime</strong> dependency. A separate running service called over HTTP.</p>
+      <ul>
+        <li>Separate Spring Boot app on port <code>8081</code></li>
+        <li>Called during every upsert via <code>NameApiClient</code></li>
+        <li>URL configured via <code>entity.name-api.url</code> in application.yml</li>
+        <li>In Docker: overridden to <code>http://entity-name-api:8081</code></li>
+        <li>Failure is non-blocking — falls back to original value</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Repo</th>
+          <th>Type</th>
+          <th>When Used</th>
+          <th>How Resolved</th>
+          <th>Failure Impact</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>entity-dob-validation</td>
+          <td><span class="pill pill-purple">Maven JAR</span></td>
+          <td>Compile time</td>
+          <td><code>~/.m2</code> local cache</td>
+          <td>Build fails — hard dependency</td>
+        </tr>
+        <tr>
+          <td>entity-name-api</td>
+          <td><span class="pill pill-green">HTTP Service</span></td>
+          <td>Runtime (every upsert)</td>
+          <td>Docker DNS / env var URL</td>
+          <td>Falls back to original name — non-blocking</td>
+        </tr>
+        <tr>
+          <td>entityapi-db</td>
+          <td><span class="pill pill-blue">Main Service</span></td>
+          <td>Always</td>
+          <td>—</td>
+          <td>—</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<hr/>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 2 — DOCKER -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section id="docker">
+  <div class="section-header">
+    <div class="section-num color-orange">2</div>
+    <h2 style="color:var(--orange)">Docker — How Containers Connect</h2>
+  </div>
+
+  <div class="highlight highlight-orange">
+    Docker Compose creates a private bridge network called <code>entity-net</code>. All containers join it and resolve each other by service name via Docker's built-in DNS.
+  </div>
+
+  <div class="diagram"><span style="color:var(--orange)">┌──────────────────────────────── entity-net (bridge network) ───────────────────────────────┐</span>
+│                                                                                             │
+│   <span style="color:var(--blue)">[couchbase]</span>          <span style="color:var(--yellow)">[couchbase-setup]</span>       <span style="color:var(--green)">[entity-name-api]</span>     <span style="color:var(--pink)">[entity-api]</span>        │
+│    port 8091 (UI)      one-shot init              port 8081             port 8080           │
+│    port 11210 (KV)     runs init.sh then exits    Spring Boot           Spring Boot         │
+│                                                                                             │
+<span style="color:var(--orange)">└─────────────────────────────────────────────────────────────────────────────────────────────┘</span>
+
+     <span style="color:var(--muted)">↑ only these ports exposed to your host machine (localhost)</span>
+     <span style="color:var(--muted)">everything else stays internal — containers talk by name e.g. "couchbase", "entity-name-api"</span></div>
+
+  <h3 style="color:var(--yellow); margin: 1.5rem 0 1rem;">Startup Order (enforced by depends_on)</h3>
+  <div class="flow">
+    <div class="flow-step">
+      <div class="step-badge" style="background:rgba(79,142,247,0.2); color:var(--blue); border:1px solid var(--blue);">1</div>
+      <div class="step-content">
+        <strong>couchbase starts</strong>
+        <span>Healthcheck polls <code>http://localhost:8091/ui/index.html</code> every 10s — waits up to 120s</span>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-badge" style="background:rgba(251,146,60,0.2); color:var(--orange); border:1px solid var(--orange);">2</div>
+      <div class="step-content">
+        <strong>couchbase-setup runs init.sh</strong>
+        <span>Creates cluster + <code>customer_bucket</code> via <code>couchbase-cli</code>. Idempotent — safe to re-run. Exits when done.</span>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-badge" style="background:rgba(52,211,153,0.2); color:var(--green); border:1px solid var(--green);">3</div>
+      <div class="step-content">
+        <strong>entity-name-api starts</strong>
+        <span>Healthcheck polls <code>/actuator/health</code> — waits until healthy</span>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-badge" style="background:rgba(244,114,182,0.2); color:var(--pink); border:1px solid var(--pink);">4</div>
+      <div class="step-content">
+        <strong>entity-api starts</strong>
+        <span>Only after step 2 completes AND step 3 is healthy. Connects to Couchbase using Docker DNS name <code>couchbase</code></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2" style="margin-top:1.25rem">
+    <div class="card card-blue">
+      <h3><span style="color:var(--blue)">⚙</span> How entity-api Finds Couchbase</h3>
+      <p>Environment variable overrides <code>application.yml</code>:</p>
+      <div class="diagram" style="margin-top:0.75rem; font-size:0.78rem; padding:1rem;">SPRING_COUCHBASE_CONNECTION_STRING: <span style="color:var(--green)">couchbase</span>
+<span style="color:var(--muted)"># "couchbase" = Docker DNS name of the couchbase container</span>
+<span style="color:var(--muted)"># resolves to the container's internal IP automatically</span></div>
+    </div>
+    <div class="card card-green">
+      <h3><span style="color:var(--green)">⚙</span> How entity-api Finds entity-name-api</h3>
+      <p>Environment variable overrides the localhost default:</p>
+      <div class="diagram" style="margin-top:0.75rem; font-size:0.78rem; padding:1rem;">ENTITY_NAME_API_URL: <span style="color:var(--green)">http://entity-name-api:8081</span>
+<span style="color:var(--muted)"># "entity-name-api" = Docker DNS name</span>
+<span style="color:var(--muted)"># without Docker: defaults to http://localhost:8081</span></div>
+    </div>
+  </div>
+
+  <div class="highlight highlight-blue">
+    <strong>CouchbaseConfig.java</strong> blocks startup with <code>bucket.waitUntilReady(10s)</code> — the app won't serve traffic until the KV connection is confirmed ready.
+  </div>
+</section>
+
+<hr/>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 3 — REQUEST FLOW -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section id="request">
+  <div class="section-header">
+    <div class="section-num color-green">3</div>
+    <h2 style="color:var(--green)">Full Request Flow &amp; Validation</h2>
+  </div>
+
+  <h3 style="color:var(--cyan); margin-bottom:1rem;">POST /entity/account (Upsert)</h3>
+
+  <div class="flow">
+    <div class="flow-step">
+      <div class="step-badge" style="background:rgba(34,211,238,0.2); color:var(--cyan); border:1px solid var(--cyan);">1</div>
+      <div class="step-content">
+        <strong>HTTP hits AccountController — @Valid fires Jakarta Bean Validation</strong>
+        <span>Checks <code>@NotNull</code>, <code>@Size</code>, <code>@Pattern</code> on the generated <code>AccountRecord</code> model. If any fail → GlobalExceptionHandler returns 400 with field-level errors array. Never reaches the service.</span>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-badge" style="background:rgba(79,142,247,0.2); color:var(--blue); border:1px solid var(--blue);">2</div>
+      <div class="step-content">
+        <strong>accountService.exists() — Couchbase KV EXISTS</strong>
+        <span>100ms timeout. Returns <code>true/false</code>. Used only to decide response status: 201 (new) vs 200 (existing). No lock, no transaction.</span>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-badge" style="background:rgba(251,146,60,0.2); color:var(--orange); border:1px solid var(--orange);">3</div>
+      <div class="step-content">
+        <strong>accountService.upsert() — null + state check</strong>
+        <span>Manual validation: null record → 400. Missing <code>address.state</code> → 400. These are service-layer guards beyond what bean validation covers.</span>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-badge" style="background:rgba(167,139,250,0.2); color:var(--purple); border:1px solid var(--purple);">4</div>
+      <div class="step-content">
+        <strong>DobValidator.isValid() — entity-dob-validation library</strong>
+        <span>In-process call to the Maven library. Validates <code>MM-DD-YYYY</code> with 4-digit year. Invalid → BadDataException → 400.</span>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-badge" style="background:rgba(52,211,153,0.2); color:var(--green); border:1px solid var(--green);">5</div>
+      <div class="step-content">
+        <strong>nameApiClient.capitalize() — HTTP call to entity-name-api</strong>
+        <span><code>POST http://entity-name-api:8081/name/capitalize</code>. Returns capitalized legalName. If it fails for ANY reason → logs warning, uses original value. Non-blocking.</span>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-badge" style="background:rgba(244,114,182,0.2); color:var(--pink); border:1px solid var(--pink);">6</div>
+      <div class="step-content">
+        <strong>collection.upsert() — Couchbase KV UPSERT</strong>
+        <span>500ms timeout. Key = accountNumber as string e.g. <code>"123456789"</code>. Inserts or replaces the full document. Sets <code>lastUpdateDate</code> and <code>lastUpdateTimestamp</code> server-side.</span>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-badge" style="background:rgba(251,146,60,0.2); color:var(--yellow); border:1px solid var(--yellow);">7</div>
+      <div class="step-content">
+        <strong>toRecord() maps document back → AccountRecord → HTTP Response</strong>
+        <span>AccountDocument (snake_case Couchbase POJO) → AccountRecord (camelCase API DTO). Returns 201 if new, 200 if existing.</span>
+      </div>
+    </div>
+  </div>
+
+  <h3 style="color:var(--cyan); margin: 1.5rem 0 1rem;">Validation Layers at a Glance</h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Layer</th><th>What Checks It</th><th>Examples</th><th>Response</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Bean Validation</td>
+          <td>Jakarta <code>@Valid</code> + annotations on generated model</td>
+          <td><code>@NotNull</code> status, <code>@Size(max=20)</code> legalName, <code>@Pattern</code> state</td>
+          <td>400 with <code>errors[]</code> array</td>
+        </tr>
+        <tr>
+          <td>State null check</td>
+          <td>Manual check in <code>AccountService</code></td>
+          <td>Missing <code>address.state</code></td>
+          <td>400 BadDataException</td>
+        </tr>
+        <tr>
+          <td>DOB format</td>
+          <td><code>DobValidator</code> from Maven library</td>
+          <td>Must be MM-DD-YYYY with 4-digit year</td>
+          <td>400 BadDataException</td>
+        </tr>
+        <tr>
+          <td>Couchbase error</td>
+          <td>SDK exception</td>
+          <td>Connection failure, timeout</td>
+          <td>500 (uncaught)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="color:var(--cyan); margin: 1.5rem 0 1rem;">Two Model Layers Explained</h3>
+  <div class="diagram"><span style="color:var(--cyan)">HTTP JSON (camelCase)      Java API model (generated)     Couchbase doc (snake_case)</span>
+<span style="color:var(--muted)">─────────────────────      ──────────────────────────     ──────────────────────────</span>
+{ "legalName": "foo" }  ←→  AccountRecord / Name  ←→   AccountDocument / NameDoc
+                              from entity-api.yaml           { "legal_name": "FOO" }
+
+<span style="color:var(--yellow)">toDocument()</span> maps API → DB       <span style="color:var(--green)">toRecord()</span> maps DB → API
+Server sets: lastUpdateDate, lastUpdateTimestamp on every write</div>
+</section>
+
+<hr/>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 4 — SCALING / WHICH CONTAINER -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section id="scale">
+  <div class="section-header">
+    <div class="section-num color-pink">4</div>
+    <h2 style="color:var(--pink)">Scaling — Which Container Gets Hit?</h2>
+  </div>
+
+  <div class="highlight highlight-orange">
+    <strong>Current setup:</strong> One container owns port 8080. Postman always hits that one container — no ambiguity.
+  </div>
+
+  <div class="grid-2">
+    <div class="card card-pink">
+      <h3><span style="color:var(--red)">✗</span> Without a Load Balancer</h3>
+      <p>If you try <code>docker compose up --scale entity-api=3</code> — it <strong style="color:var(--red)">fails</strong>. Three containers cannot all bind to host port 8080. Docker errors on the 2nd attempt.</p>
+    </div>
+    <div class="card card-green">
+      <h3><span style="color:var(--green)">✓</span> With a Load Balancer</h3>
+      <p>Host port is only on the LB. App containers have NO host port binding — only reachable inside <code>entity-net</code>.</p>
+      <ul style="margin-top:0.5rem">
+        <li>LB distributes: round-robin by default</li>
+        <li>You can't predict which container a specific request hits</li>
+        <li>nginx, HAProxy, or Traefik are common choices</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="diagram"><span style="color:var(--muted)">With a load balancer in front:</span>
+
+Postman → <span style="color:var(--yellow)">localhost:80</span>
+                │
+          <span style="color:var(--orange)">[nginx / HAProxy]</span>   ← only this has a host port
+         /        |        \
+<span style="color:var(--pink)">[entity-api-1]</span> <span style="color:var(--pink)">[entity-api-2]</span> <span style="color:var(--pink)">[entity-api-3]</span>
+  port 8080        port 8080        port 8080
+  (internal only)  (internal only)  (internal only)</div>
+
+  <div class="highlight highlight-purple">
+    <strong>In Kubernetes / Docker Swarm:</strong> The <code>Service</code> object or <code>ingress</code> acts as the built-in load balancer. A request to the service IP gets routed to any healthy pod — random or round-robin depending on the scheduler.
+  </div>
+</section>
+
+<hr/>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 5 — K8S SERVICE VS ISTIO -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section id="istio">
+  <div class="section-header">
+    <div class="section-num color-cyan">5</div>
+    <h2 style="color:var(--cyan)">Kubernetes Service vs Istio</h2>
+  </div>
+
+  <div class="grid-2">
+    <div class="card card-blue">
+      <h3><span style="color:var(--blue)">◈</span> Kubernetes Service — Layer 4 (TCP/IP)</h3>
+      <p>Built-in Kubernetes concept. Stable virtual IP + DNS name. Uses <code>kube-proxy</code> (iptables rules) to forward packets.</p>
+      <ul style="margin-top:0.75rem">
+        <li>Round-robin by default</li>
+        <li>No HTTP awareness — just TCP</li>
+        <li>No retries, timeouts, or traffic rules</li>
+        <li>"Pick a pod, forward the packet"</li>
+      </ul>
+    </div>
+    <div class="card card-cyan">
+      <h3><span style="color:var(--cyan)">◈</span> Istio — Layer 7 (HTTP/gRPC)</h3>
+      <p>Optional add-on. Injects an <strong style="color:var(--text)">Envoy sidecar</strong> proxy into every pod. Intercepts all traffic transparently.</p>
+      <ul style="margin-top:0.75rem">
+        <li>HTTP-aware routing</li>
+        <li>Retries, timeouts, circuit breaking</li>
+        <li>mTLS between every service pair</li>
+        <li>Distributed tracing built in</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="diagram"><span style="color:var(--cyan)">With Istio — every pod has a sidecar:</span>
+
+entity-api pod                         entity-name-api pods
+<span style="color:var(--border)">┌──────────────────────┐</span>               <span style="color:var(--border)">┌─────────────────────┐</span>
+│  NameApiClient       │               │  [name-api-1]       │
+│       │              │               │  [Envoy sidecar]    │
+│  <span style="color:var(--cyan)">[Envoy sidecar]</span>   │──── mTLS ────────│                     │
+<span style="color:var(--border)">└──────────────────────┘</span>               │  [name-api-2]       │
+                                       │  [Envoy sidecar]    │
+                                       <span style="color:var(--border)">└─────────────────────┘</span>
+                                                ▲
+                                    <span style="color:var(--purple)">Istio control plane</span>
+                                    (pushes routing rules
+                                     to all Envoy sidecars)</div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Feature</th><th>K8s Service</th><th>Istio</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Load balancing</td><td class="partial">Round-robin (L4)</td><td class="yes">Round-robin, least-conn, consistent hash (L7)</td></tr>
+        <tr><td>Retries</td><td class="no">No</td><td class="yes">Yes — retry on 503, configurable</td></tr>
+        <tr><td>Timeouts</td><td class="no">No</td><td class="yes">Yes — per route</td></tr>
+        <tr><td>Circuit breaking</td><td class="no">No</td><td class="yes">Yes</td></tr>
+        <tr><td>Traffic splitting (canary)</td><td class="no">No</td><td class="yes">Yes — weighted routing by %</td></tr>
+        <tr><td>mTLS between services</td><td class="no">No</td><td class="yes">Yes — automatic</td></tr>
+        <tr><td>Distributed tracing</td><td class="no">No</td><td class="yes">Yes — built in with trace IDs</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="highlight highlight-cyan">
+    <strong>Key relationship:</strong> They're complementary — Istio uses the K8s Service for pod discovery, but replaces <code>kube-proxy</code> routing with Envoy sidecars. You still define a <code>Service</code> — Istio reads it to know which pods exist.
+  </div>
+</section>
+
+<hr/>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 6 — ISTIO AT SCALE -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section id="istio-scale">
+  <div class="section-header">
+    <div class="section-num color-purple">6</div>
+    <h2 style="color:var(--purple)">How Istio Helps entity-api → entity-name-api at Scale</h2>
+  </div>
+
+  <div class="card card-orange" style="margin-bottom:1.5rem">
+    <h3><span style="color:var(--orange)">⚠</span> Problems Without Istio at Scale</h3>
+    <ul>
+      <li>If <code>name-api-1</code> is slow/overloaded, requests still go to it — kube-proxy doesn't know</li>
+      <li>If <code>name-api-1</code> crashes mid-request, your entity-api gets an error (NameApiClient falls back, but the call still failed)</li>
+      <li>No visibility into which pod is slow or failing</li>
+      <li>No way to do a safe rollout of a new entity-name-api version</li>
+    </ul>
+  </div>
+
+  <div class="grid-2">
+    <div class="card card-blue">
+      <h3><span style="color:var(--blue)">①</span> Smarter Load Balancing</h3>
+      <p>Envoy knows response times per pod. Sends new requests to the least-busy pod:</p>
+      <div class="diagram" style="font-size:0.78rem; padding:0.75rem; margin-top:0.5rem;">trafficPolicy:
+  loadBalancer:
+    simple: <span style="color:var(--green)">LEAST_CONN</span>
+<span style="color:var(--muted)"># if name-api-2 is slower,
+# requests go to name-api-1 automatically</span></div>
+    </div>
+    <div class="card card-green">
+      <h3><span style="color:var(--green)">②</span> Automatic Retries — Without Changing Code</h3>
+      <p>Retry happens at the Envoy sidecar level. <code>NameApiClient</code> never even sees the error:</p>
+      <div class="diagram" style="font-size:0.78rem; padding:0.75rem; margin-top:0.5rem;">retries:
+  attempts: <span style="color:var(--yellow)">3</span>
+  perTryTimeout: 2s
+  retryOn: <span style="color:var(--green)">5xx,gateway-error,reset</span></div>
+    </div>
+    <div class="card card-orange">
+      <h3><span style="color:var(--orange)">③</span> Circuit Breaker</h3>
+      <p>If entity-name-api is struggling, Istio stops sending it traffic — prevents cascading failure:</p>
+      <div class="diagram" style="font-size:0.78rem; padding:0.75rem; margin-top:0.5rem;">outlierDetection:
+  consecutive5xxErrors: <span style="color:var(--red)">5</span>
+  interval: 10s
+  baseEjectionTime: <span style="color:var(--yellow)">30s</span>
+<span style="color:var(--muted)"># eject bad pod for 30s, use others</span></div>
+    </div>
+    <div class="card card-purple">
+      <h3><span style="color:var(--purple)">④</span> Canary Rollout — New Version Safely</h3>
+      <p>Split traffic by weight. Roll forward only when metrics look good:</p>
+      <div class="diagram" style="font-size:0.78rem; padding:0.75rem; margin-top:0.5rem;">http:
+  - route:
+    - destination:
+        subset: <span style="color:var(--blue)">v1</span>
+      weight: <span style="color:var(--blue)">90</span>
+    - destination:
+        subset: <span style="color:var(--green)">v2</span>
+      weight: <span style="color:var(--green)">10</span></div>
+    </div>
+    <div class="card card-cyan">
+      <h3><span style="color:var(--cyan)">⑤</span> mTLS — Free Encryption</h3>
+      <p>Every call from entity-api to entity-name-api is automatically encrypted and mutually authenticated. Zero certificate management in Java code.</p>
+    </div>
+    <div class="card card-pink">
+      <h3><span style="color:var(--pink)">⑥</span> Distributed Tracing</h3>
+      <p>One trace ID links the full chain across all pods and services:</p>
+      <div class="diagram" style="font-size:0.78rem; padding:0.75rem; margin-top:0.5rem;">Postman → entity-api <span style="color:var(--muted)">(50ms)</span>
+    └─ entity-name-api <span style="color:var(--muted)">(12ms)</span>
+         which pod, how long, status
+    Total: <span style="color:var(--green)">62ms</span></div>
+    </div>
+  </div>
+
+  <div class="highlight highlight-green">
+    <strong>Key point:</strong> Your <code>NameApiClient</code> code doesn't change at all. Istio operates at the network layer — the Envoy sidecar intercepts traffic transparently. All retry logic, circuit breaking, and load balancing happen outside your application code.
+  </div>
+</section>
+
+<hr/>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 7 — GLOO MESH -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section id="gloo">
+  <div class="section-header">
+    <div class="section-num color-orange">7</div>
+    <h2 style="color:var(--orange)">Gloo Mesh vs Istio</h2>
+  </div>
+
+  <div class="highlight highlight-orange">
+    Gloo Mesh is NOT a replacement for Istio — it's a <strong>management plane built on top of Istio</strong>, made by Solo.io. Istio still runs underneath.
+  </div>
+
+  <div class="layer-stack" style="max-width:500px; margin:1.5rem auto;">
+    <div class="layer" style="background:rgba(251,146,60,0.15); border-color:var(--orange); color:var(--orange);">
+      Gloo Mesh
+      <small>Management plane — UI, policies, multi-cluster control</small>
+    </div>
+    <div class="layer-arrow">▼ manages</div>
+    <div class="layer" style="background:rgba(167,139,250,0.15); border-color:var(--purple); color:var(--purple);">
+      Istio
+      <small>Control plane — VirtualService, DestinationRule, mTLS policy</small>
+    </div>
+    <div class="layer-arrow">▼ configures</div>
+    <div class="layer" style="background:rgba(79,142,247,0.15); border-color:var(--blue); color:var(--blue);">
+      Envoy Sidecars
+      <small>Data plane — actual traffic routing in every pod</small>
+    </div>
+  </div>
+
+  <h3 style="color:var(--yellow); margin: 1.5rem 0 1rem;">The Core Problem Gloo Mesh Solves — Multi-Cluster</h3>
+
+  <div class="diagram"><span style="color:var(--muted)">With plain Istio at scale — 3 separate islands:</span>
+
+<span style="color:var(--blue)">Cluster A (us-east)</span>          <span style="color:var(--green)">Cluster B (us-west)</span>          <span style="color:var(--purple)">Cluster C (eu)</span>
+├── entity-api               ├── entity-api               ├── entity-api
+├── entity-name-api          ├── entity-name-api          ├── entity-name-api
+└── Istio (standalone)       └── Istio (standalone)       └── Istio (standalone)
+    <span style="color:var(--red)">↑ separate configs</span>           <span style="color:var(--red)">↑ separate certs</span>             <span style="color:var(--red)">↑ no cross-cluster routing</span>
+
+<span style="color:var(--muted)">─────────────────────────────────────────────────────────────────────</span>
+
+<span style="color:var(--muted)">With Gloo Mesh — single pane of glass:</span>
+
+              <span style="color:var(--orange)">Gloo Mesh Management Plane</span>
+              (single pane of glass)
+             /          |           \
+    <span style="color:var(--blue)">Cluster A</span>         <span style="color:var(--green)">Cluster B</span>         <span style="color:var(--purple)">Cluster C</span>
+    (Istio)           (Istio)           (Istio)
+
+One policy defined once → pushed to all clusters automatically</div>
+
+  <h3 style="color:var(--yellow); margin: 1.5rem 0 1rem;">How Gloo Mesh Helps Your Scenario Across Clusters</h3>
+
+  <div class="grid-2">
+    <div class="card card-orange">
+      <h3><span style="color:var(--orange)">①</span> Cross-Cluster Failover</h3>
+      <p>If all entity-name-api pods in Cluster A go down, Gloo Mesh automatically routes to Cluster B. Plain Istio cannot do this natively.</p>
+      <div class="diagram" style="font-size:0.78rem; padding:0.75rem; margin-top:0.5rem;"><span style="color:var(--red)">entity-name-api (Cluster A) ← DOWN</span>
+        │
+        └─ Gloo Mesh reroutes →
+           <span style="color:var(--green)">entity-name-api (Cluster B)</span></div>
+    </div>
+    <div class="card card-blue">
+      <h3><span style="color:var(--blue)">②</span> Shared mTLS Trust</h3>
+      <p>Plain Istio: each cluster has its own CA — cross-cluster mTLS is painful manual work.</p>
+      <p style="margin-top:0.5rem">Gloo Mesh: creates a <strong style="color:var(--text)">shared root CA</strong> across all clusters automatically. entity-api in Cluster A trusts entity-name-api in Cluster B out of the box.</p>
+    </div>
+    <div class="card card-green">
+      <h3><span style="color:var(--green)">③</span> One Policy — All Clusters</h3>
+      <p>Plain Istio: write same VirtualService in Cluster A, B, and C. Keep them in sync manually forever.</p>
+      <div class="diagram" style="font-size:0.78rem; padding:0.75rem; margin-top:0.5rem;"><span style="color:var(--muted)"># Written once, applied everywhere</span>
+kind: RetryTimeoutPolicy
+spec:
+  applyToRoutes:
+    - route:
+        labels:
+          app: <span style="color:var(--green)">entity-name-api</span>
+  config:
+    retries:
+      attempts: 3</div>
+    </div>
+    <div class="card card-purple">
+      <h3><span style="color:var(--purple)">④</span> Global Canary Across Clusters</h3>
+      <p>Route 10% of ALL entity-api calls (any cluster) to the new version:</p>
+      <div class="diagram" style="font-size:0.78rem; padding:0.75rem; margin-top:0.5rem;">weights:
+  - cluster: cluster-a
+    subset: <span style="color:var(--green)">v2</span>
+    weight: <span style="color:var(--yellow)">5</span>
+  - cluster: cluster-b
+    subset: <span style="color:var(--green)">v2</span>
+    weight: <span style="color:var(--yellow)">5</span></div>
+    </div>
+  </div>
+
+  <div class="table-wrap" style="margin-top:1.5rem">
+    <table>
+      <thead>
+        <tr><th>Feature</th><th>K8s Service</th><th>Istio</th><th>Gloo Mesh</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Load balancing</td><td class="partial">Round-robin (L4)</td><td class="yes">Smart L7</td><td class="yes">Smart L7 across clusters</td></tr>
+        <tr><td>Retries</td><td class="no">No</td><td class="partial">Yes, per cluster</td><td class="yes">Yes, one policy all clusters</td></tr>
+        <tr><td>Circuit breaking</td><td class="no">No</td><td class="partial">Yes, per cluster</td><td class="yes">Yes, global</td></tr>
+        <tr><td>Cross-cluster failover</td><td class="no">No</td><td class="no">No (complex manual setup)</td><td class="yes">Yes, built-in</td></tr>
+        <tr><td>mTLS</td><td class="no">No</td><td class="partial">Yes, per cluster</td><td class="yes">Yes, shared trust across clusters</td></tr>
+        <tr><td>Canary rollout</td><td class="no">No</td><td class="partial">Yes, per cluster</td><td class="yes">Yes, global weighted routing</td></tr>
+        <tr><td>Config management</td><td class="no">kubectl only</td><td class="partial">Raw YAML per cluster</td><td class="yes">Unified policies, one place</td></tr>
+        <tr><td>Observability</td><td class="no">No</td><td class="partial">Per cluster</td><td class="yes">Aggregated across all clusters</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="decision">
+    <h4>Decision Guide — Which Do You Need?</h4>
+    <div class="diagram" style="background:transparent; border:none; padding:0; font-size:0.85rem;">Single cluster?
+    └── <span style="color:var(--blue)">Plain Istio is enough</span>
+            └── Too complex to manage raw YAML?
+                    └── <span style="color:var(--cyan)">Gloo Mesh (open source UI layer)</span>
+
+Multiple clusters?
+    └── <span style="color:var(--orange)">Gloo Mesh — exactly what it's designed for</span>
+            └── Need enterprise support / FIPS / compliance?
+                    └── <span style="color:var(--red)">Gloo Mesh Enterprise (paid)</span></div>
+  </div>
+</section>
+
+<hr/>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 8 — SUMMARY -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section id="summary">
+  <div class="section-header">
+    <div class="section-num color-green">8</div>
+    <h2 style="color:var(--green)">Big Picture Summary</h2>
+  </div>
+
+  <div class="diagram"><span style="color:var(--muted)">Full system picture with Gloo Mesh + Istio + K8s:</span>
+
+                    <span style="color:var(--orange)">Gloo Mesh</span>
+                 (multi-cluster control)
+                /         |          \
+       <span style="color:var(--blue)">Cluster A</span>      <span style="color:var(--green)">Cluster B</span>     <span style="color:var(--purple)">Cluster C</span>
+          │                │               │
+       <span style="color:var(--cyan)">Istio</span>           <span style="color:var(--cyan)">Istio</span>          <span style="color:var(--cyan)">Istio</span>
+          │                │               │
+  <span style="color:var(--pink)">┌─────────────┐</span>
+  │ entity-api  │
+  │[Envoy]      │──── HTTP (mTLS) ───────────── entity-name-api
+  <span style="color:var(--pink)">└─────────────┘</span>                              [Envoy sidecar]
+        │                                            │
+        └───── Couchbase KV (port 11210) ────────────┘
+                  customer_bucket</div>
+
+  <div class="grid-3" style="margin-top:1.5rem">
+    <div class="card" style="border-left: 3px solid var(--blue); text-align:center;">
+      <div style="font-size:2rem; margin-bottom:0.5rem;">🏗</div>
+      <h3 style="color:var(--blue); margin-bottom:0.5rem;">3 Repos</h3>
+      <p>Main service + Maven library (compile-time) + HTTP microservice (runtime). Managed by sync script and Docker Compose.</p>
+    </div>
+    <div class="card" style="border-left: 3px solid var(--green); text-align:center;">
+      <div style="font-size:2rem; margin-bottom:0.5rem;">🐳</div>
+      <h3 style="color:var(--green); margin-bottom:0.5rem;">Docker</h3>
+      <p>One bridge network. Container names = DNS names. Strict startup order via healthchecks. No hardcoded IPs.</p>
+    </div>
+    <div class="card" style="border-left: 3px solid var(--purple); text-align:center;">
+      <div style="font-size:2rem; margin-bottom:0.5rem;">✅</div>
+      <h3 style="color:var(--purple); margin-bottom:0.5rem;">Validation</h3>
+      <p>3 layers: Jakarta Bean Validation → manual service checks → DOB library. Errors mapped to structured JSON by GlobalExceptionHandler.</p>
+    </div>
+    <div class="card" style="border-left: 3px solid var(--cyan); text-align:center;">
+      <div style="font-size:2rem; margin-bottom:0.5rem;">⚖</div>
+      <h3 style="color:var(--cyan); margin-bottom:0.5rem;">K8s Service</h3>
+      <p>Built-in L4 TCP load balancing. Stable DNS name for pods. No HTTP awareness. Foundation that everything else builds on.</p>
+    </div>
+    <div class="card" style="border-left: 3px solid var(--pink); text-align:center;">
+      <div style="font-size:2rem; margin-bottom:0.5rem;">🕸</div>
+      <h3 style="color:var(--pink); margin-bottom:0.5rem;">Istio</h3>
+      <p>L7 service mesh. Retries, circuit breaking, canary, mTLS, tracing — all without changing application code.</p>
+    </div>
+    <div class="card" style="border-left: 3px solid var(--orange); text-align:center;">
+      <div style="font-size:2rem; margin-bottom:0.5rem;">🌐</div>
+      <h3 style="color:var(--orange); margin-bottom:0.5rem;">Gloo Mesh</h3>
+      <p>Management layer on top of Istio. Solves multi-cluster: one policy, shared trust, cross-cluster failover, global canary.</p>
+    </div>
+  </div>
+</section>
+
+<div style="text-align:center; color:var(--muted); font-size:0.8rem; margin-top:3rem; padding-top:1.5rem; border-top:1px solid var(--border);">
+  Entity API Architecture Reference &nbsp;·&nbsp; entityapi-db
+</div>
+
+</body>
+</html>
