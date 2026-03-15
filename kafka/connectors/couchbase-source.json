@@ -1,0 +1,18 @@
+{
+  "name": "couchbase-source",
+  "config": {
+    "connector.class": "com.couchbase.connect.kafka.CouchbaseSourceConnector",
+    "tasks.max": "1",
+
+    "couchbase.seed.nodes": "couchbase",
+    "couchbase.bucket": "customer_bucket",
+    "couchbase.username": "Administrator",
+    "couchbase.password": "password",
+
+    "couchbase.source.handler": "com.couchbase.connect.kafka.handler.source.RawJsonSourceHandler",
+    "couchbase.topic": "entity.accounts",
+
+    "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "value.converter": "org.apache.kafka.connect.converters.ByteArrayConverter"
+  }
+}

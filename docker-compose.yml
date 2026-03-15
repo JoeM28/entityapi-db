@@ -1,6 +1,90 @@
 services:
 
-  # ── 1. Couchbase ─────────────────────────────────────────────────────────────
+  # ── 1. Zookeeper ──────────────────────────────────────────────────────────────
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - entity-net
+    restart: unless-stopped
+
+  # ── 2. Kafka broker ───────────────────────────────────────────────────────────
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"   # Exposed for local tooling (e.g. Kafka UI, kafka-console-consumer)
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      # Two listeners: internal (kafka:29092) for containers, external (localhost:9092) for host tools
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    networks:
+      - entity-net
+    restart: unless-stopped
+
+  # ── 3. Kafka Connect (Couchbase source plugin baked in) ───────────────────────
+  kafka-connect:
+    build:
+      context: ./kafka
+      dockerfile: connect.Dockerfile
+    container_name: kafka-connect
+    depends_on:
+      - kafka
+    ports:
+      - "8083:8083"   # REST API for connector management
+    environment:
+      CONNECT_BOOTSTRAP_SERVERS: kafka:29092
+      CONNECT_REST_PORT: 8083
+      CONNECT_GROUP_ID: entity-connect-group
+      # Internal topics Kafka Connect uses to persist state
+      CONNECT_CONFIG_STORAGE_TOPIC: _connect-configs
+      CONNECT_OFFSET_STORAGE_TOPIC: _connect-offsets
+      CONNECT_STATUS_STORAGE_TOPIC: _connect-status
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_KEY_CONVERTER: org.apache.kafka.connect.storage.StringConverter
+      CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.converters.ByteArrayConverter
+      CONNECT_REST_ADVERTISED_HOST_NAME: kafka-connect
+      CONNECT_PLUGIN_PATH: /usr/share/java,/usr/share/confluent-hub-components
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8083/connectors"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 90s    # Connect takes time to start and create its internal topics
+    networks:
+      - entity-net
+    restart: unless-stopped
+
+  # ── 4. Connector registration (one-shot, idempotent) ─────────────────────────
+  kafka-connect-setup:
+    image: alpine:3.19
+    container_name: kafka-connect-setup
+    depends_on:
+      kafka-connect:
+        condition: service_healthy
+      couchbase-setup:
+        condition: service_completed_successfully   # Couchbase bucket must exist before connector streams it
+    volumes:
+      - ./kafka/connectors:/connectors:ro
+      - ./kafka/register-connectors.sh:/register-connectors.sh:ro
+    entrypoint: ["sh", "-c", "apk add -q --no-cache curl && sh /register-connectors.sh"]
+    networks:
+      - entity-net
+    restart: "no"
+
+  # ── 5. Couchbase ─────────────────────────────────────────────────────────────
   couchbase:
     image: couchbase:latest
     container_name: couchbase-local
@@ -19,7 +103,7 @@ services:
       - entity-net
     restart: unless-stopped
 
-  # ── 2. One-shot cluster + bucket initialiser (idempotent, safe to re-run) ───
+  # ── 6. One-shot cluster + bucket initialiser (idempotent, safe to re-run) ────
   couchbase-setup:
     image: couchbase:latest
     container_name: couchbase-setup
@@ -38,7 +122,7 @@ services:
     networks:
       - entity-net
 
-  # ── 3. entity-name-api (separate repo — cloned sibling directory) ────────────
+  # ── 7. entity-name-api (separate repo — cloned sibling directory) ────────────
   entity-name-api:
     build:
       context: ../entity-name-api   # sibling repo on disk
@@ -56,7 +140,7 @@ services:
       - entity-net
     restart: unless-stopped
 
-  # ── 4. Spring Boot app ────────────────────────────────────────────────────────
+  # ── 8. entity-api (main Spring Boot service) ─────────────────────────────────
   entity-api:
     build:
       context: .              # repo root — Dockerfile + entity-api.yaml are both here
@@ -75,6 +159,23 @@ services:
         condition: service_completed_successfully     # waits for cluster + bucket to be ready
       entity-name-api:
         condition: service_healthy                    # waits for entity-name-api to be up
+    networks:
+      - entity-net
+    restart: unless-stopped
+
+  # ── 9. entity-kafka-service (Kafka consumer → email sink) ────────────────────
+  entity-kafka-service:
+    build:
+      context: ../entity-kafka-service   # sibling repo on disk
+      dockerfile: Dockerfile
+    container_name: entity-kafka-service
+    depends_on:
+      kafka-connect-setup:
+        condition: service_completed_successfully   # connector must be registered first
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      MAIL_USERNAME: ${MAIL_USERNAME}     # set in .env or shell before docker compose up
+      MAIL_PASSWORD: ${MAIL_PASSWORD}     # Gmail App Password (not your Google account password)
     networks:
       - entity-net
     restart: unless-stopped

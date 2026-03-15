@@ -49,6 +49,7 @@ OWN_ARTIFACT = "entity-api-service"
 #
 EXTRA_REPOS = [
     "entity-name-api",
+    "entity-kafka-service",
 ]
 
 # ── Helpers ────────────────────────────────────────────────────────────────
