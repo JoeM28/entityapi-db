@@ -1,0 +1,1546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dev Approaches V2 — Markdown-First Spec-Driven Development</title>
+<style>
+:root {
+  --tdd:#1a6b3a; --tdd-l:#e6f4ed; --tdd-b:#2e9e5b;
+  --vibe:#7c3aed; --vibe-l:#f0ebff; --vibe-b:#9d6bff;
+  --sdd:#b45309; --sdd-l:#fef3e2; --sdd-b:#f59e0b;
+  --mdd:#0f4c81; --mdd-l:#e8f1fb; --mdd-b:#3b82f6;
+  --dark:#1e1e2e; --mid:#313244; --muted:#6b7280;
+  --text:#111827; --border:#e5e7eb; --bg:#f8fafc;
+  --code-bg:#1e1e2e; --code-text:#cdd6f4;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.65}
+.wrap{max-width:1300px;margin:0 auto;padding:0 32px}
+section{padding:48px 0}
+section+section{border-top:1px solid var(--border)}
+h2{font-size:1.55rem;font-weight:800;margin-bottom:8px}
+h3{font-size:1.1rem;font-weight:700;margin-bottom:10px}
+h4{font-size:.88rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
+p{margin-bottom:12px}
+ul,ol{padding-left:20px}
+li{margin-bottom:5px}
+code{font-family:'Courier New',monospace;font-size:.85em;background:#f1f5f9;border:1px solid #e2e8f0;padding:1px 6px;border-radius:4px}
+
+/* ── HEADER */
+header{background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 55%,#083344 100%);color:#fff;padding:52px 40px 44px}
+header .eye{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#93c5fd;margin-bottom:12px}
+header h1{font-size:2.5rem;font-weight:900;line-height:1.1;margin-bottom:16px}
+header h1 em{color:#fbbf24;font-style:normal}
+header p{color:#bfdbfe;max-width:720px;font-size:1.05rem}
+.new-badge{display:inline-block;background:#fbbf24;color:#1c1917;font-size:11px;font-weight:800;padding:3px 10px;border-radius:999px;letter-spacing:.5px;margin-left:10px;vertical-align:middle}
+
+/* ── APPROACH BADGE */
+.abadge{display:inline-block;padding:3px 12px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;white-space:nowrap}
+.ab-tdd{background:var(--tdd-l);color:var(--tdd);border:1px solid var(--tdd-b)}
+.ab-vibe{background:var(--vibe-l);color:var(--vibe);border:1px solid var(--vibe-b)}
+.ab-sdd{background:var(--sdd-l);color:var(--sdd);border:1px solid var(--sdd-b)}
+.ab-mdd{background:var(--mdd-l);color:var(--mdd);border:1px solid var(--mdd-b)}
+
+/* ── CODE BLOCKS */
+.cb{background:var(--code-bg);border-radius:10px;margin:16px 0;overflow:hidden;font-size:.81rem}
+.cb-lbl{background:#313244;padding:7px 16px;font-size:.73rem;font-weight:700;letter-spacing:.5px;display:flex;align-items:center;gap:8px}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.cb pre{padding:16px 18px;color:var(--code-text);overflow-x:auto;line-height:1.65;white-space:pre}
+.kw{color:#cba6f7}.ty{color:#89dceb}.st{color:#a6e3a1}.cm{color:#6c7086;font-style:italic}
+.an{color:#fab387}.nm{color:#f9e2af}.nu{color:#f38ba8}.gd{color:#a6e3a1}.rd{color:#f38ba8}
+.yw{color:#89b4fa}.op{color:#94e2d5}.hl-ai{background:#313244;display:block;padding:0 4px;border-left:3px solid #f9e2af}
+.hl-dev{background:#1a3020;display:block;padding:0 4px;border-left:3px solid #a6e3a1}
+
+/* ── CALLOUTS */
+.callout{border-radius:10px;padding:14px 18px;margin:14px 0;font-size:.9rem;display:flex;gap:12px;align-items:flex-start}
+.ci{font-size:1.1rem;flex-shrink:0;margin-top:2px}
+.c-info{background:#eff6ff;border:1px solid #bfdbfe}
+.c-warn{background:#fffbeb;border:1px solid #fde68a}
+.c-tip{background:#f0fdf4;border:1px solid #bbf7d0}
+.c-new{background:#fdf4ff;border:1px solid #e9d5ff}
+
+/* ── PHASES */
+.phases{display:flex;flex-direction:column;gap:16px;margin-bottom:24px}
+.phase{border-radius:10px;border:1px solid var(--border);overflow:hidden}
+.ph{padding:11px 18px;display:flex;align-items:center;gap:12px;font-weight:600;font-size:.93rem}
+.pn{width:27px;height:27px;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.82rem;flex-shrink:0}
+.pb{padding:14px 18px 16px;background:#fff;font-size:.9rem}
+.tdd-ph .ph{background:var(--tdd-l);color:var(--tdd)}.tdd-ph .pn{background:var(--tdd)}
+.vibe-ph .ph{background:var(--vibe-l);color:var(--vibe)}.vibe-ph .pn{background:var(--vibe)}
+.sdd-ph .ph{background:var(--sdd-l);color:var(--sdd)}.sdd-ph .pn{background:var(--sdd)}
+.mdd-ph .ph{background:var(--mdd-l);color:var(--mdd)}.mdd-ph .pn{background:var(--mdd)}
+
+/* ── PROS/CONS */
+.pc{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
+.pros{background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:16px 18px}
+.cons{background:#fff1f2;border:1px solid #fda4af;border-radius:10px;padding:16px 18px}
+.pros h4{color:#166534}.cons h4{color:#9f1239}
+.pros ul,.cons ul{font-size:.88rem}
+
+/* ── FLOW */
+.flow{display:flex;align-items:center;gap:0;margin:16px 0;overflow-x:auto;padding-bottom:4px;flex-wrap:nowrap}
+.fn{flex-shrink:0;border-radius:8px;padding:9px 14px;font-size:.79rem;font-weight:600;text-align:center;line-height:1.4;white-space:nowrap}
+.fa{flex-shrink:0;color:#9ca3af;font-size:1.1rem;padding:0 4px}
+.fn-tdd{background:var(--tdd-l);color:var(--tdd);border:1px solid var(--tdd-b)}
+.fn-vibe{background:var(--vibe-l);color:var(--vibe);border:1px solid var(--vibe-b)}
+.fn-sdd{background:var(--sdd-l);color:var(--sdd);border:1px solid var(--sdd-b)}
+.fn-mdd{background:var(--mdd-l);color:var(--mdd);border:1px solid var(--mdd-b)}
+.fn-red{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}
+.fn-gold{background:#fef3c7;color:#92400e;border:1px solid #fde68a}
+
+/* ── TABLES */
+.ctable{width:100%;border-collapse:separate;border-spacing:0;font-size:.88rem;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.ctable thead th{padding:13px 16px;text-align:left;font-weight:700;font-size:.84rem}
+.ctable thead th:nth-child(1){background:#1e293b;color:#fff}
+.ctable thead th:nth-child(2){background:var(--tdd);color:#fff}
+.ctable thead th:nth-child(3){background:var(--vibe);color:#fff}
+.ctable thead th:nth-child(4){background:var(--sdd);color:#fff}
+.ctable thead th:nth-child(5){background:var(--mdd);color:#fff}
+.ctable tbody tr:nth-child(even) td{background:#f8fafc}
+.ctable tbody tr:nth-child(odd) td{background:#fff}
+.ctable td{padding:11px 16px;border-bottom:1px solid var(--border);vertical-align:top}
+.ctable td:first-child{font-weight:600;color:#374151}
+
+/* ── BADGES */
+.badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:.77rem;font-weight:600}
+.b-g{background:#dcfce7;color:#166534}.b-r{background:#fee2e2;color:#991b1b}
+.b-a{background:#fef3c7;color:#92400e}.b-b{background:#dbeafe;color:#1e40af}
+.b-p{background:#ede9fe;color:#5b21b6}
+
+/* ── DIALOG BOXES (AI chat) */
+.dialog{margin:16px 0;display:flex;flex-direction:column;gap:10px}
+.msg{border-radius:10px;padding:14px 18px;font-size:.88rem;max-width:92%;line-height:1.6}
+.msg-dev{background:#dbeafe;border:1px solid #93c5fd;color:#1e3a5f;align-self:flex-start}
+.msg-dev::before{content:"👨‍💻 Developer  ";font-weight:700;display:block;margin-bottom:6px;font-size:.78rem;letter-spacing:.5px;color:#1e40af}
+.msg-ai{background:#fdf4ff;border:1px solid #d8b4fe;color:#3b0764;align-self:flex-end}
+.msg-ai::before{content:"🤖 AI  ";font-weight:700;display:block;margin-bottom:6px;font-size:.78rem;letter-spacing:.5px;color:#7c3aed}
+.msg-ai2{background:#fdf4ff;border:1px solid #d8b4fe;color:#3b0764;align-self:flex-end}
+.msg-ai2::before{content:"🤖 AI (Round 2)  ";font-weight:700;display:block;margin-bottom:6px;font-size:.78rem;letter-spacing:.5px;color:#7c3aed}
+.msg-ai3{background:#fdf4ff;border:1px solid #d8b4fe;color:#3b0764;align-self:flex-end}
+.msg-ai3::before{content:"🤖 AI (Round 3)  ";font-weight:700;display:block;margin-bottom:6px;font-size:.78rem;letter-spacing:.5px;color:#7c3aed}
+
+/* ── MARKDOWN EVOLUTION */
+.md-version{border-radius:12px;overflow:hidden;margin:16px 0;border:1px solid var(--border)}
+.md-ver-header{padding:10px 18px;font-weight:700;font-size:.88rem;display:flex;align-items:center;gap:10px}
+.md-ver-body{background:#fff;padding:0}
+.md-v1 .md-ver-header{background:#fee2e2;color:#991b1b}
+.md-v2 .md-ver-header{background:#fef3c7;color:#92400e}
+.md-v3 .md-ver-header{background:#dcfce7;color:#166534}
+
+/* ── SECTION DIVIDER */
+.sdiv{display:flex;align-items:center;gap:16px;margin:32px 0 24px}
+.sdiv h2{margin:0;white-space:nowrap}
+.sdiv hr{flex:1;border:none;border-top:2px solid var(--border)}
+
+/* ── GRID */
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:22px}
+
+/* ── TIMELINE */
+.timeline{position:relative;padding-left:36px}
+.timeline::before{content:'';position:absolute;left:12px;top:0;bottom:0;width:2px;background:var(--border)}
+.tl-item{position:relative;margin-bottom:24px}
+.tl-dot{position:absolute;left:-30px;top:4px;width:16px;height:16px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 2px currentColor}
+.tl-tdd .tl-dot{color:var(--tdd);background:var(--tdd)}
+.tl-vibe .tl-dot{color:var(--vibe);background:var(--vibe)}
+.tl-sdd .tl-dot{color:var(--sdd);background:var(--sdd)}
+.tl-mdd .tl-dot{color:var(--mdd);background:var(--mdd)}
+.tl-label{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px}
+.tl-tdd .tl-label{color:var(--tdd)}.tl-vibe .tl-label{color:var(--vibe)}
+.tl-sdd .tl-label{color:var(--sdd)}.tl-mdd .tl-label{color:var(--mdd)}
+
+/* ── VERDICT */
+.verdict{background:linear-gradient(135deg,#0f172a,#1e3a5f);color:#fff;border-radius:14px;padding:32px;margin-top:20px}
+.verdict h3{color:#fbbf24;margin-bottom:14px;font-size:1.15rem}
+.verdict p{color:#bfdbfe;margin-bottom:10px}
+.verdict strong{color:#fff}
+
+footer{background:#0f172a;color:#64748b;text-align:center;padding:24px;font-size:.84rem}
+
+@media(max-width:900px){.g3,.g2,.pc{grid-template-columns:1fr};header h1{font-size:1.7rem}}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+<div class="wrap">
+  <div class="eye">Entity API DB &mdash; V2 &mdash; Field Addition Case Study</div>
+  <h1>Markdown-First <em>Spec-Driven</em> Development<span class="new-badge">NEW IN V2</span></h1>
+  <p>
+    A deep dive into four development approaches for adding <code style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:#93c5fd">emailConfidenceCode</code>
+    to the Entity API &mdash; with the Markdown-First iteration loop as the centrepiece new idea.
+    Is iterating a design markdown with AI before touching the spec a good way to do Spec-Based coding?
+    <strong style="color:#fbbf24">Yes &mdash; and here is exactly how.</strong>
+  </p>
+</div>
+</header>
+
+<div class="wrap">
+
+<!-- ══════════════ SECTION: THE INSIGHT ══════════════ -->
+<section id="insight">
+<div class="sdiv"><h2>The Core Insight</h2><hr/></div>
+
+<div class="g2" style="margin-bottom:28px">
+  <div>
+    <h3>What goes wrong without this pattern</h3>
+    <p>Most developers (and most AI tools) jump straight from a sentence of intent to code. The spec, if it gets updated at all, is updated <em>after</em> the code. Tests are written last. Edge cases are discovered in production.</p>
+    <p>Even "Spec-Driven Development" has a gap: <strong>the spec itself can be wrong</strong>. If you commit a bad spec, code gets built on a bad contract. Changing the spec later breaks consumers.</p>
+    <div class="callout c-warn">
+      <span class="ci">⚠️</span>
+      <div><strong>The expensive mistake:</strong> In entityapi-db, <code>AccountRecord</code> is auto-generated from <code>entity-api.yaml</code>. A field added to the YAML without careful thought becomes a permanent API contract &mdash; changing or removing it is a breaking change for any consumer of the API.</div>
+    </div>
+  </div>
+  <div>
+    <h3>The Markdown-First loop fixes this</h3>
+    <p>A <strong>Design Markdown</strong> is a lightweight, cost-free, deletable artifact. You iterate it with AI until the design is solid. Only then does the spec get updated. The key idea:</p>
+    <div class="callout c-new">
+      <span class="ci">💡</span>
+      <div>
+        <strong>Markdown is the thinking space. YAML is the commitment.</strong><br/><br/>
+        You can trash a markdown doc at zero cost. A bad YAML change requires a versioned deprecation cycle. Use markdown to resolve every open question <em>before</em> touching the spec.
+      </div>
+    </div>
+    <p>AI is an outstanding thought partner at the markdown stage because it can:</p>
+    <ul>
+      <li>Identify edge cases you haven't considered</li>
+      <li>Challenge naming and type decisions before they're locked in</li>
+      <li>Generate the full test matrix from the design intent</li>
+      <li>Spot consistency issues with existing fields</li>
+    </ul>
+  </div>
+</div>
+
+<!-- Four-approach overview flow -->
+<h3>The Four Approaches at a Glance</h3>
+<div style="overflow-x:auto;padding-bottom:8px">
+<table style="width:100%;border-collapse:collapse;font-size:.85rem;min-width:780px">
+<thead>
+<tr>
+  <th style="background:#1e293b;color:#fff;padding:12px 14px;text-align:left;width:22%">Approach</th>
+  <th style="background:#1e293b;color:#fff;padding:12px 14px;text-align:left">Sequence</th>
+  <th style="background:#1e293b;color:#fff;padding:12px 14px;text-align:center;width:130px">Design&nbsp;artifact</th>
+  <th style="background:#1e293b;color:#fff;padding:12px 14px;text-align:center;width:110px">AI&nbsp;role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="padding:11px 14px;background:#fff;font-weight:600"><span class="abadge ab-tdd">BDD/TDD</span></td>
+  <td style="padding:11px 14px;background:#fff">Gherkin → Failing tests → YAML → Code → Green tests</td>
+  <td style="padding:11px 14px;background:#fff;text-align:center">Gherkin .feature</td>
+  <td style="padding:11px 14px;background:#fff;text-align:center">Optional</td>
+</tr>
+<tr>
+  <td style="padding:11px 14px;background:#f8fafc;font-weight:600"><span class="abadge ab-vibe">Vibe Coding</span></td>
+  <td style="padding:11px 14px;background:#f8fafc">Prompt → AI generates code → Manual test → Ship</td>
+  <td style="padding:11px 14px;background:#f8fafc;text-align:center">None</td>
+  <td style="padding:11px 14px;background:#f8fafc;text-align:center">Code generator</td>
+</tr>
+<tr>
+  <td style="padding:11px 14px;background:#fff;font-weight:600"><span class="abadge ab-sdd">Spec-Driven (V1)</span></td>
+  <td style="padding:11px 14px;background:#fff">YAML update → AI implements → AI tests → CI</td>
+  <td style="padding:11px 14px;background:#fff;text-align:center">OpenAPI YAML</td>
+  <td style="padding:11px 14px;background:#fff;text-align:center">Implementer</td>
+</tr>
+<tr style="outline:2px solid var(--mdd-b);outline-offset:-1px">
+  <td style="padding:11px 14px;background:var(--mdd-l);font-weight:600"><span class="abadge ab-mdd">Markdown-First ★</span></td>
+  <td style="padding:11px 14px;background:var(--mdd-l)"><strong>Design MD → AI iteration loops → YAML → AI implements → AI tests → CI</strong></td>
+  <td style="padding:11px 14px;background:var(--mdd-l);text-align:center"><strong>Design Markdown + YAML</strong></td>
+  <td style="padding:11px 14px;background:var(--mdd-l);text-align:center"><strong>Design reviewer + implementer</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<!-- ══════════════ SECTION 1: TDD ══════════════ -->
+<section id="tdd">
+<div class="sdiv"><h2>&#128203; Approach 1: Traditional BDD / TDD</h2><hr/></div>
+
+<div class="callout c-info">
+  <span class="ci">ℹ️</span>
+  <div><strong>Philosophy:</strong> No implementation code may exist unless a failing test demands it. In BDD, human-readable Gherkin scenarios act as the first design artifact. The test suite becomes the living documentation of intent.</div>
+</div>
+
+<h3 style="margin-top:20px">Workflow</h3>
+<div class="flow">
+  <div class="fn fn-tdd">📋 Gherkin<br/>scenarios</div><div class="fa">→</div>
+  <div class="fn fn-red">🔴 Write failing<br/>unit tests</div><div class="fa">→</div>
+  <div class="fn fn-tdd">📄 Update<br/>entity-api.yaml</div><div class="fa">→</div>
+  <div class="fn fn-tdd">⚙️ mvn compile<br/>regenerates model</div><div class="fa">→</div>
+  <div class="fn fn-tdd">📝 AccountDocument<br/>+ AccountService</div><div class="fa">→</div>
+  <div class="fn fn-gold">🟢 Green tests</div><div class="fa">→</div>
+  <div class="fn fn-tdd">♻️ Refactor</div>
+</div>
+
+<div class="phases">
+<div class="phase tdd-ph">
+  <div class="ph"><div class="pn">1</div>Write Gherkin Feature File (before any code changes)</div>
+  <div class="pb">
+    <p>Product owner, QA, and developer collaborate on behaviour scenarios. These are reviewed and signed off <em>before</em> anyone writes Java.</p>
+    <div class="cb">
+      <div class="cb-lbl"><span class="dot" style="background:#f38ba8"></span><span style="color:#cdd6f4">features/email_confidence_code.feature — agreed BEFORE any code</span></div>
+      <pre><span class="kw">Feature:</span> Account emailConfidenceCode field
+
+  <span class="cm"># Product owner reviewed and approved these scenarios on 2026-03-15</span>
+
+  <span class="kw">Background:</span>
+    <span class="kw">Given</span> the Entity API is running at http://localhost:8080
+    <span class="kw">And</span>   the Couchbase cluster is healthy
+
+  <span class="kw">Scenario:</span> Upsert stores a HIGH confidence code
+    <span class="kw">Given</span> a valid account payload with <span class="nm">emailConfidenceCode</span> <span class="st">"HIGH"</span>
+    <span class="kw">When</span>  I POST to <span class="st">/entity/account</span>
+    <span class="kw">Then</span>  the response status is <span class="nu">201</span>
+    <span class="kw">And</span>   the response body contains <span class="nm">emailConfidenceCode</span> = <span class="st">"HIGH"</span>
+    <span class="kw">And</span>   the Couchbase document has <span class="nm">email_confidence_code</span> = <span class="st">"HIGH"</span>
+
+  <span class="kw">Scenario:</span> Upsert accepts all four valid enum values
+    <span class="kw">Given</span> a valid account payload with emailConfidenceCode <span class="st">"&lt;code&gt;"</span>
+    <span class="kw">When</span>  I POST to <span class="st">/entity/account</span>
+    <span class="kw">Then</span>  the response status is <span class="nu">2xx</span>
+    Examples:
+      | code    |
+      | HIGH    |
+      | MEDIUM  |
+      | LOW     |
+      | UNKNOWN |
+
+  <span class="kw">Scenario:</span> Upsert rejects an invalid confidence code
+    <span class="kw">Given</span> a payload with emailConfidenceCode <span class="st">"SUPER_HIGH"</span>
+    <span class="kw">When</span>  I POST to <span class="st">/entity/account</span>
+    <span class="kw">Then</span>  the response status is <span class="nu">400</span>
+    <span class="kw">And</span>   the error message mentions <span class="st">"emailConfidenceCode"</span>
+
+  <span class="kw">Scenario:</span> Field is optional — upsert succeeds without it
+    <span class="kw">Given</span> a valid account payload with no emailConfidenceCode field
+    <span class="kw">When</span>  I POST to <span class="st">/entity/account</span>
+    <span class="kw">Then</span>  the response status is <span class="nu">201</span>
+    <span class="kw">And</span>   emailConfidenceCode is absent or null in the response
+
+  <span class="kw">Scenario:</span> GET returns the stored confidence code
+    <span class="kw">Given</span> account <span class="nu">123456789</span> was stored with emailConfidenceCode <span class="st">"MEDIUM"</span>
+    <span class="kw">When</span>  I GET <span class="st">/entity/account/123456789</span>
+    <span class="kw">Then</span>  the response body contains <span class="nm">emailConfidenceCode</span> = <span class="st">"MEDIUM"</span>
+
+  <span class="kw">Scenario:</span> GET handles legacy account without the field
+    <span class="kw">Given</span> account <span class="nu">999999999</span> exists in Couchbase WITHOUT email_confidence_code
+    <span class="kw">When</span>  I GET <span class="st">/entity/account/999999999</span>
+    <span class="kw">Then</span>  the response status is <span class="nu">200</span>
+    <span class="kw">And</span>   emailConfidenceCode is absent or null</pre>
+    </div>
+  </div>
+</div>
+
+<div class="phase tdd-ph">
+  <div class="ph"><div class="pn">2</div>Write Failing Unit Tests (Red Phase — won't compile yet)</div>
+  <div class="pb">
+    <p>Translate the Gherkin into JUnit 5. These deliberately fail to compile because <code>emailConfidenceCode</code> doesn't exist yet on the generated <code>AccountRecord</code>.</p>
+    <div class="cb">
+      <div class="cb-lbl"><span class="dot" style="background:#f38ba8"></span><span style="color:#cdd6f4">AccountServiceTest.java — new tests (RED, will not compile)</span></div>
+      <pre><span class="an">@ParameterizedTest</span>
+<span class="an">@ValueSource</span>(strings = {<span class="st">"HIGH"</span>, <span class="st">"MEDIUM"</span>, <span class="st">"LOW"</span>, <span class="st">"UNKNOWN"</span>})
+<span class="kw">void</span> upsert_acceptsAllValidConfidenceCodes(<span class="ty">String</span> code) {
+    AccountRecord r = buildValidRecord();
+    <span class="cm">// ← compile error: EmailConfidenceCodeEnum does not exist yet</span>
+    r.setEmailConfidenceCode(
+        AccountRecord.EmailConfidenceCodeEnum.fromValue(code));
+    when(nameApiClient.capitalize(any())).thenReturn(<span class="st">"Test Corp"</span>);
+
+    AccountRecord result = service.upsert(r);
+
+    assertEquals(code, result.getEmailConfidenceCode().getValue());
+}
+
+<span class="an">@Test</span>
+<span class="kw">void</span> upsert_allowsNull_emailConfidenceCode() {
+    AccountRecord r = buildValidRecord();
+    <span class="cm">// field not set — should not throw BadDataException</span>
+    when(nameApiClient.capitalize(any())).thenReturn(<span class="st">"Test Corp"</span>);
+
+    assertDoesNotThrow(() -&gt; service.upsert(r));
+}
+
+<span class="an">@Test</span>
+<span class="kw">void</span> getById_returnsConfidenceCode_whenPresentInCouchbase() {
+    AccountDocument doc = buildDoc();
+    doc.setEmailConfidenceCode(<span class="st">"LOW"</span>);  <span class="cm">// ← field not on doc yet either</span>
+    GetResult mock = mockGetResult(doc);
+    when(collection.get(eq(<span class="st">"123"</span>), any())).thenReturn(mock);
+
+    AccountRecord result = service.getById(123L);
+    assertEquals(AccountRecord.EmailConfidenceCodeEnum.LOW,
+                 result.getEmailConfidenceCode());
+}
+
+<span class="an">@Test</span>
+<span class="kw">void</span> getById_returnsNull_whenLegacyDocHasNoConfidenceCode() {
+    AccountDocument doc = buildDoc();
+    <span class="cm">// email_confidence_code absent from doc — simulates pre-feature document</span>
+    GetResult mock = mockGetResult(doc);
+    when(collection.get(eq(<span class="st">"456"</span>), any())).thenReturn(mock);
+
+    AccountRecord result = service.getById(456L);
+    assertNull(result.getEmailConfidenceCode());
+}</pre>
+    </div>
+    <div class="callout c-tip"><span class="ci">✅</span><div><code>mvn test</code> now fails with a compile error. That is the <strong>correct</strong> TDD state — Red. No implementation exists. The tests define what must be built.</div></div>
+  </div>
+</div>
+
+<div class="phase tdd-ph">
+  <div class="ph"><div class="pn">3</div>Update entity-api.yaml (source of truth — regenerates AccountRecord)</div>
+  <div class="pb">
+    <div class="cb">
+      <div class="cb-lbl"><span class="dot" style="background:#a6e3a1"></span><span style="color:#cdd6f4">entity-api.yaml — AccountRecord schema diff</span></div>
+      <pre>    <span class="yw">AccountRecord:</span>
+      <span class="yw">type:</span> object
+      <span class="yw">properties:</span>
+        <span class="yw">status:</span>
+          <span class="yw">type:</span> string
+          <span class="yw">enum:</span> [ACTIVE, INACTIVE, SUSPENDED, CLOSED, PENDING, CANCEL]
+<span class="gd">+       emailConfidenceCode:</span>
+<span class="gd">+         type: string</span>
+<span class="gd">+         description: |</span>
+<span class="gd">+           Confidence level that the account email address is valid.</span>
+<span class="gd">+           HIGH    — confirmed deliverable by verification service</span>
+<span class="gd">+           MEDIUM  — likely valid, not formally verified</span>
+<span class="gd">+           LOW     — suspected invalid or unreachable</span>
+<span class="gd">+           UNKNOWN — no verification data available</span>
+<span class="gd">+         enum: [HIGH, MEDIUM, LOW, UNKNOWN]</span>
+<span class="gd">+         example: HIGH</span>
+        <span class="yw">dob:</span>
+          <span class="yw">type:</span> string</pre>
+    </div>
+    <p>Run <code>mvn compile</code>. The openapi-generator-maven-plugin regenerates <code>AccountRecord</code>, adding <code>EmailConfidenceCodeEnum</code> and <code>getEmailConfidenceCode()</code>/<code>setEmailConfidenceCode()</code>. Tests now compile but still fail (Red) because the service mapping is missing.</p>
+  </div>
+</div>
+
+<div class="phase tdd-ph">
+  <div class="ph"><div class="pn">4</div>Add snake_case field to AccountDocument</div>
+  <div class="pb">
+    <div class="cb">
+      <div class="cb-lbl"><span class="dot" style="background:#a6e3a1"></span><span style="color:#cdd6f4">AccountDocument.java — new field, matches snake_case convention</span></div>
+      <pre><span class="cm">// Follows existing pattern: account_number, last_update_date, etc.</span>
+<span class="an">@JsonProperty</span>(<span class="st">"email_confidence_code"</span>)
+<span class="kw">private</span> <span class="ty">String</span> emailConfidenceCode;
+
+<span class="kw">public</span> <span class="ty">String</span> getEmailConfidenceCode() { <span class="kw">return</span> emailConfidenceCode; }
+<span class="kw">public void</span> setEmailConfidenceCode(<span class="ty">String</span> v) { this.emailConfidenceCode = v; }</pre>
+    </div>
+  </div>
+</div>
+
+<div class="phase tdd-ph">
+  <div class="ph"><div class="pn">5</div>Implement mapping in AccountService (Green Phase)</div>
+  <div class="pb">
+    <div class="cb">
+      <div class="cb-lbl"><span class="dot" style="background:#a6e3a1"></span><span style="color:#cdd6f4">AccountService.java — minimum code to make failing tests pass</span></div>
+      <pre><span class="cm">// ── toDocument() ─────────────────────────────────────────────────</span>
+<span class="cm">// Mirrors the existing status field pattern (getValue()/fromValue())</span>
+<span class="kw">if</span> (r.getEmailConfidenceCode() != <span class="kw">null</span>) {
+    doc.setEmailConfidenceCode(r.getEmailConfidenceCode().getValue());
+}
+
+<span class="cm">// ── toRecord() ────────────────────────────────────────────────────</span>
+<span class="cm">// Null guard required — legacy Couchbase docs won't have this field</span>
+<span class="kw">if</span> (doc.getEmailConfidenceCode() != <span class="kw">null</span>) {
+    r.setEmailConfidenceCode(
+        AccountRecord.EmailConfidenceCodeEnum
+            .fromValue(doc.getEmailConfidenceCode())
+    );
+}</pre>
+    </div>
+    <p><code>mvn test</code> → <strong style="color:var(--tdd)">All 6 new tests pass. Green.</strong></p>
+  </div>
+</div>
+</div><!-- /phases -->
+
+<div class="pc">
+  <div class="pros"><h4>✅ Strengths</h4><ul>
+    <li>Every scenario approved by product owner before code exists</li>
+    <li>Tests are the specification — impossible to accidentally skip a scenario</li>
+    <li>Highest regression protection: any future breakage caught automatically</li>
+    <li>Gherkin is human-readable by non-engineers</li>
+    <li>CI enforces it on every push to main</li>
+  </ul></div>
+  <div class="cons"><h4>❌ Weaknesses</h4><ul>
+    <li>High ceremony for a simple optional field</li>
+    <li>Gherkin step definitions need separate Java glue code</li>
+    <li>Teams under pressure skip the Red phase ("it compiles, ship it")</li>
+    <li>Design decisions are implicit in the test code, not in a readable doc</li>
+    <li>No single document explains <em>why</em> the field exists</li>
+  </ul></div>
+</div>
+</section>
+
+<!-- ══════════════ SECTION 2: VIBE ══════════════ -->
+<section id="vibe">
+<div class="sdiv"><h2>🎵 Approach 2: AI Vibe Coding</h2><hr/></div>
+
+<div class="callout c-warn">
+  <span class="ci">⚠️</span>
+  <div><strong>Philosophy:</strong> Move fast. Describe intent to an AI, accept generated code, test manually, ship. The developer's experience and taste substitute for formal process. Works well when the developer fully understands the codebase's architecture constraints. In entityapi-db, there is a <em>specific, silent trap</em> that vibe coding reliably hits.</div>
+</div>
+
+<div class="flow" style="margin-top:20px">
+  <div class="fn fn-vibe">🎵 Describe to AI<br/>in natural language</div><div class="fa">→</div>
+  <div class="fn fn-red">🤖 AI generates<br/>code (may be wrong)</div><div class="fa">→</div>
+  <div class="fn fn-vibe">👀 Developer<br/>eyeballs output</div><div class="fa">→</div>
+  <div class="fn fn-vibe">▶️ docker compose up<br/>manual Postman test</div><div class="fa">→</div>
+  <div class="fn fn-vibe">🔄 Re-prompt if<br/>something breaks</div><div class="fa">→</div>
+  <div class="fn fn-vibe">🚀 Ship</div>
+</div>
+
+<div class="phases">
+<div class="phase vibe-ph">
+  <div class="ph"><div class="pn">1</div>The Vibe Prompt — no spec, no design doc, just intent</div>
+  <div class="pb">
+    <div class="cb">
+      <div class="cb-lbl"><span class="dot" style="background:#9d6bff"></span><span style="color:#cdd6f4">Typical vibe coding prompt (informal)</span></div>
+      <pre><span class="st">"Add emailConfidenceCode field to Account. Enum: HIGH, MEDIUM, LOW, UNKNOWN.
+Optional field. Store in Couchbase as email_confidence_code.
+Update the service, document class, and the API. Thanks"</span></pre>
+    </div>
+    <p>No mention of: OpenAPI-first constraint, generated sources, test expectations, legacy document backward compatibility, or the <code>fromValue()</code> enum pattern already in the codebase.</p>
+  </div>
+</div>
+
+<div class="phase vibe-ph">
+  <div class="ph"><div class="pn">2</div>The Silent Trap — AI edits the wrong file</div>
+  <div class="pb">
+    <p>Without knowing this project's OpenAPI-first constraint, an AI doing vibe coding will almost certainly edit the generated file directly:</p>
+    <div class="cb">
+      <div class="cb-lbl"><span class="dot" style="background:#f38ba8"></span><span style="color:#cdd6f4">AI vibe output — WRONG: editing the generated source file</span></div>
+      <pre><span class="rd">// AI edits this file:</span>
+<span class="rd">// target/generated-sources/openapi/com/company/entityapi/model/AccountRecord.java</span>
+<span class="cm">// ↑↑↑ THIS FILE IS REGENERATED ON EVERY mvn compile ↑↑↑</span>
+<span class="cm">// The change will be silently DELETED next time anyone runs the build</span>
+
+<span class="kw">public enum</span> EmailConfidenceCodeEnum {
+    <span class="nm">HIGH</span>(<span class="st">"HIGH"</span>), <span class="nm">MEDIUM</span>(<span class="st">"MEDIUM"</span>), <span class="nm">LOW</span>(<span class="st">"LOW"</span>), <span class="nm">UNKNOWN</span>(<span class="st">"UNKNOWN"</span>);
+    <span class="cm">// Works fine until the next build wipes this file entirely</span>
+}
+
+<span class="cm">// Developer tests with Postman → passes → merges → CI runs mvn compile → GONE</span>
+<span class="cm">// Bug surfaces hours or days later when another developer pulls and builds</span></pre>
+    </div>
+    <div class="callout c-warn">
+      <span class="ci">⚠️</span>
+      <div>This is not a hypothetical. In real teams using vibe coding without process, this exact mistake causes hours of debugging: "it worked yesterday, why did it stop?" The answer is always "someone ran <code>mvn compile</code> and wiped the generated-sources edit."</div>
+    </div>
+    <p>A well-context-prompted AI will produce the correct changes, but the developer must explicitly tell it about the OpenAPI-first constraint every time. With vibe coding, that context is typically missing from the prompt.</p>
+    <div class="cb">
+      <div class="cb-lbl"><span class="dot" style="background:#a6e3a1"></span><span style="color:#cdd6f4">What correct vibe output looks like (requires developer to spot the mistake and re-prompt)</span></div>
+      <pre><span class="cm">// After developer catches the error and re-prompts:</span>
+<span class="cm">// "Don't edit AccountRecord.java directly — it's in target/generated-sources.</span>
+<span class="cm">// Update entity-api.yaml instead."</span>
+
+<span class="gd">// Now AI edits entity-api.yaml ✓</span>
+<span class="gd">// And AccountDocument.java ✓</span>
+<span class="gd">// And AccountService.java ✓</span>
+<span class="cm">// But still no tests written — left to developer's discretion</span></pre>
+    </div>
+  </div>
+</div>
+
+<div class="phase vibe-ph">
+  <div class="ph"><div class="pn">3</div>Edge Cases Not Covered — the invisible debt</div>
+  <div class="pb">
+    <p>Even when vibe coding produces syntactically correct code, the following are typically not handled unless the developer explicitly asks:</p>
+    <div class="cb">
+      <div class="cb-lbl"><span class="dot" style="background:#f38ba8"></span><span style="color:#cdd6f4">What vibe coding leaves unverified</span></div>
+      <pre><span class="rd">✗ Legacy Couchbase documents (no email_confidence_code field) → NPE on GET</span>
+<span class="rd">✗ fromValue() throws IllegalArgumentException for unknown strings → 500 in prod</span>
+<span class="rd">✗ Round-trip fidelity: POST "LOW" → GET returns "LOW" (not tested)</span>
+<span class="rd">✗ Postman collection NOT updated → integration tests don't cover new field</span>
+<span class="rd">✗ entity-api.yaml examples not updated → API docs misleading</span>
+<span class="rd">✗ No unit tests → next developer who refactors AccountService gets no warning</span></pre>
+    </div>
+    <p>Each item above is a future production incident waiting to happen. There is nothing in the codebase to catch them — no tests, no spec validation, just silence until a user hits the bug.</p>
+  </div>
+</div>
+</div><!-- /phases -->
+
+<div class="pc">
+  <div class="pros"><h4>✅ When it works</h4><ul>
+    <li>Developer knows the codebase deeply (knows about generated sources)</li>
+    <li>Throwaway prototype — not going to production</li>
+    <li>Solo project with no downstream API consumers</li>
+    <li>Simple cosmetic change with no business logic</li>
+  </ul></div>
+  <div class="cons"><h4>❌ When it fails</h4><ul>
+    <li>AI doesn't know about project-specific constraints (OpenAPI-first trap)</li>
+    <li>No regression tests — every future change is a gamble</li>
+    <li>Knowledge lives in developer's head, not in the codebase</li>
+    <li>Legacy document edge cases missed until production NPE</li>
+    <li>Technical debt compounds with each vibe session</li>
+    <li>Code review is impossible without a spec to compare against</li>
+  </ul></div>
+</div>
+</section>
+
+<!-- ══════════════ SECTION 3: SPEC-DRIVEN V1 ══════════════ -->
+<section id="sdd">
+<div class="sdiv"><h2>📄 Approach 3: AI Spec-Driven Development (V1)</h2><hr/></div>
+
+<div class="callout c-info">
+  <span class="ci">ℹ️</span>
+  <div><strong>Philosophy:</strong> The spec is updated first. AI implements against the spec. This matches entityapi-db's existing OpenAPI-first architecture naturally. Better than vibe coding but has one remaining gap: <em>the spec itself might be wrong or incomplete</em>, and we only find out during implementation or code review.</div>
+</div>
+
+<div class="flow" style="margin-top:20px">
+  <div class="fn fn-sdd">📄 Update YAML<br/>deliberately</div><div class="fa">→</div>
+  <div class="fn fn-sdd">🤖 Give spec diff<br/>to AI as context</div><div class="fa">→</div>
+  <div class="fn fn-sdd">⚙️ AI implements<br/>all layers</div><div class="fa">→</div>
+  <div class="fn fn-sdd">📋 AI derives<br/>tests from spec</div><div class="fa">→</div>
+  <div class="fn fn-sdd">✅ mvn test passes</div><div class="fa">→</div>
+  <div class="fn fn-sdd">🚀 CI confirms</div>
+</div>
+
+<div class="phases">
+<div class="phase sdd-ph">
+  <div class="ph"><div class="pn">1</div>Update entity-api.yaml with deliberate design decisions</div>
+  <div class="pb">
+    <div class="cb">
+      <div class="cb-lbl"><span class="dot" style="background:#f9e2af"></span><span style="color:#cdd6f4">entity-api.yaml — careful, deliberate spec change</span></div>
+      <pre><span class="gd">+     emailConfidenceCode:</span>
+<span class="gd">+       type: string</span>
+<span class="gd">+       description: |</span>
+<span class="gd">+         Confidence level that the account's email address is valid.</span>
+<span class="gd">+         Set by the email verification service during onboarding.</span>
+<span class="gd">+         HIGH    — confirmed deliverable</span>
+<span class="gd">+         MEDIUM  — likely valid, unverified</span>
+<span class="gd">+         LOW     — suspected invalid</span>
+<span class="gd">+         UNKNOWN — no data available (default for legacy accounts)</span>
+<span class="gd">+       enum: [HIGH, MEDIUM, LOW, UNKNOWN]</span>
+<span class="gd">+       example: HIGH</span></pre>
+    </div>
+    <p>This is a reviewable PR artifact. Another engineer or team can approve or challenge the field design before implementation begins.</p>
+  </div>
+</div>
+
+<div class="phase sdd-ph">
+  <div class="ph"><div class="pn">2</div>Give AI the spec diff + project conventions as authoritative context</div>
+  <div class="pb">
+    <div class="cb">
+      <div class="cb-lbl"><span class="dot" style="background:#f9e2af"></span><span style="color:#cdd6f4">Precise AI prompt — spec-driven, not vibe</span></div>
+      <pre><span class="st">"I updated entity-api.yaml to add emailConfidenceCode (enum: HIGH|MEDIUM|LOW|UNKNOWN,
+optional). This project is OpenAPI-first: AccountRecord is in
+target/generated-sources — do NOT edit it. Run mvn compile to regenerate.
+
+Implement across:
+  1. AccountDocument.java: add email_confidence_code (@JsonProperty snake_case)
+  2. AccountService.toDocument(): map EmailConfidenceCodeEnum → String (getValue())
+  3. AccountService.toRecord(): map String → enum (fromValue()), null-safe
+  4. AccountServiceTest.java: parameterized test for all 4 enum values + null case
+  5. Update Postman collection examples
+
+Follow the status field pattern exactly (getValue()/fromValue()).
+Do not add server-side enum validation — the OpenAPI spec handles it."</span></pre>
+    </div>
+    <p>Because the spec is explicit about field name, type, and enum values, the AI cannot hallucinate these. The prompt eliminates the generated-sources trap by explicitly naming it.</p>
+  </div>
+</div>
+
+<div class="phase sdd-ph">
+  <div class="ph"><div class="pn">3</div>AI implements all layers + generates spec-derived tests</div>
+  <div class="pb">
+    <div class="cb">
+      <div class="cb-lbl"><span class="dot" style="background:#a6e3a1"></span><span style="color:#cdd6f4">AI-generated AccountServiceTest.java — all test cases derived from spec</span></div>
+      <pre><span class="cm">// Spec says: enum [HIGH, MEDIUM, LOW, UNKNOWN] — test ALL values, not just HIGH</span>
+<span class="an">@ParameterizedTest</span>
+<span class="an">@EnumSource</span>(AccountRecord.EmailConfidenceCodeEnum.class)
+<span class="kw">void</span> upsert_storesAllValidConfidenceCodes(
+        AccountRecord.EmailConfidenceCodeEnum code) {
+    AccountRecord r = buildValidRecord();
+    r.setEmailConfidenceCode(code);
+    when(nameApiClient.capitalize(any())).thenReturn(<span class="st">"Test Corp"</span>);
+
+    AccountRecord result = service.upsert(r);
+
+    assertEquals(code, result.getEmailConfidenceCode());
+    verify(collection).upsert(any(), any(AccountDocument.class), any());
+}
+
+<span class="cm">// Spec says: field is optional — null must not throw</span>
+<span class="an">@Test</span>
+<span class="kw">void</span> upsert_succeeds_whenEmailConfidenceCodeAbsent() {
+    AccountRecord r = buildValidRecord();
+    <span class="cm">// intentionally not calling r.setEmailConfidenceCode()</span>
+    when(nameApiClient.capitalize(any())).thenReturn(<span class="st">"Test Corp"</span>);
+
+    assertDoesNotThrow(() -&gt; service.upsert(r));
+}
+
+<span class="cm">// Spec says: field returned by GET — must survive Couchbase round-trip</span>
+<span class="an">@Test</span>
+<span class="kw">void</span> getById_returnsStoredConfidenceCode() {
+    AccountDocument doc = buildDoc();
+    doc.setEmailConfidenceCode(<span class="st">"MEDIUM"</span>);
+    GetResult mockResult = mockGetResult(doc);
+    when(collection.get(eq(<span class="st">"123"</span>), any())).thenReturn(mockResult);
+
+    AccountRecord result = service.getById(123L);
+
+    assertEquals(AccountRecord.EmailConfidenceCodeEnum.MEDIUM,
+                 result.getEmailConfidenceCode());
+}
+
+<span class="cm">// Spec says: optional — old docs without field must not throw NullPointerException</span>
+<span class="an">@Test</span>
+<span class="kw">void</span> getById_returnsNull_forLegacyDocumentWithoutConfidenceCode() {
+    AccountDocument doc = buildDoc();
+    <span class="cm">// email_confidence_code absent — simulates pre-feature Couchbase document</span>
+    GetResult mockResult = mockGetResult(doc);
+    when(collection.get(eq(<span class="st">"456"</span>), any())).thenReturn(mockResult);
+
+    AccountRecord result = service.getById(456L);
+
+    assertNull(result.getEmailConfidenceCode(),
+        <span class="st">"Legacy documents without email_confidence_code must return null, not throw"</span>);
+}</pre>
+    </div>
+  </div>
+</div>
+</div><!-- /phases -->
+
+<div class="callout c-warn" style="margin-bottom:4px">
+  <span class="ci">⚠️</span>
+  <div><strong>Remaining gap in V1:</strong> The spec itself was written without iteration. What if the product team later wants <code>NOT_APPLICABLE</code> as a fifth enum value? Or what if the API consumer team expected a <code>emailConfidenceScore</code> (numeric 0–100) instead of a code? These questions should have been asked <em>before</em> the spec was committed. The Markdown-First approach (next section) closes this gap.</div>
+</div>
+
+<div class="pc">
+  <div class="pros"><h4>✅ Strengths</h4><ul>
+    <li>Spec is the single source of truth — AI anchored to it</li>
+    <li>Naturally fits entityapi-db's OpenAPI-first architecture</li>
+    <li>Tests derived from spec catch all enum values and null case</li>
+    <li>Spec diff is a reviewable PR artifact before implementation</li>
+    <li>Fast: AI handles all layers in one pass with correct context</li>
+  </ul></div>
+  <div class="cons"><h4>❌ Remaining weaknesses</h4><ul>
+    <li>Spec is written once, in isolation, without design iteration</li>
+    <li>Open questions (5th enum? read-only vs client-settable?) resolved ad-hoc</li>
+    <li>No written record of <em>why</em> design decisions were made</li>
+    <li>Changing the spec after code exists requires a breaking-change process</li>
+  </ul></div>
+</div>
+</section>
+
+<!-- ══════════════ SECTION 4: MARKDOWN-FIRST ══════════════ -->
+<section id="mdd">
+<div class="sdiv"><h2>📝 Approach 4: Markdown-First Spec-Driven Development <span class="new-badge">NEW</span></h2><hr/></div>
+
+<div class="callout c-new">
+  <span class="ci">💡</span>
+  <div>
+    <strong>The core idea:</strong> Before touching <code>entity-api.yaml</code>, write a <strong>Design Markdown</strong> that captures intent, constraints, edge cases, and open questions. Then <strong>iterate that markdown with AI</strong> in multiple rounds until every question is resolved and every edge case is handled. Only <em>then</em> translate the resolved markdown into a YAML spec change. The markdown is the thinking space; the YAML is the commitment.
+  </div>
+</div>
+
+<div class="flow" style="margin-top:20px;flex-wrap:wrap;gap:8px">
+  <div class="fn fn-mdd">📝 Draft Design<br/>Markdown</div><div class="fa">→</div>
+  <div class="fn fn-mdd">🤖 AI Round 1<br/>finds gaps</div><div class="fa">→</div>
+  <div class="fn fn-mdd">✏️ Revise MD<br/>(resolve gaps)</div><div class="fa">→</div>
+  <div class="fn fn-mdd">🤖 AI Round 2<br/>edge cases</div><div class="fa">→</div>
+  <div class="fn fn-mdd">✏️ Revise MD<br/>(resolve edges)</div><div class="fa">→</div>
+  <div class="fn fn-mdd">🤖 AI Round 3<br/>final check</div><div class="fa">→</div>
+  <div class="fn fn-gold">📄 MD → YAML<br/>(mechanical)</div><div class="fa">→</div>
+  <div class="fn fn-mdd">🤖 AI implements<br/>code</div><div class="fa">→</div>
+  <div class="fn fn-mdd">✅ Tests pass<br/>CI confirms</div>
+</div>
+
+<!-- PHASE 1: DRAFT MARKDOWN -->
+<div class="phases" style="margin-top:24px">
+<div class="phase mdd-ph">
+  <div class="ph"><div class="pn">1</div>Draft the Design Markdown — raw first attempt (intentionally incomplete)</div>
+  <div class="pb">
+    <p>The developer drafts a markdown document answering: <em>what, why, where, how, and what could go wrong</em>. The first draft is intentionally rough — the AI will find the gaps.</p>
+
+    <div class="md-version md-v1">
+      <div class="md-ver-header">🔴 Design Markdown v1.0 — First Draft (has open questions)</div>
+      <div class="md-ver-body">
+        <div class="cb" style="margin:0;border-radius:0">
+          <div class="cb-lbl"><span class="dot" style="background:#f38ba8"></span><span style="color:#cdd6f4">design/emailConfidenceCode-design-v1.md</span></div>
+          <pre><span class="nm"># Design: emailConfidenceCode field on AccountRecord</span>
+
+<span class="nm">## Context</span>
+The email verification service (external) now produces a confidence signal
+for each account email address. We need to store and return this signal
+via the Entity API so downstream consumers can act on it.
+
+<span class="nm">## Field Definition</span>
+- Name: emailConfidenceCode
+- Type: enum string
+- Values: HIGH, MEDIUM, LOW, UNKNOWN
+- Required: No (optional)
+- Who sets it: The client (email verification service) on upsert
+
+<span class="nm">## Couchbase Storage</span>
+- Stored as: email_confidence_code (snake_case)
+- Location: top-level field on the account document
+
+<span class="nm">## API Contract</span>
+- Appears in POST /entity/account request body (client sets it)
+- Appears in GET /entity/account/{id} response (returned to caller)
+- Appears in POST /entity/account response (echo back)
+
+<span class="nm">## Open Questions</span>
+- ??? What should we return for accounts created before this field existed?
+- ??? Should the client be able to set this, or is it server-set only?
+- ??? What happens if the client sends a value not in the enum?
+
+<span class="nm">## Files to Change</span>
+- entity-api.yaml
+- AccountDocument.java
+- AccountService.java</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout c-info" style="margin-top:10px">
+      <span class="ci">ℹ️</span>
+      <div>Notice the explicit <strong>Open Questions</strong> section. This is the key discipline: you are not allowed to proceed to the YAML until every open question in the markdown is resolved. The AI helps resolve them.</div>
+    </div>
+  </div>
+</div>
+
+<!-- AI ROUND 1 -->
+<div class="phase mdd-ph">
+  <div class="ph"><div class="pn">2</div>AI Iteration — Round 1: Gap Analysis</div>
+  <div class="pb">
+    <p>The developer shares the markdown with the AI and asks it to critique the design, not generate code.</p>
+
+    <div class="dialog">
+      <div class="msg msg-dev">
+        Here is my design doc for adding emailConfidenceCode to the Entity API.<br/><br/>
+        [pastes design-v1.md above]<br/><br/>
+        Review this design. What gaps, risks, or unresolved questions do you see? Don't write any code — just analyse the design.
+      </div>
+      <div class="msg msg-ai">
+        Good start. Here are the gaps I see:<br/><br/>
+        <strong>1. Open Question 1 is critical:</strong> Your existing Couchbase documents don't have <code>email_confidence_code</code>. When <code>AccountService.toRecord()</code> calls <code>fromValue(null)</code> it will throw <code>IllegalArgumentException</code> → 500 on every GET for a legacy account. You need to decide: return <code>null</code>, or return <code>UNKNOWN</code> as a default?<br/><br/>
+        <strong>2. Open Question 2 matters for your model generation:</strong> If the field is client-settable, it goes in the YAML as a normal property. If it's server-set (like <code>lastUpdateDate</code>), it should be <code>readOnly: true</code> and never accepted from the client. Your context says "the email verification service sets it" — but is that service the API client, or a separate internal process?<br/><br/>
+        <strong>3. Open Question 3 is already answered by OpenAPI:</strong> If you define it as an enum in the YAML, the generated Jakarta validation rejects invalid values with a 400 automatically. No additional service-layer code needed.<br/><br/>
+        <strong>4. Missing: What about CustomerRecord?</strong> Your spec has both AccountRecord and CustomerRecord. Should CustomerRecord also get this field? Decide now to avoid a second PR later.<br/><br/>
+        <strong>5. Missing: Couchbase migration.</strong> Will existing documents be backfilled, or left without the field? This affects whether callers can rely on the field always being present.<br/><br/>
+        <strong>6. Missing: Test scenarios.</strong> The design doc has no test cases. Add them so the implementation phase has a clear acceptance checklist.
+      </div>
+    </div>
+
+    <p style="margin-top:12px">The developer resolves each point and updates the markdown:</p>
+
+    <div class="md-version md-v2">
+      <div class="md-ver-header">🟡 Design Markdown v2.0 — After Round 1 (gaps resolved, new questions surface)</div>
+      <div class="md-ver-body">
+        <div class="cb" style="margin:0;border-radius:0">
+          <div class="cb-lbl"><span class="dot" style="background:#f9e2af"></span><span style="color:#cdd6f4">design/emailConfidenceCode-design-v2.md (revised)</span></div>
+          <pre><span class="nm"># Design: emailConfidenceCode field on AccountRecord</span>
+<span class="nm">## Status: DRAFT v2 — under review</span>
+
+<span class="nm">## Context</span>
+The email verification service (external) produces a confidence signal per account.
+We store and expose this signal so downstream risk systems can act on it.
+The email verification service is an API CLIENT — it sets this field on upsert.
+
+<span class="nm">## Field Definition</span>
+- API name:        emailConfidenceCode (camelCase, client-settable)
+- Couchbase name:  email_confidence_code (snake_case)
+- Type:            optional string enum
+- Enum values:     HIGH | MEDIUM | LOW | UNKNOWN
+- readOnly:        false (client sets it — NOT server-set like lastUpdateDate)
+- CustomerRecord:  OUT OF SCOPE for this change — separate ticket ENG-4421
+
+<span class="nm">## Legacy Document Handling (RESOLVED)</span>
+Decision: Return null (not UNKNOWN) for accounts without the field.
+Reason: Callers should distinguish "not yet assessed" (null) from
+"assessed and result is unknown" (UNKNOWN). Masking as UNKNOWN loses info.
+Implementation: null-guard in toRecord() — if doc field is null, leave
+r.emailConfidenceCode as null. No default injection.
+
+<span class="nm">## Enum Validation (RESOLVED)</span>
+OpenAPI enum constraint + Jakarta validation handles invalid values → 400.
+No additional service-layer validation needed.
+
+<span class="nm">## Couchbase Migration</span>
+No backfill. Existing documents left as-is (no email_confidence_code field).
+@JsonIgnoreProperties(ignoreUnknown=true) already present on AccountDocument
+— Jackson will simply leave the field null on deserialization.
+
+<span class="nm">## Test Scenarios (ADDED)</span>
+1. POST with HIGH → response contains HIGH, Couchbase stores HIGH
+2. POST with each of MEDIUM, LOW, UNKNOWN → stored and returned correctly
+3. POST without the field → 201, field absent/null in response
+4. POST with invalid value "SUPER_HIGH" → 400
+5. GET account WITH email_confidence_code in Couchbase → returned
+6. GET account WITHOUT email_confidence_code (legacy doc) → null, no 500
+7. Existing unit tests not broken (regression)
+
+<span class="nm">## Files to Change</span>
+- entity-api.yaml (AccountRecord schema + POST/GET examples)
+- AccountDocument.java (add email_confidence_code field)
+- AccountService.java (toDocument + toRecord mapping)
+- AccountServiceTest.java (7 new test cases)
+- tests/integration-tests.postman_collection.json (2 new requests)
+
+<span class="nm">## Open Questions (REMAINING after Round 1)</span>
+- ??? Should POST example in YAML include emailConfidenceCode?
+- ??? Does the GET response example need updating?</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AI ROUND 2 -->
+<div class="phase mdd-ph">
+  <div class="ph"><div class="pn">3</div>AI Iteration — Round 2: Edge Cases &amp; Consistency Check</div>
+  <div class="pb">
+    <div class="dialog">
+      <div class="msg msg-dev">
+        Updated design is attached (v2). Two open questions remain about YAML examples. Also — are there any edge cases I'm still missing? Specifically around the Couchbase side and the enum parsing.
+      </div>
+      <div class="msg msg-ai2">
+        <strong>On the YAML examples:</strong> Yes, update both. The POST example should include <code>emailConfidenceCode: HIGH</code> to show consumers how to use it. The GET response example should also include it. If you leave examples as-is, API documentation tools like Swagger UI will show a response without the new field — confusing for consumers.<br/><br/>
+        <strong>Edge case you're missing — fromValue() with unexpected Couchbase data:</strong> Your <code>AccountRecord.EmailConfidenceCodeEnum.fromValue()</code> is generated by openapi-generator. The default generated implementation throws <code>IllegalArgumentException</code> for unrecognized strings. If someone bypasses the API and writes a Couchbase document directly with <code>email_confidence_code: "high"</code> (lowercase), your GET will return a 500. Add this to the test scenarios and decide: throw 500, or treat unknown strings as null?<br/><br/>
+        <strong>Edge case — concurrent upsert clearing the field:</strong> The POST contract says the field is optional. If a client sends a POST without <code>emailConfidenceCode</code>, your <code>toDocument()</code> will set <code>email_confidence_code</code> to null, overwriting a previously stored value. Is that intentional? If account 123 has HIGH and the email verification service sends an update for just the <code>status</code> field without re-sending the confidence code — it gets erased.<br/><br/>
+        <strong>Recommendation:</strong> Add a sentence to the design doc: "Upsert replaces the full document — clients must re-send emailConfidenceCode on every upsert to preserve it." This is not a bug but it IS a consumer gotcha that should be documented.
+      </div>
+    </div>
+
+    <p style="margin-top:12px">Developer updates the markdown to v3 with these resolutions:</p>
+    <div class="md-version md-v3">
+      <div class="md-ver-header">🟢 Design Markdown v3.0 — APPROVED (all questions resolved)</div>
+      <div class="md-ver-body">
+        <div class="cb" style="margin:0;border-radius:0">
+          <div class="cb-lbl"><span class="dot" style="background:#a6e3a1"></span><span style="color:#cdd6f4">design/emailConfidenceCode-design-v3.md — FINAL, ready for YAML translation</span></div>
+          <pre><span class="nm"># Design: emailConfidenceCode field on AccountRecord</span>
+<span class="nm">## Status: APPROVED — ready to translate to entity-api.yaml</span>
+<span class="nm">## Reviewers: [names], Approved: 2026-03-15</span>
+
+<span class="nm">## Context &amp; Business Purpose</span>
+The external email verification service produces a confidence signal per account.
+We store and expose this signal. Downstream risk systems consume it.
+The email verification service is an API CLIENT that sets this on upsert.
+
+<span class="nm">## Field Specification (RESOLVED)</span>
+| Attribute       | Value |
+|-----------------|-------|
+| API field name  | emailConfidenceCode |
+| Couchbase field | email_confidence_code |
+| Type            | string enum, optional |
+| Enum values     | HIGH, MEDIUM, LOW, UNKNOWN |
+| readOnly        | false (client-settable) |
+| Default         | none — absent field = not yet assessed |
+| Validation      | OpenAPI enum + Jakarta → 400 on invalid value |
+
+<span class="nm">## Legacy &amp; Edge Cases (ALL RESOLVED)</span>
+1. Legacy docs (no field): toRecord() null-guard → returns null. No 500.
+2. Malformed Couchbase data (e.g. lowercase "high"): fromValue() throws
+   IllegalArgumentException → caught by GlobalExceptionHandler → 500 with
+   logged error. Acceptable — direct Couchbase writes bypass validation and
+   are an ops issue, not an API concern.
+3. Upsert overwrites: Full-document upsert — clients MUST re-send the field
+   on every upsert to preserve it. Documented in API description field.
+
+<span class="nm">## Consumer Warning (added to YAML description)</span>
+"This field is replaced on every upsert. Clients must include the current
+value on each POST to preserve it."
+
+<span class="nm">## YAML Changes Required</span>
+- AccountRecord.properties: add emailConfidenceCode enum field
+- POST /entity/account request example: add emailConfidenceCode: HIGH
+- POST /entity/account response example: add emailConfidenceCode: HIGH
+- GET /entity/account/{id} response example: add emailConfidenceCode: HIGH
+
+<span class="nm">## Test Acceptance Checklist (ALL items must pass before merging)</span>
+1. ✓ POST HIGH → 201 → response has emailConfidenceCode: HIGH
+2. ✓ POST MEDIUM / LOW / UNKNOWN → each stored and returned correctly
+3. ✓ POST without field → 201 → emailConfidenceCode null/absent in response
+4. ✓ POST "SUPER_HIGH" → 400, error mentions emailConfidenceCode
+5. ✓ GET account WITH stored code → returned correctly
+6. ✓ GET legacy account (no field in Couchbase) → 200, field is null, no 500
+7. ✓ Existing tests (stateMissing, statePresent) still pass
+
+<span class="nm">## Out of Scope</span>
+- CustomerRecord: separate ticket ENG-4421
+- Couchbase backfill: not needed, null = "not assessed"
+- Score (numeric 0-100): separate design if needed later
+
+<span class="nm">## Files to Change (COMPLETE LIST)</span>
+- entity-api.yaml
+- AccountDocument.java
+- AccountService.java (toDocument + toRecord)
+- AccountServiceTest.java (7 new tests)
+- tests/integration-tests.postman_collection.json</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AI ROUND 3 -->
+<div class="phase mdd-ph">
+  <div class="ph"><div class="pn">4</div>AI Iteration — Round 3: Final Sign-off</div>
+  <div class="pb">
+    <div class="dialog">
+      <div class="msg msg-dev">
+        Final design is attached (v3). All open questions resolved. Does anything in this design contradict how the existing codebase works? Any final concerns before I translate this to YAML?
+      </div>
+      <div class="msg msg-ai3">
+        The design looks solid. Two small consistency checks to be aware of:<br/><br/>
+        <strong>1. Test 4 (invalid enum → 400):</strong> In entityapi-db, invalid enum values are caught by Spring's <code>@Valid</code> annotation on the controller's <code>@RequestBody</code>, which triggers <code>MethodArgumentNotValidException</code>, handled by <code>GlobalExceptionHandler</code>. Your test should mock at the controller level (integration test) rather than service level for this specific scenario, since <code>AccountService</code> never sees an invalid enum — it's rejected before it reaches the service.<br/><br/>
+        <strong>2. The existing <code>status</code> field uses this exact same pattern</strong> — optional enum, client-settable, camelCase in API, same in Couchbase. You can use it as a line-by-line template for both the YAML and the service mapping. This confirms your design is consistent with existing patterns.<br/><br/>
+        <strong>Everything else looks correct. Ready to translate to YAML.</strong>
+      </div>
+    </div>
+    <div class="callout c-tip" style="margin-top:12px">
+      <span class="ci">✅</span>
+      <div><strong>Three iteration rounds took ~30 minutes.</strong> In that time: 6 gaps were found and resolved, 3 edge cases documented, 1 consumer gotcha identified, and 7 test scenarios defined. None of this required touching a single source file. The markdown is now a committed, searchable record of <em>why</em> the field is designed this way.</div>
+    </div>
+  </div>
+</div>
+
+<!-- PHASE 5: MD → YAML -->
+<div class="phase mdd-ph">
+  <div class="ph"><div class="pn">5</div>Translate Markdown → entity-api.yaml (mechanical step)</div>
+  <div class="pb">
+    <p>The markdown is now an authoritative design document. Translating it to YAML is <em>mechanical</em> — every decision has already been made. There are no open questions.</p>
+    <div class="cb">
+      <div class="cb-lbl"><span class="dot" style="background:#a6e3a1"></span><span style="color:#cdd6f4">entity-api.yaml — final YAML change (directly from v3 markdown)</span></div>
+      <pre>    <span class="yw">AccountRecord:</span>
+      <span class="yw">type:</span> object
+      <span class="yw">properties:</span>
+        <span class="yw">status:</span>
+          <span class="yw">type:</span> string
+          <span class="yw">enum:</span> [ACTIVE, INACTIVE, SUSPENDED, CLOSED, PENDING, CANCEL]
+<span class="gd">+       emailConfidenceCode:</span>
+<span class="gd">+         type: string</span>
+<span class="gd">+         description: |</span>
+<span class="gd">+           Confidence level that the account's email address is valid.</span>
+<span class="gd">+           Set by the email verification service. Optional.</span>
+<span class="gd">+           HIGH    — confirmed deliverable by verification</span>
+<span class="gd">+           MEDIUM  — likely valid, unverified</span>
+<span class="gd">+           LOW     — suspected invalid or unreachable</span>
+<span class="gd">+           UNKNOWN — no verification data available</span>
+<span class="gd">+           NOTE: This field is replaced on every upsert. Clients must</span>
+<span class="gd">+           re-send the current value on each POST to preserve it.</span>
+<span class="gd">+         enum: [HIGH, MEDIUM, LOW, UNKNOWN]</span>
+<span class="gd">+         example: HIGH</span>
+
+<span class="cm">    # POST example updated (from markdown v3 YAML Changes section):</span>
+    <span class="yw">insertAccount:</span>
+      <span class="yw">value:</span>
+        <span class="yw">docType:</span> Account
+        <span class="yw">accountNumber:</span> 123456789
+<span class="gd">+       emailConfidenceCode: HIGH</span>
+        <span class="yw">status:</span> ACTIVE
+        <span class="yw">name:</span>
+          <span class="yw">legalName:</span> Acme Corporation</pre>
+    </div>
+  </div>
+</div>
+
+<!-- PHASE 6: YAML → CODE -->
+<div class="phase mdd-ph">
+  <div class="ph"><div class="pn">6</div>YAML → Code: AI implements against the finalized spec + design doc</div>
+  <div class="pb">
+    <p>Now the AI is given three things as context: the spec diff, the design markdown, and the project conventions. This is the richest implementation prompt possible.</p>
+    <div class="cb">
+      <div class="cb-lbl"><span class="dot" style="background:#f9e2af"></span><span style="color:#cdd6f4">Final implementation prompt — AI has full context</span></div>
+      <pre><span class="st">"I've updated entity-api.yaml and attached the approved design doc (v3).
+All design decisions are resolved in the markdown.
+
+Key implementation notes from the design doc:
+- AccountRecord is in target/generated-sources — run mvn compile, do not edit
+- null-guard in toRecord(): if doc.emailConfidenceCode is null, leave result null
+- Follow the existing status field as a line-by-line template
+- The invalid-enum 400 test should be an integration test (controller level),
+  not a unit test (the service never sees an invalid enum — Spring rejects it first)
+
+Implement:
+  1. AccountDocument.java: add email_confidence_code (@JsonProperty)
+  2. AccountService.toDocument(): null-guard, getValue()
+  3. AccountService.toRecord(): null-guard, fromValue()
+  4. AccountServiceTest.java: the 7 test cases from the acceptance checklist
+  5. Update Postman collection with 2 new requests
+
+The acceptance checklist from the design doc is the definition of done."</span></pre>
+    </div>
+
+    <div class="cb">
+      <div class="cb-lbl"><span class="dot" style="background:#a6e3a1"></span><span style="color:#cdd6f4">AI-generated AccountService additions — complete, correct, no guessing</span></div>
+      <pre><span class="cm">// ── AccountDocument.java ─────────────────────────────────────────</span>
+<span class="an">@JsonProperty</span>(<span class="st">"email_confidence_code"</span>)
+<span class="kw">private</span> <span class="ty">String</span> emailConfidenceCode;
+
+<span class="kw">public</span> <span class="ty">String</span> getEmailConfidenceCode() { <span class="kw">return</span> emailConfidenceCode; }
+<span class="kw">public void</span> setEmailConfidenceCode(<span class="ty">String</span> v) { this.emailConfidenceCode = v; }
+
+<span class="cm">// ── AccountService.toDocument() ──────────────────────────────────</span>
+<span class="cm">// Design doc: client-settable, optional. Null = not yet assessed.</span>
+<span class="kw">if</span> (r.getEmailConfidenceCode() != <span class="kw">null</span>) {
+    doc.setEmailConfidenceCode(r.getEmailConfidenceCode().getValue());
+}
+
+<span class="cm">// ── AccountService.toRecord() ────────────────────────────────────</span>
+<span class="cm">// Design doc: legacy docs have no field → return null, not UNKNOWN</span>
+<span class="kw">if</span> (doc.getEmailConfidenceCode() != <span class="kw">null</span>) {
+    r.setEmailConfidenceCode(
+        AccountRecord.EmailConfidenceCodeEnum
+            .fromValue(doc.getEmailConfidenceCode())
+    );
+}
+<span class="cm">// No else-branch intentional: null means "not yet assessed" (design v3, section Legacy)</span></pre>
+    </div>
+
+    <div class="cb">
+      <div class="cb-lbl"><span class="dot" style="background:#a6e3a1"></span><span style="color:#cdd6f4">AccountServiceTest.java — all 7 acceptance checklist items as tests</span></div>
+      <pre><span class="cm">// Checklist item 1 + 2: all four valid enum values stored and returned</span>
+<span class="an">@ParameterizedTest</span>
+<span class="an">@EnumSource</span>(AccountRecord.EmailConfidenceCodeEnum.class)
+<span class="kw">void</span> upsert_storesAndReturns_allValidConfidenceCodes(
+        AccountRecord.EmailConfidenceCodeEnum code) {
+    AccountRecord r = buildValidRecord();
+    r.setEmailConfidenceCode(code);
+    when(nameApiClient.capitalize(any())).thenReturn(<span class="st">"Corp"</span>);
+
+    AccountRecord result = service.upsert(r);
+
+    assertEquals(code, result.getEmailConfidenceCode(),
+        <span class="st">"Acceptance checklist items 1+2: all enum values round-trip correctly"</span>);
+}
+
+<span class="cm">// Checklist item 3: field absent → null in response, no error</span>
+<span class="an">@Test</span>
+<span class="kw">void</span> upsert_succeeds_whenEmailConfidenceCodeAbsent() {
+    AccountRecord r = buildValidRecord();
+    when(nameApiClient.capitalize(any())).thenReturn(<span class="st">"Corp"</span>);
+
+    AccountRecord result = service.upsert(r);
+    assertNull(result.getEmailConfidenceCode(),
+        <span class="st">"Checklist item 3: absent field must return null, not throw"</span>);
+}
+
+<span class="cm">// Checklist item 5: GET returns stored code</span>
+<span class="an">@Test</span>
+<span class="kw">void</span> getById_returnsConfidenceCode_whenPresentInDocument() {
+    AccountDocument doc = buildDoc();
+    doc.setEmailConfidenceCode(<span class="st">"MEDIUM"</span>);
+    when(collection.get(eq(<span class="st">"100"</span>), any())).thenReturn(mockGetResult(doc));
+
+    assertEquals(AccountRecord.EmailConfidenceCodeEnum.MEDIUM,
+        service.getById(100L).getEmailConfidenceCode(),
+        <span class="st">"Checklist item 5: GET must return stored confidence code"</span>);
+}
+
+<span class="cm">// Checklist item 6: GET legacy document → null, not NPE</span>
+<span class="an">@Test</span>
+<span class="kw">void</span> getById_returnsNull_forLegacyDocumentWithoutConfidenceCode() {
+    AccountDocument doc = buildDoc();
+    <span class="cm">// email_confidence_code field NOT set — simulates pre-feature document</span>
+    when(collection.get(eq(<span class="st">"200"</span>), any())).thenReturn(mockGetResult(doc));
+
+    assertNull(service.getById(200L).getEmailConfidenceCode(),
+        <span class="st">"Checklist item 6: legacy docs must return null, never throw NullPointerException"</span>);
+}
+
+<span class="cm">// Checklist item 7: existing tests still pass (no change to these)</span>
+<span class="an">@Test</span>
+<span class="kw">void</span> upsert_throwsBadData_whenStateMissing() { <span class="cm">/* unchanged */</span> }
+<span class="an">@Test</span>
+<span class="kw">void</span> upsert_callsCollection_whenStatePresent() { <span class="cm">/* unchanged */</span> }</pre>
+    </div>
+  </div>
+</div>
+
+<div class="phase mdd-ph">
+  <div class="ph"><div class="pn">7</div>Run Tests, Commit, CI Confirms</div>
+  <div class="pb">
+    <p><code>mvn test</code> → all tests pass. The design markdown is committed to the repo alongside the code changes. Future developers reading the git history can see exactly why every decision was made.</p>
+    <div class="cb">
+      <div class="cb-lbl"><span class="dot" style="background:#a6e3a1"></span><span style="color:#cdd6f4">Git commit structure for Markdown-First approach</span></div>
+      <pre>git log --oneline
+
+<span class="gd">a1b2c3d</span> feat: add emailConfidenceCode to AccountRecord
+<span class="gd">        </span>
+<span class="gd">        Design doc: design/emailConfidenceCode-design-v3.md</span>
+<span class="gd">        All 7 acceptance checklist items pass.</span>
+<span class="gd">        Legacy document backward-compat verified (null-guard in toRecord).</span>
+<span class="gd">        Consumer note: field replaced on every upsert (see YAML description).</span>
+
+<span class="cm">Files changed:
+  design/emailConfidenceCode-design-v3.md   ← permanent record of WHY
+  entity-api.yaml                           ← contract
+  AccountDocument.java                      ← Couchbase layer
+  AccountService.java                       ← business logic
+  AccountServiceTest.java                   ← 7 new tests
+  tests/integration-tests.postman_*.json   ← E2E coverage</span></pre>
+    </div>
+  </div>
+</div>
+</div><!-- /phases -->
+
+<div class="pc">
+  <div class="pros"><h4>✅ Strengths</h4><ul>
+    <li>Design decisions resolved <em>before</em> spec is committed — no breaking-change cycles</li>
+    <li>AI used as a design reviewer (highest-value AI use) not just a code generator</li>
+    <li>Every edge case and consumer gotcha documented before code is written</li>
+    <li>Design markdown is a permanent searchable record of intent and rationale</li>
+    <li>Spec update is mechanical — no judgment calls left at implementation time</li>
+    <li>AI-generated tests are derived from the acceptance checklist in the design doc</li>
+    <li>New team members can read the markdown to understand any field's history</li>
+    <li>Naturally fits entityapi-db's OpenAPI-first architecture</li>
+  </ul></div>
+  <div class="cons"><h4>❌ Tradeoffs</h4><ul>
+    <li>More upfront time than vibe coding or even Spec-Driven V1</li>
+    <li>Requires discipline to iterate markdown before touching YAML</li>
+    <li>Design doc can go stale if not updated when decisions change</li>
+    <li>For trivial changes (typo fix, internal refactor), this is overkill</li>
+    <li>Team must agree on and maintain a design doc template</li>
+  </ul></div>
+</div>
+</section>
+
+<!-- ══════════════ COMPARISON TABLE ══════════════ -->
+<section id="comparison">
+<div class="sdiv"><h2>Head-to-Head Comparison</h2><hr/></div>
+
+<div style="overflow-x:auto">
+<table class="ctable">
+<thead>
+<tr>
+  <th>Dimension</th>
+  <th>📋 BDD/TDD</th>
+  <th>🎵 Vibe</th>
+  <th>📄 Spec-Driven V1</th>
+  <th>📝 Markdown-First ★</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>First artifact created</td>
+  <td>Gherkin .feature</td>
+  <td>Nothing (prompt → code)</td>
+  <td>YAML diff</td>
+  <td><strong>Design markdown</strong></td>
+</tr>
+<tr>
+  <td>When are design decisions made?</td>
+  <td>During Gherkin writing</td>
+  <td>During coding (implicitly)</td>
+  <td>During YAML edit (one shot)</td>
+  <td><strong>Iteratively, before any code</strong></td>
+</tr>
+<tr>
+  <td>Open questions resolved before code?</td>
+  <td><span class="badge b-a">Partially</span></td>
+  <td><span class="badge b-r">No</span></td>
+  <td><span class="badge b-a">Usually not</span></td>
+  <td><span class="badge b-g">Yes — explicitly</span></td>
+</tr>
+<tr>
+  <td>Risk of spec being wrong</td>
+  <td><span class="badge b-a">Medium</span></td>
+  <td><span class="badge b-r">High</span></td>
+  <td><span class="badge b-a">Medium</span></td>
+  <td><span class="badge b-g">Low — iterated before commit</span></td>
+</tr>
+<tr>
+  <td>Generated sources trap in this codebase</td>
+  <td><span class="badge b-g">Safe — YAML first</span></td>
+  <td><span class="badge b-r">High risk</span></td>
+  <td><span class="badge b-g">Safe — YAML first</span></td>
+  <td><span class="badge b-g">Safe — YAML from design doc</span></td>
+</tr>
+<tr>
+  <td>Legacy document null handling</td>
+  <td><span class="badge b-g">Covered by test</span></td>
+  <td><span class="badge b-r">Usually missed</span></td>
+  <td><span class="badge b-g">AI derives from optional spec</span></td>
+  <td><span class="badge b-g">Explicitly decided in markdown</span></td>
+</tr>
+<tr>
+  <td>Consumer gotcha (upsert overwrites)</td>
+  <td><span class="badge b-a">May be missed</span></td>
+  <td><span class="badge b-r">Missed</span></td>
+  <td><span class="badge b-a">May be missed</span></td>
+  <td><span class="badge b-g">Caught in AI iteration round 2</span></td>
+</tr>
+<tr>
+  <td>Regression protection</td>
+  <td><span class="badge b-g">Highest</span></td>
+  <td><span class="badge b-r">None</span></td>
+  <td><span class="badge b-g">High</span></td>
+  <td><span class="badge b-g">High (checklist-derived tests)</span></td>
+</tr>
+<tr>
+  <td>Record of why decisions were made</td>
+  <td><span class="badge b-a">In Gherkin + commit</span></td>
+  <td><span class="badge b-r">Nowhere</span></td>
+  <td><span class="badge b-a">In YAML description + commit</span></td>
+  <td><span class="badge b-g">Design markdown (permanent)</span></td>
+</tr>
+<tr>
+  <td>Time to working code</td>
+  <td><span class="badge b-r">Slowest</span></td>
+  <td><span class="badge b-g">Fastest</span></td>
+  <td><span class="badge b-b">Fast</span></td>
+  <td><span class="badge b-a">Moderate (30 min design + fast impl)</span></td>
+</tr>
+<tr>
+  <td>Time to <em>correct, documented, tested</em> code</td>
+  <td><span class="badge b-g">Best for complex logic</span></td>
+  <td><span class="badge b-r">Longest (rework)</span></td>
+  <td><span class="badge b-g">Good</span></td>
+  <td><span class="badge b-g">Best for API contract changes</span></td>
+</tr>
+<tr>
+  <td>Fits entityapi-db OpenAPI-first arch</td>
+  <td><span class="badge b-b">Well</span></td>
+  <td><span class="badge b-r">Poorly</span></td>
+  <td><span class="badge b-g">Naturally</span></td>
+  <td><span class="badge b-g">Best fit</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<!-- ══════════════ DESIGN MARKDOWN TEMPLATE ══════════════ -->
+<section id="template">
+<div class="sdiv"><h2>📝 Design Markdown Template</h2><hr/></div>
+
+<p>Use this template for any API field addition, schema change, or behaviour change in entityapi-db. Copy it into <code>design/&lt;feature-name&gt;.md</code> and iterate with AI before touching the spec.</p>
+
+<div class="cb">
+  <div class="cb-lbl"><span class="dot" style="background:#89b4fa"></span><span style="color:#cdd6f4">design/TEMPLATE.md — copy this for every API change</span></div>
+  <pre><span class="nm"># Design: [Field/Feature Name]</span>
+<span class="nm">## Status:</span> DRAFT | UNDER REVIEW | APPROVED
+<span class="nm">## Ticket:</span> [ENG-XXXX]
+<span class="nm">## Reviewers:</span> [names]
+
+<span class="nm">---</span>
+
+<span class="nm">## 1. Context &amp; Business Purpose</span>
+<span class="cm">&lt;Why does this field/feature need to exist?</span>
+<span class="cm">Who is the consumer? What problem does it solve?&gt;</span>
+
+<span class="nm">## 2. Field / Behaviour Specification</span>
+<span class="cm">&lt;For a field:&gt;</span>
+| Attribute        | Value |
+|------------------|-------|
+| API field name   | (camelCase) |
+| Couchbase field  | (snake_case) |
+| Type             | string / integer / boolean / enum |
+| Enum values      | (if applicable) |
+| Required         | yes / no |
+| readOnly         | yes (server-set) / no (client-settable) |
+| Default          | (or "none — absent = [meaning]") |
+| Validation       | (OpenAPI enum / min / max / pattern / server-side) |
+| Max length       | (for strings) |
+
+<span class="nm">## 3. Impact Analysis — Files to Change</span>
+<span class="cm">&lt;List every file. In entityapi-db, a new field always touches at minimum:&gt;</span>
+- [ ] entity-api.yaml (schema + POST/GET examples)
+- [ ] AccountDocument.java (snake_case @JsonProperty)
+- [ ] AccountService.toDocument()
+- [ ] AccountService.toRecord()
+- [ ] AccountServiceTest.java
+- [ ] tests/integration-tests.postman_collection.json
+- [ ] (Optional) design/&lt;this-file&gt;.md committed with code
+
+<span class="nm">## 4. Edge Cases &amp; Decisions</span>
+<span class="cm">&lt;Each decision that could be made differently. For each:&gt;</span>
+<span class="cm">- What is the edge case?</span>
+<span class="cm">- What decision was made?</span>
+<span class="cm">- Why?</span>
+
+Example format:
+**Legacy documents (Couchbase docs without this field):**
+Decision: return null (not [default]).
+Reason: callers can distinguish "not set" from "set to default".
+
+**Upsert overwrites:**
+Decision: full document replace — clients must re-send field to preserve it.
+Reason: current architecture uses KV upsert (not mutateIn), replacing full doc.
+
+<span class="nm">## 5. Consumer Notes</span>
+<span class="cm">&lt;Anything API consumers must know that isn't obvious from the spec.&gt;</span>
+<span class="cm">&lt;This becomes the `description` text in the YAML.&gt;</span>
+
+<span class="nm">## 6. Test Acceptance Checklist</span>
+<span class="cm">&lt;These become unit tests in AccountServiceTest and/or Postman scenarios.&gt;</span>
+<span class="cm">&lt;Do not proceed to implementation until all items are defined.&gt;</span>
+- [ ] Happy path: [value] → stored and returned correctly
+- [ ] Field absent → [expected behaviour]
+- [ ] Invalid value → [expected HTTP status + error]
+- [ ] Legacy document → [expected behaviour]
+- [ ] [other scenarios specific to this field]
+
+<span class="nm">## 7. Out of Scope</span>
+<span class="cm">&lt;Explicitly list what is NOT being done. Prevents scope creep.&gt;</span>
+
+<span class="nm">## 8. Open Questions</span>
+<span class="cm">&lt;Fill in before AI iteration. Clear all before moving to YAML.&gt;</span>
+- ??? [question 1]
+- ??? [question 2]
+<span class="cm"># When this section is empty, the design is ready for YAML translation.</span></pre>
+</div>
+
+<div class="callout c-tip">
+  <span class="ci">💡</span>
+  <div>
+    <strong>Rule of thumb:</strong> A design markdown is ready to translate to YAML when the Open Questions section is empty. If you feel tempted to leave a question unanswered and "figure it out during coding" — that is precisely the question the AI will help you resolve in 2 minutes of iteration. Do it now, not in a 3am production incident.
+  </div>
+</div>
+</section>
+
+<!-- ══════════════ WHEN TO USE WHICH ══════════════ -->
+<section id="when">
+<div class="sdiv"><h2>When to Use Which Approach</h2><hr/></div>
+
+<div style="overflow-x:auto;margin-bottom:28px">
+<table class="ctable" style="min-width:700px">
+<thead>
+<tr>
+  <th>Situation</th>
+  <th>📋 BDD/TDD</th>
+  <th>🎵 Vibe</th>
+  <th>📄 Spec V1</th>
+  <th>📝 Markdown-First</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Adding a field to a public API (this example)</td>
+  <td><span class="badge b-b">Good</span></td>
+  <td><span class="badge b-r">Risky</span></td>
+  <td><span class="badge b-g">Good</span></td>
+  <td><span class="badge b-g">Best</span></td>
+</tr>
+<tr>
+  <td>Complex business rule with many branches</td>
+  <td><span class="badge b-g">Best</span></td>
+  <td><span class="badge b-r">Avoid</span></td>
+  <td><span class="badge b-a">OK</span></td>
+  <td><span class="badge b-g">Best</span></td>
+</tr>
+<tr>
+  <td>Quick prototype / spike</td>
+  <td><span class="badge b-r">Overkill</span></td>
+  <td><span class="badge b-g">Best</span></td>
+  <td><span class="badge b-a">Fine</span></td>
+  <td><span class="badge b-r">Overkill</span></td>
+</tr>
+<tr>
+  <td>External API contract (other teams consume it)</td>
+  <td><span class="badge b-g">Good</span></td>
+  <td><span class="badge b-r">Never</span></td>
+  <td><span class="badge b-g">Good</span></td>
+  <td><span class="badge b-g">Best — spec errors caught early</span></td>
+</tr>
+<tr>
+  <td>Breaking change / deprecation</td>
+  <td><span class="badge b-b">Good</span></td>
+  <td><span class="badge b-r">Never</span></td>
+  <td><span class="badge b-a">OK</span></td>
+  <td><span class="badge b-g">Best — design doc records rationale</span></td>
+</tr>
+<tr>
+  <td>Regulatory / compliance requirement</td>
+  <td><span class="badge b-g">Required by process</span></td>
+  <td><span class="badge b-r">Never</span></td>
+  <td><span class="badge b-b">Good</span></td>
+  <td><span class="badge b-g">Best — audit trail in markdown</span></td>
+</tr>
+<tr>
+  <td>New developer onboarding to this codebase</td>
+  <td><span class="badge b-b">Good</span></td>
+  <td><span class="badge b-r">High risk</span></td>
+  <td><span class="badge b-b">Good</span></td>
+  <td><span class="badge b-g">Best — markdown guides them</span></td>
+</tr>
+<tr>
+  <td>Internal refactor (no API surface change)</td>
+  <td><span class="badge b-b">Good</span></td>
+  <td><span class="badge b-a">OK if developer knows code</span></td>
+  <td><span class="badge b-r">Overkill</span></td>
+  <td><span class="badge b-r">Overkill</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<div class="g3">
+  <div class="card" style="border-top:4px solid var(--tdd-b)">
+    <h3 style="color:var(--tdd);margin-bottom:12px">📋 BDD/TDD</h3>
+    <p style="font-size:.88rem;color:var(--muted)">Use when the behaviour is complex, when product owner sign-off on Gherkin is valuable, or when compliance requires formal test evidence. The ceremony pays off for features with many branches.</p>
+  </div>
+  <div class="card" style="border-top:4px solid var(--vibe-b)">
+    <h3 style="color:var(--vibe);margin-bottom:12px">🎵 Vibe Coding</h3>
+    <p style="font-size:.88rem;color:var(--muted)">Use only for throwaway spikes, local experiments, or solo projects not going to production. In entityapi-db specifically: only for non-API changes where the generated-sources trap cannot be hit.</p>
+  </div>
+  <div class="card" style="border-top:4px solid var(--mdd-b)">
+    <h3 style="color:var(--mdd);margin-bottom:12px">📝 Markdown-First</h3>
+    <p style="font-size:.88rem;color:var(--muted)">Use for any API contract change. The 30-minute design iteration loop prevents hours or days of production incidents, breaking-change cycles, and consumer confusion. Default approach for entityapi-db field additions.</p>
+  </div>
+</div>
+</section>
+
+<!-- ══════════════ VERDICT ══════════════ -->
+<section id="verdict">
+<div class="sdiv"><h2>Verdict</h2><hr/></div>
+
+<div class="callout c-new">
+  <span class="ci">💡</span>
+  <div>
+    <strong>Is iterating a Design Markdown with AI before touching the spec a good way to do Spec-Based coding?</strong><br/><br/>
+    <strong>Yes — it is arguably the most effective form of Spec-Based Development for API-first projects.</strong>
+    The markdown iteration loop uses AI at the highest-value point in the development cycle: <em>before any commitment is made</em>. Every other approach uses AI to generate code. Markdown-First uses AI to refine <em>thinking</em>. The code is almost an afterthought — once the design is solid, the implementation is mechanical.
+  </div>
+</div>
+
+<div class="verdict">
+  <h3>🏆 Recommended Approach for entityapi-db: Markdown-First Spec-Driven Development</h3>
+  <p>
+    entityapi-db is an <strong>OpenAPI-first project</strong>. <code>entity-api.yaml</code> is a published contract.
+    Adding a field wrong is expensive to fix — it requires versioning, deprecation, and consumer migration.
+    The Markdown-First loop catches design errors at the cheapest possible moment: before any YAML is committed.
+  </p>
+  <p>
+    The three AI iteration rounds took ~30 minutes and surfaced: the null-vs-UNKNOWN decision for legacy docs,
+    the upsert-overwrites consumer gotcha, the <code>fromValue()</code> lowercase edge case, and the
+    generated-sources constraint. None of these would have been caught by vibe coding. Only some would have
+    been caught by Spec-Driven V1. All of them are now documented permanently in the design markdown.
+  </p>
+  <p>
+    <strong>The practical workflow for this codebase:</strong><br/>
+    1. Copy <code>design/TEMPLATE.md</code> → fill in what you know<br/>
+    2. Share with AI: "critique this design, find gaps"<br/>
+    3. Revise, repeat until Open Questions is empty<br/>
+    4. Translate to <code>entity-api.yaml</code> (mechanical, no judgment calls)<br/>
+    5. Prompt AI: "implement exactly what the design doc says"<br/>
+    6. Run the acceptance checklist as the definition of done
+  </p>
+  <p>
+    <strong>Combine with BDD/TDD</strong> when the business logic is complex or when
+    product-owner sign-off on Gherkin scenarios is required by process. The two approaches are
+    complementary: Markdown-First provides the design rigour; BDD/TDD provides the executable
+    specification. Use both for high-stakes changes.
+  </p>
+</div>
+</section>
+
+</div><!-- /.wrap -->
+
+<footer>
+  entityapi-db &mdash; Development Approaches V2 &mdash; Markdown-First Spec-Driven Development &mdash; 2026-03-15<br/>
+  <span style="font-size:.8rem">Feature: emailConfidenceCode &bull; Spring Boot 3.2 &bull; Couchbase SDK &bull; OpenAPI 3.0.3</span>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,1745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Development Approaches: Adding emailConfidenceCode to Entity API</title>
+  <style>
+    :root {
+      --tdd-color: #1a6b3a;
+      --tdd-light: #e6f4ed;
+      --tdd-border: #2e9e5b;
+      --vibe-color: #7c3aed;
+      --vibe-light: #f0ebff;
+      --vibe-border: #9d6bff;
+      --sdd-color: #b45309;
+      --sdd-light: #fef3e2;
+      --sdd-border: #f59e0b;
+      --dark: #1e1e2e;
+      --mid: #2d2d44;
+      --muted: #6b7280;
+      --text: #111827;
+      --border: #e5e7eb;
+      --code-bg: #1e1e2e;
+      --code-text: #cdd6f4;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f8fafc;
+      color: var(--text);
+      line-height: 1.65;
+    }
+
+    /* ── HEADER ──────────────────────────────────────────────── */
+    header {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 60%, #0f4c81 100%);
+      color: white;
+      padding: 48px 40px 40px;
+    }
+
+    header .eyebrow {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #93c5fd;
+      margin-bottom: 12px;
+    }
+
+    header h1 {
+      font-size: 2.4rem;
+      font-weight: 800;
+      line-height: 1.15;
+      margin-bottom: 16px;
+    }
+
+    header h1 span { color: #fbbf24; }
+
+    header p {
+      font-size: 1.05rem;
+      color: #bfdbfe;
+      max-width: 700px;
+    }
+
+    .field-pill {
+      display: inline-block;
+      background: #0f4c81;
+      border: 1px solid #3b82f6;
+      color: #93c5fd;
+      padding: 6px 16px;
+      border-radius: 999px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+      margin-top: 20px;
+    }
+
+    /* ── LAYOUT ──────────────────────────────────────────────── */
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 32px;
+    }
+
+    section { padding: 48px 0; }
+    section + section { border-top: 1px solid var(--border); }
+
+    h2 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    h3 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    h4 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 8px;
+    }
+
+    p { margin-bottom: 12px; }
+
+    /* ── APPROACH HEADERS ────────────────────────────────────── */
+    .approach-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 28px;
+      padding-bottom: 16px;
+      border-bottom: 3px solid;
+    }
+
+    .approach-header .icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+      flex-shrink: 0;
+    }
+
+    .tdd-header { border-color: var(--tdd-border); }
+    .tdd-header .icon { background: var(--tdd-light); }
+
+    .vibe-header { border-color: var(--vibe-border); }
+    .vibe-header .icon { background: var(--vibe-light); }
+
+    .sdd-header { border-color: var(--sdd-border); }
+    .sdd-header .icon { background: var(--sdd-light); }
+
+    /* ── PHASE STEPS ─────────────────────────────────────────── */
+    .phases { display: flex; flex-direction: column; gap: 18px; margin-bottom: 28px; }
+
+    .phase {
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    .phase-header {
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .phase-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 0.85rem;
+      flex-shrink: 0;
+    }
+
+    .phase-body {
+      padding: 14px 18px 16px;
+      background: white;
+      font-size: 0.92rem;
+    }
+
+    .phase-body ul { padding-left: 20px; }
+    .phase-body li { margin-bottom: 5px; }
+
+    /* Color theming for phases */
+    .tdd-phase .phase-header { background: var(--tdd-light); color: var(--tdd-color); }
+    .tdd-phase .phase-num { background: var(--tdd-color); }
+
+    .vibe-phase .phase-header { background: var(--vibe-light); color: var(--vibe-color); }
+    .vibe-phase .phase-num { background: var(--vibe-color); }
+
+    .sdd-phase .phase-header { background: var(--sdd-light); color: var(--sdd-color); }
+    .sdd-phase .phase-num { background: var(--sdd-color); }
+
+    /* ── CODE BLOCKS ─────────────────────────────────────────── */
+    .code-block {
+      background: var(--code-bg);
+      border-radius: 10px;
+      margin: 16px 0;
+      overflow: hidden;
+      font-size: 0.82rem;
+    }
+
+    .code-block .code-label {
+      background: #313244;
+      padding: 7px 16px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .code-block .code-label .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .code-block pre {
+      padding: 16px 18px;
+      color: var(--code-text);
+      overflow-x: auto;
+      line-height: 1.6;
+      white-space: pre;
+    }
+
+    .hl-kw { color: #cba6f7; }   /* keyword */
+    .hl-ty { color: #89dceb; }   /* type */
+    .hl-st { color: #a6e3a1; }   /* string */
+    .hl-cm { color: #6c7086; font-style: italic; }  /* comment */
+    .hl-an { color: #fab387; }   /* annotation */
+    .hl-nm { color: #f9e2af; }   /* name/field */
+    .hl-nu { color: #f38ba8; }   /* number */
+    .hl-gd { color: #a6e3a1; }   /* added (green) */
+    .hl-rd { color: #f38ba8; }   /* removed (red) */
+    .hl-yw { color: #f9e2af; }   /* yaml key */
+    .hl-op { color: #89b4fa; }   /* operator / symbol */
+
+    /* ── PROS / CONS ─────────────────────────────────────────── */
+    .proscons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 20px;
+    }
+
+    .pros, .cons {
+      border-radius: 10px;
+      padding: 16px 18px;
+    }
+
+    .pros { background: #f0fdf4; border: 1px solid #86efac; }
+    .cons { background: #fff1f2; border: 1px solid #fda4af; }
+
+    .pros h4 { color: #166534; }
+    .cons h4 { color: #9f1239; }
+
+    .pros ul, .cons ul { padding-left: 18px; font-size: 0.9rem; }
+    .pros li, .cons li { margin-bottom: 5px; }
+
+    /* ── FLOW DIAGRAM ────────────────────────────────────────── */
+    .flow {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin: 18px 0;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .flow-node {
+      flex-shrink: 0;
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .flow-arrow {
+      flex-shrink: 0;
+      color: #9ca3af;
+      font-size: 1.2rem;
+      padding: 0 4px;
+    }
+
+    .tdd-node { background: var(--tdd-light); color: var(--tdd-color); border: 1px solid var(--tdd-border); }
+    .vibe-node { background: var(--vibe-light); color: var(--vibe-color); border: 1px solid var(--vibe-border); }
+    .sdd-node { background: var(--sdd-light); color: var(--sdd-color); border: 1px solid var(--sdd-border); }
+
+    /* ── COMPARISON TABLE ────────────────────────────────────── */
+    .comparison-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 0.9rem;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+
+    .comparison-table thead th {
+      padding: 14px 18px;
+      text-align: left;
+      font-weight: 700;
+      font-size: 0.88rem;
+    }
+
+    .comparison-table thead th:nth-child(1) { background: #1e293b; color: white; }
+    .comparison-table thead th:nth-child(2) { background: var(--tdd-color); color: white; }
+    .comparison-table thead th:nth-child(3) { background: var(--vibe-color); color: white; }
+    .comparison-table thead th:nth-child(4) { background: var(--sdd-color); color: white; }
+
+    .comparison-table tbody tr:nth-child(even) td { background: #f8fafc; }
+    .comparison-table tbody tr:nth-child(odd) td { background: white; }
+
+    .comparison-table td {
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    .comparison-table td:first-child { font-weight: 600; color: #374151; }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+
+    .badge-green { background: #dcfce7; color: #166534; }
+    .badge-red   { background: #fee2e2; color: #991b1b; }
+    .badge-amber { background: #fef3c7; color: #92400e; }
+    .badge-blue  { background: #dbeafe; color: #1e40af; }
+    .badge-purple{ background: #ede9fe; color: #5b21b6; }
+
+    /* ── CALLOUT BOXES ────────────────────────────────────────── */
+    .callout {
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin: 16px 0;
+      font-size: 0.92rem;
+      display: flex;
+      gap: 12px;
+    }
+
+    .callout-icon { font-size: 1.2rem; flex-shrink: 0; }
+    .callout-info  { background: #eff6ff; border: 1px solid #bfdbfe; }
+    .callout-warn  { background: #fffbeb; border: 1px solid #fde68a; }
+    .callout-tip   { background: #f0fdf4; border: 1px solid #bbf7d0; }
+
+    /* ── SECTION INTRO ───────────────────────────────────────── */
+    .section-intro {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px 28px;
+      margin-bottom: 36px;
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+
+    .section-intro .approach-tag {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      border-radius: 999px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .tdd-tag { background: var(--tdd-light); color: var(--tdd-color); border: 1px solid var(--tdd-border); }
+    .vibe-tag { background: var(--vibe-light); color: var(--vibe-color); border: 1px solid var(--vibe-border); }
+    .sdd-tag { background: var(--sdd-light); color: var(--sdd-color); border: 1px solid var(--sdd-border); }
+
+    /* ── CARD GRID ───────────────────────────────────────────── */
+    .card-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
+
+    .card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 22px;
+    }
+
+    /* ── SCENARIO TABLE ──────────────────────────────────────── */
+    .scenario-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+      margin: 16px 0;
+    }
+
+    .scenario-table th {
+      background: #1e293b;
+      color: white;
+      padding: 10px 14px;
+      text-align: left;
+      font-size: 0.82rem;
+    }
+
+    .scenario-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: top;
+    }
+
+    .scenario-table tr:hover td { background: #f8fafc; }
+
+    /* ── WHEN TO USE ─────────────────────────────────────────── */
+    .when-grid {
+      display: grid;
+      grid-template-columns: repeat(3,1fr);
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .when-card {
+      border-radius: 10px;
+      padding: 20px;
+    }
+
+    .when-card.tdd { background: var(--tdd-light); border: 1px solid var(--tdd-border); }
+    .when-card.vibe { background: var(--vibe-light); border: 1px solid var(--vibe-border); }
+    .when-card.sdd { background: var(--sdd-light); border: 1px solid var(--sdd-border); }
+
+    .when-card h4 { margin-bottom: 12px; font-size: 0.95rem; }
+    .when-card ul { padding-left: 18px; font-size: 0.88rem; }
+    .when-card li { margin-bottom: 5px; }
+    .when-card.tdd h4 { color: var(--tdd-color); }
+    .when-card.vibe h4 { color: var(--vibe-color); }
+    .when-card.sdd h4 { color: var(--sdd-color); }
+
+    /* ── VERDICT ─────────────────────────────────────────────── */
+    .verdict {
+      background: linear-gradient(135deg, #0f172a, #1e3a5f);
+      color: white;
+      border-radius: 14px;
+      padding: 32px;
+      margin-top: 20px;
+    }
+
+    .verdict h3 { color: #fbbf24; margin-bottom: 16px; font-size: 1.2rem; }
+    .verdict p { color: #bfdbfe; }
+    .verdict strong { color: white; }
+
+    /* ── FOOTER ──────────────────────────────────────────────── */
+    footer {
+      background: #0f172a;
+      color: #64748b;
+      text-align: center;
+      padding: 24px;
+      font-size: 0.85rem;
+    }
+
+    code {
+      font-family: 'Courier New', monospace;
+      font-size: 0.88em;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+
+    .toc {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px 28px;
+      display: inline-block;
+      min-width: 320px;
+    }
+
+    .toc h4 { color: #374151; margin-bottom: 12px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; }
+    .toc ol { padding-left: 20px; }
+    .toc li { margin-bottom: 6px; }
+    .toc a { color: #3b82f6; text-decoration: none; font-size: 0.92rem; }
+    .toc a:hover { text-decoration: underline; }
+
+    @media (max-width: 900px) {
+      .card-grid, .when-grid { grid-template-columns: 1fr; }
+      .proscons { grid-template-columns: 1fr; }
+      header h1 { font-size: 1.7rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════════
+     HEADER
+═══════════════════════════════════════════════════════════════ -->
+<header>
+  <div class="container">
+    <div class="eyebrow">Entity API DB &mdash; Field Addition Case Study</div>
+    <h1>Adding <span>emailConfidenceCode</span><br/>Three Different Ways</h1>
+    <p>
+      A ground-level comparison of Traditional BDD/TDD, AI-assisted Vibe Coding, and
+      AI-assisted Spec-Driven Development &mdash; using the real entityapi-db codebase as the
+      working example.
+    </p>
+    <div class="field-pill">&#43; emailConfidenceCode : string [enum: HIGH | MEDIUM | LOW | UNKNOWN]</div>
+  </div>
+</header>
+
+<!-- ══════════════════════════════════════════════════════════════
+     TOC + CONTEXT
+═══════════════════════════════════════════════════════════════ -->
+<div class="container">
+<section>
+  <div style="display:flex; gap:32px; flex-wrap:wrap; align-items:flex-start;">
+
+    <div style="flex:1; min-width:280px;">
+      <h2>What We're Adding</h2>
+      <p>
+        <strong>emailConfidenceCode</strong> is a new optional field on the
+        <code>AccountRecord</code> indicating how confident the system is in the
+        account's email address. Valid values: <code>HIGH</code>, <code>MEDIUM</code>,
+        <code>LOW</code>, <code>UNKNOWN</code>.
+      </p>
+      <p>
+        This touches every layer of the entityapi-db stack:
+      </p>
+      <ul style="padding-left:20px; font-size:0.95rem;">
+        <li><strong>entity-api.yaml</strong> &mdash; OpenAPI spec (source of truth)</li>
+        <li><strong>AccountDocument.java</strong> &mdash; Couchbase POJO (snake_case)</li>
+        <li><strong>AccountService.java</strong> &mdash; toDocument() / toRecord() mapping</li>
+        <li><strong>AccountServiceTest.java</strong> &mdash; unit tests</li>
+        <li><strong>integration-tests.postman_collection.json</strong> &mdash; integration tests</li>
+      </ul>
+      <div class="callout callout-info" style="margin-top:16px;">
+        <span class="callout-icon">&#8505;&#65039;</span>
+        <div>
+          Because this project uses <strong>OpenAPI-first model generation</strong>,
+          the generated <code>AccountRecord</code> class is never edited by hand.
+          The field must first appear in <code>entity-api.yaml</code>, then
+          <code>mvn compile</code> regenerates the model automatically.
+        </div>
+      </div>
+    </div>
+
+    <div class="toc">
+      <h4>Contents</h4>
+      <ol>
+        <li><a href="#tdd">Approach 1: Traditional BDD / TDD</a></li>
+        <li><a href="#vibe">Approach 2: AI Vibe Coding</a></li>
+        <li><a href="#sdd">Approach 3: AI Spec-Driven Development</a></li>
+        <li><a href="#comparison">Head-to-Head Comparison</a></li>
+        <li><a href="#scenarios">When to Use Which</a></li>
+        <li><a href="#verdict">Verdict for entityapi-db</a></li>
+      </ol>
+    </div>
+
+  </div>
+</section>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     APPROACH 1 — BDD / TDD
+═══════════════════════════════════════════════════════════════ -->
+<div class="container">
+<section id="tdd">
+
+  <div class="approach-header tdd-header">
+    <div class="icon">&#128203;</div>
+    <div>
+      <h2 style="color:var(--tdd-color);">Approach 1: Traditional BDD / TDD</h2>
+      <p style="color:var(--muted); font-size:0.9rem;">
+        Behaviour-Driven Development defines what the system <em>should do</em> before
+        writing a line of code. Test-Driven Development enforces Red&nbsp;→&nbsp;Green&nbsp;→&nbsp;Refactor.
+        Both start with intent, not implementation.
+      </p>
+    </div>
+  </div>
+
+  <div class="section-intro">
+    <span class="approach-tag tdd-tag">BDD / TDD</span>
+    <div>
+      <strong>Core philosophy:</strong> You cannot write implementation code unless there is a
+      failing test that demands it. The discipline forces you to think through acceptance criteria,
+      edge cases, and API contracts <em>before</em> touching <code>AccountService.java</code>.
+      In a BDD flavour, the failing tests are written in human-readable Gherkin scenarios that
+      a product owner could review.
+    </div>
+  </div>
+
+  <!-- FLOW -->
+  <h3>Workflow Flow</h3>
+  <div class="flow">
+    <div class="flow-node tdd-node">&#128203; Write Gherkin<br/>Scenarios</div>
+    <div class="flow-arrow">&#8594;</div>
+    <div class="flow-node tdd-node">&#128683; Red Tests<br/>(no impl yet)</div>
+    <div class="flow-arrow">&#8594;</div>
+    <div class="flow-node tdd-node">&#128196; Update YAML<br/>Spec</div>
+    <div class="flow-arrow">&#8594;</div>
+    <div class="flow-node tdd-node">&#128295; Implement<br/>minimum code</div>
+    <div class="flow-arrow">&#8594;</div>
+    <div class="flow-node tdd-node">&#9989; Green Tests</div>
+    <div class="flow-arrow">&#8594;</div>
+    <div class="flow-node tdd-node">&#9855; Refactor<br/>+ Repeat</div>
+  </div>
+
+  <!-- PHASES -->
+  <div class="phases">
+
+    <!-- Phase 1 -->
+    <div class="phase tdd-phase">
+      <div class="phase-header">
+        <div class="phase-num">1</div>
+        Define BDD Scenarios (Gherkin)
+      </div>
+      <div class="phase-body">
+        <p>
+          Before touching any code, the team writes Gherkin feature files describing the
+          expected <em>behaviour</em> of <code>emailConfidenceCode</code>. A product owner,
+          QA engineer, and developer collaborate on these.
+        </p>
+        <div class="code-block">
+          <div class="code-label">
+            <span class="dot" style="background:#f38ba8;"></span>
+            <span style="color:#cdd6f4;">features/email_confidence_code.feature</span>
+          </div>
+          <pre><span class="hl-kw">Feature:</span> Account emailConfidenceCode field
+
+  <span class="hl-kw">Background:</span>
+    <span class="hl-kw">Given</span> the Entity API is running at http://localhost:8080
+
+  <span class="hl-kw">Scenario:</span> Store a HIGH confidence code on upsert
+    <span class="hl-kw">Given</span> a valid account payload with emailConfidenceCode <span class="hl-st">"HIGH"</span>
+    <span class="hl-kw">When</span> I POST to /entity/account
+    <span class="hl-kw">Then</span> the response status should be 201
+    <span class="hl-kw">And</span> the returned emailConfidenceCode should be <span class="hl-st">"HIGH"</span>
+    <span class="hl-kw">And</span> Couchbase should store email_confidence_code as <span class="hl-st">"HIGH"</span>
+
+  <span class="hl-kw">Scenario:</span> Reject invalid confidence code on upsert
+    <span class="hl-kw">Given</span> a valid account payload with emailConfidenceCode <span class="hl-st">"SUPER_HIGH"</span>
+    <span class="hl-kw">When</span> I POST to /entity/account
+    <span class="hl-kw">Then</span> the response status should be 400
+    <span class="hl-kw">And</span> the error should mention <span class="hl-st">"emailConfidenceCode"</span>
+
+  <span class="hl-kw">Scenario:</span> Field is optional — upsert succeeds without it
+    <span class="hl-kw">Given</span> a valid account payload with no emailConfidenceCode field
+    <span class="hl-kw">When</span> I POST to /entity/account
+    <span class="hl-kw">Then</span> the response status should be 201
+    <span class="hl-kw">And</span> the returned emailConfidenceCode should be absent or null
+
+  <span class="hl-kw">Scenario:</span> Retrieve stored confidence code on GET
+    <span class="hl-kw">Given</span> account 123456789 exists with emailConfidenceCode <span class="hl-st">"MEDIUM"</span>
+    <span class="hl-kw">When</span> I GET /entity/account/123456789
+    <span class="hl-kw">Then</span> the returned emailConfidenceCode should be <span class="hl-st">"MEDIUM"</span></pre>
+        </div>
+        <div class="callout callout-tip">
+          <span class="callout-icon">&#128161;</span>
+          <div>At this point <strong>zero code has changed</strong>. The team is purely
+          describing intent. A product owner can reject or refine these before any engineer
+          writes implementation code.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 2 -->
+    <div class="phase tdd-phase">
+      <div class="phase-header">
+        <div class="phase-num">2</div>
+        Write Failing Unit Tests (Red Phase)
+      </div>
+      <div class="phase-body">
+        <p>
+          Translate the Gherkin scenarios into JUnit 5 unit tests. These are written against
+          <code>AccountService</code> using Mockito — the same pattern as the existing
+          <code>AccountServiceTest.java</code>. They will <strong>not compile yet</strong>
+          because <code>emailConfidenceCode</code> does not exist on the model.
+        </p>
+        <div class="code-block">
+          <div class="code-label">
+            <span class="dot" style="background:#f38ba8;"></span>
+            <span style="color:#cdd6f4;">AccountServiceTest.java &mdash; new tests (RED, won't compile)</span>
+          </div>
+          <pre><span class="hl-an">@Test</span>
+<span class="hl-kw">void</span> upsert_storesHighConfidenceCode() {
+    AccountRecord record = buildValidRecord();
+    <span class="hl-cm">// This line fails to compile — field doesn't exist yet</span>
+    record.setEmailConfidenceCode(AccountRecord.EmailConfidenceCodeEnum.HIGH);
+    when(nameApiClient.capitalize(any())).thenReturn(<span class="hl-st">"Test Name"</span>);
+    when(collection.upsert(any(), any(), any())).thenReturn(null);
+
+    AccountRecord result = service.upsert(record);
+
+    assertNotNull(result.getEmailConfidenceCode());
+    assertEquals(<span class="hl-st">"HIGH"</span>, result.getEmailConfidenceCode().getValue());
+}
+
+<span class="hl-an">@Test</span>
+<span class="hl-kw">void</span> upsert_handlesNullConfidenceCode() {
+    AccountRecord record = buildValidRecord();
+    <span class="hl-cm">// emailConfidenceCode not set — should not throw</span>
+    when(nameApiClient.capitalize(any())).thenReturn(<span class="hl-st">"Test Name"</span>);
+    when(collection.upsert(any(), any(), any())).thenReturn(null);
+
+    assertDoesNotThrow(() -> service.upsert(record));
+}
+
+<span class="hl-an">@Test</span>
+<span class="hl-kw">void</span> getById_returnsConfidenceCode_whenStoredInCouchbase() {
+    AccountDocument doc = buildDocumentWithConfidenceCode(<span class="hl-st">"MEDIUM"</span>);
+    GetResult mockResult = mock(GetResult.class);
+    when(mockResult.contentAs(AccountDocument.class)).thenReturn(doc);
+    when(collection.get(eq(<span class="hl-st">"123"</span>), any())).thenReturn(mockResult);
+
+    AccountRecord result = service.getById(123L);
+
+    assertEquals(<span class="hl-st">"MEDIUM"</span>, result.getEmailConfidenceCode().getValue());
+}</pre>
+        </div>
+        <p>Run <code>mvn test</code> now &rarr; <strong>compile error</strong>. That's expected and correct in TDD.</p>
+      </div>
+    </div>
+
+    <!-- Phase 3 -->
+    <div class="phase tdd-phase">
+      <div class="phase-header">
+        <div class="phase-num">3</div>
+        Update entity-api.yaml (source of truth)
+      </div>
+      <div class="phase-body">
+        <p>
+          Only now do we touch the codebase. The OpenAPI spec is updated first because this
+          project is <strong>OpenAPI-first</strong>: the Java model is auto-generated from it.
+        </p>
+        <div class="code-block">
+          <div class="code-label">
+            <span class="dot" style="background:#a6e3a1;"></span>
+            <span style="color:#cdd6f4;">entity-api.yaml &mdash; AccountRecord schema (diff)</span>
+          </div>
+          <pre>    <span class="hl-yw">AccountRecord:</span>
+      type: object
+      properties:
+        accountNumber:
+          type: integer
+          format: int64
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE, SUSPENDED, CLOSED, PENDING, CANCEL]
+<span class="hl-gd">+       emailConfidenceCode:</span>
+<span class="hl-gd">+         type: string</span>
+<span class="hl-gd">+         description: Confidence level in the account's email address</span>
+<span class="hl-gd">+         enum: [HIGH, MEDIUM, LOW, UNKNOWN]</span>
+<span class="hl-gd">+         example: HIGH</span>
+        dob:
+          type: string
+          example: "01-15-1990"</pre>
+        </div>
+        <p>Run <code>mvn compile</code>. The generator adds <code>getEmailConfidenceCode()</code> /
+        <code>setEmailConfidenceCode()</code> to <code>AccountRecord</code> and a new
+        <code>EmailConfidenceCodeEnum</code>. Tests now compile but still <strong>fail</strong>
+        (Red phase) because service mapping is not done.</p>
+      </div>
+    </div>
+
+    <!-- Phase 4 -->
+    <div class="phase tdd-phase">
+      <div class="phase-header">
+        <div class="phase-num">4</div>
+        Update AccountDocument (Couchbase POJO)
+      </div>
+      <div class="phase-body">
+        <div class="code-block">
+          <div class="code-label">
+            <span class="dot" style="background:#a6e3a1;"></span>
+            <span style="color:#cdd6f4;">AccountDocument.java &mdash; add snake_case field</span>
+          </div>
+          <pre><span class="hl-an">@JsonProperty</span>(<span class="hl-st">"email_confidence_code"</span>)
+<span class="hl-kw">private</span> <span class="hl-ty">String</span> emailConfidenceCode;
+
+<span class="hl-kw">public</span> <span class="hl-ty">String</span> getEmailConfidenceCode() { <span class="hl-kw">return</span> emailConfidenceCode; }
+<span class="hl-kw">public void</span> setEmailConfidenceCode(<span class="hl-ty">String</span> v) { this.emailConfidenceCode = v; }</pre>
+        </div>
+        <p>Snake_case <code>email_confidence_code</code> matches the Couchbase document convention
+        established by the existing fields (<code>account_number</code>, <code>last_update_date</code>, etc.).</p>
+      </div>
+    </div>
+
+    <!-- Phase 5 -->
+    <div class="phase tdd-phase">
+      <div class="phase-header">
+        <div class="phase-num">5</div>
+        Implement Minimum Mapping in AccountService (Green Phase)
+      </div>
+      <div class="phase-body">
+        <p>Add exactly the mapping needed to make the failing tests pass &mdash; no more.</p>
+        <div class="code-block">
+          <div class="code-label">
+            <span class="dot" style="background:#a6e3a1;"></span>
+            <span style="color:#cdd6f4;">AccountService.java &mdash; toDocument() addition</span>
+          </div>
+          <pre><span class="hl-cm">// In toDocument() — map API enum → Couchbase string</span>
+<span class="hl-kw">if</span> (r.getEmailConfidenceCode() != null) {
+    doc.setEmailConfidenceCode(r.getEmailConfidenceCode().getValue());
+}</pre>
+        </div>
+        <div class="code-block">
+          <div class="code-label">
+            <span class="dot" style="background:#a6e3a1;"></span>
+            <span style="color:#cdd6f4;">AccountService.java &mdash; toRecord() addition</span>
+          </div>
+          <pre><span class="hl-cm">// In toRecord() — map Couchbase string → API enum</span>
+<span class="hl-kw">if</span> (doc.getEmailConfidenceCode() != null) {
+    r.setEmailConfidenceCode(
+        AccountRecord.EmailConfidenceCodeEnum
+            .fromValue(doc.getEmailConfidenceCode())
+    );
+}</pre>
+        </div>
+        <p>Run <code>mvn test</code> &rarr; <strong style="color:var(--tdd-color);">All tests pass. Green!</strong></p>
+      </div>
+    </div>
+
+    <!-- Phase 6 -->
+    <div class="phase tdd-phase">
+      <div class="phase-header">
+        <div class="phase-num">6</div>
+        Update Integration Tests &amp; Postman Collection
+      </div>
+      <div class="phase-body">
+        <p>
+          Add scenarios to <code>integration-tests.postman_collection.json</code> that mirror
+          the Gherkin scenarios. These run via Newman against the full Docker stack.
+        </p>
+        <div class="code-block">
+          <div class="code-label">
+            <span class="dot" style="background:#a6e3a1;"></span>
+            <span style="color:#cdd6f4;">Postman test snippet — pm.test assertion</span>
+          </div>
+          <pre>pm.test(<span class="hl-st">"emailConfidenceCode is returned correctly"</span>, () => {
+    const body = pm.response.json();
+    pm.expect(body.emailConfidenceCode).to.equal(<span class="hl-st">"HIGH"</span>);
+});
+
+pm.test(<span class="hl-st">"Invalid emailConfidenceCode returns 400"</span>, () => {
+    pm.expect(pm.response.code).to.equal(<span class="hl-nu">400</span>);
+    pm.expect(pm.response.json().errors[<span class="hl-nu">0</span>].field)
+        .to.include(<span class="hl-st">"emailConfidenceCode"</span>);
+});</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 7 -->
+    <div class="phase tdd-phase">
+      <div class="phase-header">
+        <div class="phase-num">7</div>
+        Refactor (if needed) &mdash; Cycle Complete
+      </div>
+      <div class="phase-body">
+        <p>
+          Review the mapping code. Could <code>fromValue()</code> / <code>getValue()</code>
+          enum conversion be centralised? Are there other fields that follow this same
+          pattern? If yes, refactor now while tests protect you. Otherwise: done.
+        </p>
+      </div>
+    </div>
+
+  </div><!-- /phases -->
+
+  <div class="proscons">
+    <div class="pros">
+      <h4>&#9989; Strengths</h4>
+      <ul>
+        <li>Every acceptance criterion is captured as a test before code exists</li>
+        <li>Product owner can validate Gherkin before engineers start</li>
+        <li>Impossible to "forget" to handle null — the test forces you to</li>
+        <li>Regression protection: future changes are gated by the test suite</li>
+        <li>CI pipeline catches breakage automatically on every push</li>
+        <li>Clear audit trail: spec → test → implementation</li>
+      </ul>
+    </div>
+    <div class="cons">
+      <h4>&#10060; Weaknesses</h4>
+      <ul>
+        <li>High ceremony for a simple optional field</li>
+        <li>Takes 2&ndash;3x longer than just adding the field and testing manually</li>
+        <li>Requires team discipline — pressure shortcuts the Red phase</li>
+        <li>Gherkin step definitions need separate maintenance</li>
+        <li>Value of TDD decreases if team doesn't do regular refactors</li>
+      </ul>
+    </div>
+  </div>
+
+</section>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     APPROACH 2 — VIBE CODING
+═══════════════════════════════════════════════════════════════ -->
+<div class="container">
+<section id="vibe">
+
+  <div class="approach-header vibe-header">
+    <div class="icon">&#127926;</div>
+    <div>
+      <h2 style="color:var(--vibe-color);">Approach 2: AI Vibe Coding</h2>
+      <p style="color:var(--muted); font-size:0.9rem;">
+        Describe what you want to an AI in natural language, accept the generated code,
+        run it, iterate based on vibes. Fast but highly context-dependent.
+      </p>
+    </div>
+  </div>
+
+  <div class="section-intro">
+    <span class="approach-tag vibe-tag">Vibe Coding</span>
+    <div>
+      <strong>Core philosophy:</strong> Move fast. Describe the intent to an AI, get code
+      back, try it, adjust if it doesn't feel right. There is no formal spec, no tests-first
+      discipline, no pre-agreed acceptance criteria. The engineer is the acceptance test.
+      Works best when the developer deeply understands the codebase and can immediately
+      spot AI hallucinations.
+    </div>
+  </div>
+
+  <!-- FLOW -->
+  <h3>Workflow Flow</h3>
+  <div class="flow">
+    <div class="flow-node vibe-node">&#127926; Describe field<br/>to AI in chat</div>
+    <div class="flow-arrow">&#8594;</div>
+    <div class="flow-node vibe-node">&#129302; AI generates<br/>code changes</div>
+    <div class="flow-arrow">&#8594;</div>
+    <div class="flow-node vibe-node">&#9997;&#65039; Developer reviews<br/>&amp; tweaks</div>
+    <div class="flow-arrow">&#8594;</div>
+    <div class="flow-node vibe-node">&#9654;&#65039; Run app, test<br/>manually in Postman</div>
+    <div class="flow-arrow">&#8594;</div>
+    <div class="flow-node vibe-node">&#128260; Iterate if<br/>something's off</div>
+    <div class="flow-arrow">&#8594;</div>
+    <div class="flow-node vibe-node">&#128640; Ship</div>
+  </div>
+
+  <!-- PHASES -->
+  <div class="phases">
+
+    <!-- Phase 1 -->
+    <div class="phase vibe-phase">
+      <div class="phase-header">
+        <div class="phase-num">1</div>
+        The Prompt &mdash; Describe Intent to AI
+      </div>
+      <div class="phase-body">
+        <p>The developer opens Claude Code (or GitHub Copilot, Cursor, etc.) and types:</p>
+        <div class="code-block">
+          <div class="code-label">
+            <span class="dot" style="background:#9d6bff;"></span>
+            <span style="color:#cdd6f4;">Developer's vibe prompt (informal, no spec)</span>
+          </div>
+          <pre><span class="hl-st">"Hey, I need to add an emailConfidenceCode field to the Account API.
+It should be an enum with values HIGH, MEDIUM, LOW, UNKNOWN. It's optional.
+It should be stored in Couchbase as email_confidence_code.
+Update whatever files you need to — YAML, service, document class, etc."</span></pre>
+        </div>
+        <p>
+          No Gherkin. No failing test. The developer is trusting the AI to figure out
+          the correct layers to modify and the patterns to follow.
+        </p>
+        <div class="callout callout-warn">
+          <span class="callout-icon">&#9888;&#65039;</span>
+          <div>
+            The AI has no visibility into the OpenAPI-first constraint unless the developer
+            mentions it. If the AI edits the generated <code>AccountRecord.java</code> directly
+            instead of <code>entity-api.yaml</code>, those changes will be <strong>wiped on
+            the next <code>mvn compile</code></strong>. This is a classic vibe coding trap
+            in code-generated projects.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 2 -->
+    <div class="phase vibe-phase">
+      <div class="phase-header">
+        <div class="phase-num">2</div>
+        AI Generates Code &mdash; What It Might Produce
+      </div>
+      <div class="phase-body">
+        <p>
+          A well-prompted AI on this codebase might produce the correct changes. But
+          without explicit guidance it may also make the following mistakes:
+        </p>
+        <div class="code-block">
+          <div class="code-label">
+            <span class="dot" style="background:#f38ba8;"></span>
+            <span style="color:#cdd6f4;">Common AI vibe coding mistake — editing the generated file (WRONG)</span>
+          </div>
+          <pre><span class="hl-cm">// AI edits target/generated-sources/openapi/.../AccountRecord.java</span>
+<span class="hl-cm">// This file is REGENERATED by mvn compile — the change will be LOST</span>
+<span class="hl-rd">// target/generated-sources/openapi/com/company/entityapi/model/AccountRecord.java</span>
+<span class="hl-kw">public enum</span> EmailConfidenceCodeEnum {
+    <span class="hl-nm">HIGH</span>(<span class="hl-st">"HIGH"</span>), <span class="hl-nm">MEDIUM</span>(<span class="hl-st">"MEDIUM"</span>), <span class="hl-nm">LOW</span>(<span class="hl-st">"LOW"</span>), <span class="hl-nm">UNKNOWN</span>(<span class="hl-st">"UNKNOWN"</span>);
+    <span class="hl-cm">// ^^^^ WRONG — this is in generated-sources, will be overwritten!</span>
+}</pre>
+        </div>
+        <div class="code-block">
+          <div class="code-label">
+            <span class="dot" style="background:#a6e3a1;"></span>
+            <span style="color:#cdd6f4;">What the AI should produce (correct path)</span>
+          </div>
+          <pre><span class="hl-cm">// 1. entity-api.yaml (source of truth)</span>
+<span class="hl-gd">+     emailConfidenceCode:</span>
+<span class="hl-gd">+       type: string</span>
+<span class="hl-gd">+       enum: [HIGH, MEDIUM, LOW, UNKNOWN]</span>
+
+<span class="hl-cm">// 2. AccountDocument.java</span>
+<span class="hl-gd">+   @JsonProperty("email_confidence_code")</span>
+<span class="hl-gd">+   private String emailConfidenceCode;</span>
+
+<span class="hl-cm">// 3. AccountService.java toDocument()</span>
+<span class="hl-gd">+   if (r.getEmailConfidenceCode() != null)</span>
+<span class="hl-gd">+       doc.setEmailConfidenceCode(r.getEmailConfidenceCode().getValue());</span>
+
+<span class="hl-cm">// 4. AccountService.java toRecord()</span>
+<span class="hl-gd">+   if (doc.getEmailConfidenceCode() != null)</span>
+<span class="hl-gd">+       r.setEmailConfidenceCode(AccountRecord.EmailConfidenceCodeEnum</span>
+<span class="hl-gd">+           .fromValue(doc.getEmailConfidenceCode()));</span></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 3 -->
+    <div class="phase vibe-phase">
+      <div class="phase-header">
+        <div class="phase-num">3</div>
+        Manual Verification &mdash; Fire Up Postman
+      </div>
+      <div class="phase-body">
+        <p>
+          The developer runs <code>docker compose up -d --build</code>, opens Postman,
+          sends a POST with <code>"emailConfidenceCode": "HIGH"</code>, and eyeballs the
+          response. If it looks right, it ships.
+        </p>
+        <div class="code-block">
+          <div class="code-label">
+            <span class="dot" style="background:#9d6bff;"></span>
+            <span style="color:#cdd6f4;">Manual Postman test — informal verification</span>
+          </div>
+          <pre>POST http://localhost:8080/entity/account
+{
+  <span class="hl-nm">"accountNumber"</span>: 123456789,
+  <span class="hl-nm">"docType"</span>: <span class="hl-st">"Account"</span>,
+  <span class="hl-nm">"status"</span>: <span class="hl-st">"ACTIVE"</span>,
+  <span class="hl-nm">"emailConfidenceCode"</span>: <span class="hl-st">"HIGH"</span>,  <span class="hl-cm">← new field</span>
+  <span class="hl-nm">"name"</span>: { <span class="hl-nm">"legalName"</span>: <span class="hl-st">"Test Corp"</span> },
+  <span class="hl-nm">"address"</span>: { <span class="hl-nm">"line1"</span>: <span class="hl-st">"1 Main St"</span>, <span class="hl-nm">"state"</span>: <span class="hl-st">"CA"</span> }
+}
+
+<span class="hl-cm">Response: 201 — looks good! Ship it.</span>
+
+<span class="hl-cm">But did the dev test:</span>
+<span class="hl-rd">  ✗ null emailConfidenceCode round-trip?</span>
+<span class="hl-rd">  ✗ GET after upsert returns the code?</span>
+<span class="hl-rd">  ✗ Invalid value rejected with 400?</span>
+<span class="hl-rd">  ✗ Old documents without the field still load?</span></pre>
+        </div>
+        <div class="callout callout-warn">
+          <span class="callout-icon">&#9888;&#65039;</span>
+          <div>
+            Vibe coding generates <strong>no persistent test artifacts</strong>. The next developer
+            who changes <code>AccountService.java</code> has no automated safety net for
+            <code>emailConfidenceCode</code>. The regression is only caught if someone manually
+            tests it again.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 4 -->
+    <div class="phase vibe-phase">
+      <div class="phase-header">
+        <div class="phase-num">4</div>
+        Iteration Loop (The "Vibe")
+      </div>
+      <div class="phase-body">
+        <p>
+          If the first attempt breaks something (e.g., <code>fromValue()</code> throws on
+          unknown values from old Couchbase documents), the developer re-prompts the AI
+          to fix it. The loop continues until it "feels right."
+        </p>
+        <div class="code-block">
+          <div class="code-label">
+            <span class="dot" style="background:#f9e2af;"></span>
+            <span style="color:#cdd6f4;">Follow-up vibe prompt after encountering a bug</span>
+          </div>
+          <pre><span class="hl-st">"Getting a NullPointerException when loading old accounts that don't have
+the field in Couchbase. Fix it so it handles null gracefully."</span>
+
+<span class="hl-cm">— AI fixes, developer tests again, ships</span></pre>
+        </div>
+        <p>
+          Each iteration is fast but ad-hoc. The fixes don't necessarily become tests,
+          so the same bug can re-emerge later.
+        </p>
+      </div>
+    </div>
+
+  </div><!-- /phases -->
+
+  <div class="callout callout-warn" style="margin-bottom:20px;">
+    <span class="callout-icon">&#9888;&#65039;</span>
+    <div>
+      <strong>Critical risk for entityapi-db:</strong> This project's <code>AccountRecord</code>
+      is in <code>target/generated-sources/</code> and is regenerated on every build.
+      An AI doing vibe coding without knowing this will edit the wrong file.
+      There is no failing test to catch it — the bug only surfaces at the next
+      <code>mvn compile</code> and the developer wonders why their changes disappeared.
+    </div>
+  </div>
+
+  <div class="proscons">
+    <div class="pros">
+      <h4>&#9989; Strengths</h4>
+      <ul>
+        <li>Fastest time-to-running-code for simple, well-understood changes</li>
+        <li>Low ceremony — no Gherkin, no test scaffolding upfront</li>
+        <li>AI can identify all affected files at once</li>
+        <li>Great for prototyping or throwaway code</li>
+        <li>Good developer can catch AI mistakes quickly with local testing</li>
+      </ul>
+    </div>
+    <div class="cons">
+      <h4>&#10060; Weaknesses</h4>
+      <ul>
+        <li>No automated regression protection — bugs return silently</li>
+        <li>AI unaware of project-specific constraints (OpenAPI-first, generated sources)</li>
+        <li>Edge cases (null values, old documents) are easily missed</li>
+        <li>Knowledge lives in developer's head, not in tests or spec</li>
+        <li>Code review is harder without a spec to compare against</li>
+        <li>Technical debt accumulates rapidly across many vibe sessions</li>
+        <li>High risk when developer is unfamiliar with the codebase</li>
+      </ul>
+    </div>
+  </div>
+
+</section>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     APPROACH 3 — AI SPEC-DRIVEN DEVELOPMENT
+═══════════════════════════════════════════════════════════════ -->
+<div class="container">
+<section id="sdd">
+
+  <div class="approach-header sdd-header">
+    <div class="icon">&#128196;</div>
+    <div>
+      <h2 style="color:var(--sdd-color);">Approach 3: AI Spec-Driven Development</h2>
+      <p style="color:var(--muted); font-size:0.9rem;">
+        The OpenAPI spec is updated first as the contract. AI is then used as an
+        accelerator to implement the spec, not a replacement for design.
+        Combines AI speed with spec rigour.
+      </p>
+    </div>
+  </div>
+
+  <div class="section-intro">
+    <span class="approach-tag sdd-tag">Spec-Driven + AI</span>
+    <div>
+      <strong>Core philosophy:</strong> The spec is the single source of truth. A human
+      (or AI-assisted human) updates <code>entity-api.yaml</code> first, creating a precise
+      contract. Then the AI is given the spec diff as context and asked to implement
+      <em>exactly</em> what the spec says — no guessing, no hallucinating field names.
+      This is naturally aligned with how entityapi-db is already structured.
+    </div>
+  </div>
+
+  <!-- FLOW -->
+  <h3>Workflow Flow</h3>
+  <div class="flow">
+    <div class="flow-node sdd-node">&#128196; Update YAML<br/>spec precisely</div>
+    <div class="flow-arrow">&#8594;</div>
+    <div class="flow-node sdd-node">&#129302; AI reads spec<br/>diff as context</div>
+    <div class="flow-arrow">&#8594;</div>
+    <div class="flow-node sdd-node">&#9997;&#65039; AI implements<br/>all layers</div>
+    <div class="flow-arrow">&#8594;</div>
+    <div class="flow-node sdd-node">&#128203; AI generates<br/>test cases from spec</div>
+    <div class="flow-arrow">&#8594;</div>
+    <div class="flow-node sdd-node">&#9989; Review &amp;<br/>validate</div>
+    <div class="flow-arrow">&#8594;</div>
+    <div class="flow-node sdd-node">&#128640; Merge &amp;<br/>CI confirms</div>
+  </div>
+
+  <!-- PHASES -->
+  <div class="phases">
+
+    <!-- Phase 1 -->
+    <div class="phase sdd-phase">
+      <div class="phase-header">
+        <div class="phase-num">1</div>
+        Update entity-api.yaml First — Deliberately
+      </div>
+      <div class="phase-body">
+        <p>
+          The developer (or architect) makes a careful, deliberate update to the OpenAPI spec.
+          This is a <strong>design decision</strong>, not a code change. Field name, type,
+          enum values, required vs optional, description — all decided here.
+        </p>
+        <div class="code-block">
+          <div class="code-label">
+            <span class="dot" style="background:#f9e2af;"></span>
+            <span style="color:#cdd6f4;">entity-api.yaml &mdash; full, precise spec change</span>
+          </div>
+          <pre>    <span class="hl-yw">AccountRecord:</span>
+      <span class="hl-yw">type:</span> object
+      <span class="hl-yw">properties:</span>
+        <span class="hl-yw">accountNumber:</span>
+          <span class="hl-yw">type:</span> integer
+          <span class="hl-yw">format:</span> int64
+        <span class="hl-yw">status:</span>
+          <span class="hl-yw">type:</span> string
+          <span class="hl-yw">enum:</span> [ACTIVE, INACTIVE, SUSPENDED, CLOSED, PENDING, CANCEL]
+<span class="hl-gd">+       emailConfidenceCode:</span>
+<span class="hl-gd">+         type: string</span>
+<span class="hl-gd">+         description: |</span>
+<span class="hl-gd">+           Indicates how confident the system is that the account's email</span>
+<span class="hl-gd">+           address is valid and reachable.</span>
+<span class="hl-gd">+           HIGH   — confirmed deliverable</span>
+<span class="hl-gd">+           MEDIUM — likely valid, not verified</span>
+<span class="hl-gd">+           LOW    — suspected invalid or unreachable</span>
+<span class="hl-gd">+           UNKNOWN — no email verification data available</span>
+<span class="hl-gd">+         enum: [HIGH, MEDIUM, LOW, UNKNOWN]</span>
+<span class="hl-gd">+         example: HIGH</span></pre>
+        </div>
+        <div class="callout callout-tip">
+          <span class="callout-icon">&#128161;</span>
+          <div>
+            The spec diff is a <strong>reviewable artifact</strong>. A product owner, API
+            consumer team, or tech lead can review and approve the spec change in a PR
+            <em>before</em> any implementation work begins.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 2 -->
+    <div class="phase sdd-phase">
+      <div class="phase-header">
+        <div class="phase-num">2</div>
+        Provide Spec Diff to AI as Authoritative Context
+      </div>
+      <div class="phase-body">
+        <p>
+          Unlike vibe coding where the AI guesses at intent, here the AI is given the
+          spec diff and the project conventions, and asked to implement <em>exactly</em>
+          what the spec describes.
+        </p>
+        <div class="code-block">
+          <div class="code-label">
+            <span class="dot" style="background:#f9e2af;"></span>
+            <span style="color:#cdd6f4;">Precise AI prompt (spec-driven, not vibe)</span>
+          </div>
+          <pre><span class="hl-st">"I've just updated entity-api.yaml to add emailConfidenceCode (enum:
+HIGH | MEDIUM | LOW | UNKNOWN, optional). This project is OpenAPI-first:
+AccountRecord is generated from the YAML by openapi-generator-maven-plugin
+into target/generated-sources/ — do not edit it.
+
+Please implement exactly what the spec says across:
+  1. AccountDocument.java — add email_confidence_code (snake_case, @JsonProperty)
+  2. AccountService.toDocument() — map EmailConfidenceCodeEnum → String
+  3. AccountService.toRecord()   — map String → EmailConfidenceCodeEnum
+  4. AccountServiceTest.java     — add unit tests for all four enum values
+                                   and for null (field absent)
+
+Follow the exact patterns of existing fields: status uses getValue()/fromValue(),
+use the same pattern. Do not add validation — the enum in the YAML handles it."</span></pre>
+        </div>
+        <p>
+          The AI is now working from a <strong>contract</strong>, not a description. It
+          cannot hallucinate field names or types because the spec is explicit.
+        </p>
+      </div>
+    </div>
+
+    <!-- Phase 3 -->
+    <div class="phase sdd-phase">
+      <div class="phase-header">
+        <div class="phase-num">3</div>
+        AI Implements All Layers (Following Spec)
+      </div>
+      <div class="phase-body">
+        <p>
+          The AI produces all four file changes in one pass, guided by the spec:
+        </p>
+        <div class="code-block">
+          <div class="code-label">
+            <span class="dot" style="background:#a6e3a1;"></span>
+            <span style="color:#cdd6f4;">AccountDocument.java — AI output, spec-guided</span>
+          </div>
+          <pre><span class="hl-cm">// Follows existing snake_case @JsonProperty convention</span>
+<span class="hl-an">@JsonProperty</span>(<span class="hl-st">"email_confidence_code"</span>)
+<span class="hl-kw">private</span> <span class="hl-ty">String</span> emailConfidenceCode;
+
+<span class="hl-kw">public</span> <span class="hl-ty">String</span> getEmailConfidenceCode() { <span class="hl-kw">return</span> emailConfidenceCode; }
+<span class="hl-kw">public void</span> setEmailConfidenceCode(<span class="hl-ty">String</span> v) { this.emailConfidenceCode = v; }</pre>
+        </div>
+        <div class="code-block">
+          <div class="code-label">
+            <span class="dot" style="background:#a6e3a1;"></span>
+            <span style="color:#cdd6f4;">AccountService.java — AI output, spec-guided</span>
+          </div>
+          <pre><span class="hl-cm">// toDocument() — mirrors status field pattern exactly</span>
+<span class="hl-kw">if</span> (r.getEmailConfidenceCode() != null) {
+    doc.setEmailConfidenceCode(r.getEmailConfidenceCode().getValue());
+}
+
+<span class="hl-cm">// toRecord() — mirrors status field pattern exactly</span>
+<span class="hl-kw">if</span> (doc.getEmailConfidenceCode() != null) {
+    r.setEmailConfidenceCode(
+        AccountRecord.EmailConfidenceCodeEnum
+            .fromValue(doc.getEmailConfidenceCode())
+    );
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 4 -->
+    <div class="phase sdd-phase">
+      <div class="phase-header">
+        <div class="phase-num">4</div>
+        AI Generates Tests Derived from the Spec
+      </div>
+      <div class="phase-body">
+        <p>
+          Because the spec is explicit about enum values, the AI generates a complete
+          test matrix from the spec — not just a happy path.
+        </p>
+        <div class="code-block">
+          <div class="code-label">
+            <span class="dot" style="background:#a6e3a1;"></span>
+            <span style="color:#cdd6f4;">AccountServiceTest.java — AI-generated spec-derived tests</span>
+          </div>
+          <pre><span class="hl-an">@ParameterizedTest</span>
+<span class="hl-an">@EnumSource</span>(AccountRecord.EmailConfidenceCodeEnum.class)
+<span class="hl-kw">void</span> upsert_storesAllValidConfidenceCodes(
+        AccountRecord.EmailConfidenceCodeEnum code) {
+    <span class="hl-cm">// Spec defines 4 valid values — test ALL of them, not just HIGH</span>
+    AccountRecord record = buildValidRecord();
+    record.setEmailConfidenceCode(code);
+    when(nameApiClient.capitalize(any())).thenReturn(<span class="hl-st">"Test Corp"</span>);
+
+    AccountRecord result = service.upsert(record);
+
+    assertEquals(code, result.getEmailConfidenceCode());
+}
+
+<span class="hl-an">@Test</span>
+<span class="hl-kw">void</span> upsert_acceptsAbsent_emailConfidenceCode() {
+    <span class="hl-cm">// Spec says field is optional — null must be handled</span>
+    AccountRecord record = buildValidRecord();
+    <span class="hl-cm">// emailConfidenceCode intentionally not set</span>
+    when(nameApiClient.capitalize(any())).thenReturn(<span class="hl-st">"Test Corp"</span>);
+
+    assertDoesNotThrow(() -> service.upsert(record));
+}
+
+<span class="hl-an">@Test</span>
+<span class="hl-kw">void</span> toRecord_mapsConfidenceCode_fromCouchbaseDocument() {
+    <span class="hl-cm">// Spec: GET /entity/account/{id} must return emailConfidenceCode</span>
+    AccountDocument doc = buildDocumentWithConfidenceCode(<span class="hl-st">"LOW"</span>);
+    GetResult mockResult = mock(GetResult.class);
+    when(mockResult.contentAs(AccountDocument.class)).thenReturn(doc);
+    when(collection.get(eq(<span class="hl-st">"999"</span>), any())).thenReturn(mockResult);
+
+    AccountRecord result = service.getById(999L);
+
+    assertEquals(AccountRecord.EmailConfidenceCodeEnum.LOW,
+                 result.getEmailConfidenceCode());
+}
+
+<span class="hl-an">@Test</span>
+<span class="hl-kw">void</span> toRecord_handlesLegacyDocument_withoutConfidenceCode() {
+    <span class="hl-cm">// Spec: field is optional — old Couchbase docs won't have it</span>
+    AccountDocument doc = buildDocumentWithConfidenceCode(null);
+    GetResult mockResult = mock(GetResult.class);
+    when(mockResult.contentAs(AccountDocument.class)).thenReturn(doc);
+    when(collection.get(eq(<span class="hl-st">"888"</span>), any())).thenReturn(mockResult);
+
+    AccountRecord result = service.getById(888L);
+
+    assertNull(result.getEmailConfidenceCode());
+}</pre>
+        </div>
+        <p>
+          The AI derives the legacy document test from the spec's <em>optional</em>
+          designation — something a vibe coder often misses until production breaks.
+        </p>
+      </div>
+    </div>
+
+    <!-- Phase 5 -->
+    <div class="phase sdd-phase">
+      <div class="phase-header">
+        <div class="phase-num">5</div>
+        Review Against Spec, Run Tests, Confirm CI
+      </div>
+      <div class="phase-body">
+        <p>
+          The reviewer's job is simple: does the implementation match the spec?
+          The spec is the checklist. Run <code>mvn test</code>, then
+          <code>docker compose up</code> + Newman. Push to main &rarr; CI runs automatically.
+        </p>
+        <div class="code-block">
+          <div class="code-label">
+            <span class="dot" style="background:#a6e3a1;"></span>
+            <span style="color:#cdd6f4;">Spec-to-implementation traceability checklist</span>
+          </div>
+          <pre><span class="hl-gd">✓</span> entity-api.yaml: emailConfidenceCode enum [HIGH,MEDIUM,LOW,UNKNOWN] added
+<span class="hl-gd">✓</span> mvn compile: AccountRecord.EmailConfidenceCodeEnum generated automatically
+<span class="hl-gd">✓</span> AccountDocument: email_confidence_code field (snake_case) added
+<span class="hl-gd">✓</span> AccountService.toDocument(): maps all 4 enum values
+<span class="hl-gd">✓</span> AccountService.toRecord(): maps String → enum, handles null (legacy docs)
+<span class="hl-gd">✓</span> AccountServiceTest: parameterized test covers all 4 enum values
+<span class="hl-gd">✓</span> AccountServiceTest: null/absent field covered
+<span class="hl-gd">✓</span> Postman collection: 2 new requests added
+<span class="hl-gd">✓</span> CI (integration-test.yml): Newman confirms end-to-end</pre>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /phases -->
+
+  <div class="proscons">
+    <div class="pros">
+      <h4>&#9989; Strengths</h4>
+      <ul>
+        <li>Spec is the authoritative contract — AI can't hallucinate field names</li>
+        <li>Aligns with entityapi-db's existing OpenAPI-first architecture</li>
+        <li>AI generates tests derived from the spec (all enum values, null handling)</li>
+        <li>Spec change is reviewable before implementation begins</li>
+        <li>Fast: AI handles all implementation layers in one pass</li>
+        <li>Regression protection via generated tests + CI</li>
+        <li>New team members can onboard via the spec, not tribal knowledge</li>
+      </ul>
+    </div>
+    <div class="cons">
+      <h4>&#10060; Weaknesses</h4>
+      <ul>
+        <li>Requires developer to understand the spec format (YAML/OpenAPI)</li>
+        <li>More upfront effort than vibe coding — spec must be done right</li>
+        <li>AI still needs good context about project conventions (prompt quality matters)</li>
+        <li>Over-reliance on AI means developers may not deeply understand the code</li>
+      </ul>
+    </div>
+  </div>
+
+</section>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     COMPARISON TABLE
+═══════════════════════════════════════════════════════════════ -->
+<div class="container">
+<section id="comparison">
+  <h2>Head-to-Head Comparison</h2>
+  <p style="color:var(--muted); margin-bottom:24px;">
+    Evaluated against the specific characteristics of the entityapi-db codebase.
+  </p>
+
+  <table class="comparison-table">
+    <thead>
+      <tr>
+        <th>Dimension</th>
+        <th>&#128203; BDD / TDD</th>
+        <th>&#127926; AI Vibe Coding</th>
+        <th>&#128196; AI Spec-Driven</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Speed to working code</td>
+        <td><span class="badge badge-amber">Slowest</span><br/>Tests-first adds ceremony</td>
+        <td><span class="badge badge-green">Fastest</span><br/>Code in minutes</td>
+        <td><span class="badge badge-blue">Fast</span><br/>Spec first, then AI implements</td>
+      </tr>
+      <tr>
+        <td>Spec as first-class artifact</td>
+        <td><span class="badge badge-blue">Sometimes</span><br/>Gherkin exists, YAML may lag</td>
+        <td><span class="badge badge-red">No</span><br/>YAML often updated after the fact</td>
+        <td><span class="badge badge-green">Always</span><br/>YAML is the starting point</td>
+      </tr>
+      <tr>
+        <td>Regression protection</td>
+        <td><span class="badge badge-green">Highest</span><br/>Test suite covers all scenarios</td>
+        <td><span class="badge badge-red">None</span><br/>No persistent test artifacts</td>
+        <td><span class="badge badge-green">High</span><br/>AI generates spec-derived tests</td>
+      </tr>
+      <tr>
+        <td>Risk of editing generated sources</td>
+        <td><span class="badge badge-green">Low</span><br/>TDD forces spec awareness</td>
+        <td><span class="badge badge-red">High</span><br/>AI targets <code>target/</code> without context</td>
+        <td><span class="badge badge-green">Low</span><br/>Spec-first prevents this by design</td>
+      </tr>
+      <tr>
+        <td>Edge case coverage</td>
+        <td><span class="badge badge-green">Comprehensive</span><br/>Gherkin captures all scenarios</td>
+        <td><span class="badge badge-red">Minimal</span><br/>Happy path only unless pushed</td>
+        <td><span class="badge badge-blue">Good</span><br/>AI derives from spec optionality &amp; enums</td>
+      </tr>
+      <tr>
+        <td>Null / legacy doc handling</td>
+        <td><span class="badge badge-green">Explicit</span><br/>Scenario written for it</td>
+        <td><span class="badge badge-red">Often missed</span><br/>NPE in production</td>
+        <td><span class="badge badge-green">Caught</span><br/>Spec optional → AI adds null test</td>
+      </tr>
+      <tr>
+        <td>Reviewability</td>
+        <td><span class="badge badge-green">Excellent</span><br/>Spec + tests + impl, all in PR</td>
+        <td><span class="badge badge-amber">Poor</span><br/>Reviewers have no spec to compare</td>
+        <td><span class="badge badge-green">Excellent</span><br/>Spec diff is a reviewable contract</td>
+      </tr>
+      <tr>
+        <td>Team onboarding value</td>
+        <td><span class="badge badge-green">High</span><br/>Gherkin is human-readable</td>
+        <td><span class="badge badge-red">Low</span><br/>Intent lives in developer's memory</td>
+        <td><span class="badge badge-green">High</span><br/>YAML is the living docs</td>
+      </tr>
+      <tr>
+        <td>Ceremony / overhead</td>
+        <td><span class="badge badge-red">High</span><br/>Gherkin + step definitions + tests</td>
+        <td><span class="badge badge-green">Minimal</span><br/>One prompt, done</td>
+        <td><span class="badge badge-amber">Moderate</span><br/>Spec update + AI prompt</td>
+      </tr>
+      <tr>
+        <td>Suitable for this codebase</td>
+        <td><span class="badge badge-blue">Yes</span><br/>Best for team-level discipline</td>
+        <td><span class="badge badge-amber">Risky</span><br/>Needs deep codebase knowledge</td>
+        <td><span class="badge badge-green">Best fit</span><br/>Matches OpenAPI-first architecture</td>
+      </tr>
+    </tbody>
+  </table>
+
+</section>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     WHEN TO USE WHICH
+═══════════════════════════════════════════════════════════════ -->
+<div class="container">
+<section id="scenarios">
+  <h2>When to Use Which Approach</h2>
+  <p style="color:var(--muted); margin-bottom:8px;">
+    The right approach depends on the team, the change, and the risk.
+  </p>
+
+  <table class="scenario-table">
+    <thead>
+      <tr>
+        <th>Situation</th>
+        <th>&#128203; BDD/TDD</th>
+        <th>&#127926; Vibe Coding</th>
+        <th>&#128196; Spec-Driven AI</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Critical production field, financial data</td>
+        <td><span class="badge badge-green">Best choice</span></td>
+        <td><span class="badge badge-red">Avoid</span></td>
+        <td><span class="badge badge-blue">Good choice</span></td>
+      </tr>
+      <tr>
+        <td>New field on existing schema (like this example)</td>
+        <td><span class="badge badge-blue">Good</span></td>
+        <td><span class="badge badge-amber">Risky</span></td>
+        <td><span class="badge badge-green">Best choice</span></td>
+      </tr>
+      <tr>
+        <td>Rapid prototype or internal tool</td>
+        <td><span class="badge badge-red">Overkill</span></td>
+        <td><span class="badge badge-green">Best choice</span></td>
+        <td><span class="badge badge-amber">Fine</span></td>
+      </tr>
+      <tr>
+        <td>External API consumed by other teams</td>
+        <td><span class="badge badge-blue">Good</span></td>
+        <td><span class="badge badge-red">Avoid</span></td>
+        <td><span class="badge badge-green">Best choice</span></td>
+      </tr>
+      <tr>
+        <td>Complex business logic with many edge cases</td>
+        <td><span class="badge badge-green">Best choice</span></td>
+        <td><span class="badge badge-red">Avoid</span></td>
+        <td><span class="badge badge-blue">Good with AI-generated tests</span></td>
+      </tr>
+      <tr>
+        <td>Solo developer who knows codebase deeply</td>
+        <td><span class="badge badge-amber">Fine</span></td>
+        <td><span class="badge badge-blue">Good</span></td>
+        <td><span class="badge badge-green">Best choice</span></td>
+      </tr>
+      <tr>
+        <td>New developer onboarding</td>
+        <td><span class="badge badge-green">Best choice</span></td>
+        <td><span class="badge badge-red">High risk</span></td>
+        <td><span class="badge badge-blue">Good — spec guides them</span></td>
+      </tr>
+      <tr>
+        <td>Regulatory or compliance requirement</td>
+        <td><span class="badge badge-green">Required</span></td>
+        <td><span class="badge badge-red">Unacceptable</span></td>
+        <td><span class="badge badge-blue">Good if spec is auditable</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="when-grid">
+    <div class="when-card tdd">
+      <h4>&#128203; Use BDD/TDD When&hellip;</h4>
+      <ul>
+        <li>The change involves complex business rules</li>
+        <li>Multiple scenarios need product owner sign-off</li>
+        <li>Regulatory compliance requires test evidence</li>
+        <li>The team values long-term test suite quality</li>
+        <li>You're defining new behavior, not modifying existing</li>
+      </ul>
+    </div>
+    <div class="when-card vibe">
+      <h4>&#127926; Use Vibe Coding When&hellip;</h4>
+      <ul>
+        <li>It's a throwaway prototype or spike</li>
+        <li>You deeply know the codebase and its traps</li>
+        <li>Speed is the only constraint</li>
+        <li>The output will be rewritten properly later</li>
+        <li>There's no downstream consumer of the API</li>
+      </ul>
+    </div>
+    <div class="when-card sdd">
+      <h4>&#128196; Use AI Spec-Driven When&hellip;</h4>
+      <ul>
+        <li>The project is already OpenAPI-first (like this one)</li>
+        <li>Other teams consume the API and need a stable contract</li>
+        <li>You want AI speed with spec discipline</li>
+        <li>The change is well-scoped with clear acceptance criteria</li>
+        <li>You want test coverage without full TDD ceremony</li>
+      </ul>
+    </div>
+  </div>
+
+</section>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     VERDICT
+═══════════════════════════════════════════════════════════════ -->
+<div class="container">
+<section id="verdict">
+  <h2>Verdict for entityapi-db</h2>
+
+  <div class="verdict">
+    <h3>&#127942; Recommended Approach: AI Spec-Driven Development</h3>
+    <p>
+      entityapi-db is already an <strong>OpenAPI-first project</strong>. The <code>entity-api.yaml</code>
+      spec is the declared source of truth. <code>AccountRecord</code> is a generated artifact
+      in <code>target/</code> — editing it directly (a classic vibe coding failure) is
+      impossible to do safely. The project has an established pattern:
+      YAML → generated model → document class → service mapping.
+    </p>
+    <p style="margin-top:12px;">
+      <strong>AI Spec-Driven Development is a natural extension of this design</strong>.
+      Update the YAML first (one file, reviewable diff), then give the AI the spec change
+      and project conventions as context. The AI implements all layers correctly because
+      the field name, type, and constraints are unambiguous in the spec. Test cases are
+      derived from the spec's enum values and optional designation, meaning the
+      null/legacy-document edge case is caught before production.
+    </p>
+    <p style="margin-top:12px;">
+      <strong>BDD/TDD is the right evolution</strong> when the team scales, when Gherkin
+      scenarios need product owner approval, or when compliance requires formal test
+      evidence. For a small team moving fast, AI Spec-Driven gives you 80% of the
+      protection at 30% of the ceremony.
+    </p>
+    <p style="margin-top:12px;">
+      <strong>Vibe coding</strong> is appropriate only for local spikes or throwaway
+      experiments in this codebase. The OpenAPI-first architecture and generated sources
+      create specific traps that an AI without explicit context will fall into.
+    </p>
+  </div>
+
+  <!-- SUMMARY CARD GRID -->
+  <div class="card-grid" style="margin-top:28px;">
+    <div class="card" style="border-top:4px solid var(--tdd-border);">
+      <h3 style="color:var(--tdd-color); margin-bottom:12px;">&#128203; BDD/TDD</h3>
+      <p style="font-size:0.9rem; color:var(--muted);">
+        <strong>Files changed in order:</strong><br/>
+        Gherkin .feature &rarr; failing JUnit tests &rarr; entity-api.yaml &rarr;
+        AccountDocument.java &rarr; AccountService.java &rarr; Green tests &rarr;
+        Postman collection
+      </p>
+      <p style="font-size:0.88rem; margin-top:10px;">
+        <span class="badge badge-amber">Time:</span> Longest<br/>
+        <span class="badge badge-green">Safety:</span> Highest<br/>
+        <span class="badge badge-blue">Fits this codebase:</span> Well, with discipline
+      </p>
+    </div>
+    <div class="card" style="border-top:4px solid var(--vibe-border);">
+      <h3 style="color:var(--vibe-color); margin-bottom:12px;">&#127926; Vibe Coding</h3>
+      <p style="font-size:0.9rem; color:var(--muted);">
+        <strong>Files changed in order:</strong><br/>
+        Prompt to AI &rarr; AI guesses which files to touch &rarr; Manual Postman test &rarr;
+        Iterate until it "feels right"
+      </p>
+      <p style="font-size:0.88rem; margin-top:10px;">
+        <span class="badge badge-green">Time:</span> Shortest<br/>
+        <span class="badge badge-red">Safety:</span> Lowest<br/>
+        <span class="badge badge-red">Fits this codebase:</span> Risky (generated sources trap)
+      </p>
+    </div>
+    <div class="card" style="border-top:4px solid var(--sdd-border);">
+      <h3 style="color:var(--sdd-color); margin-bottom:12px;">&#128196; AI Spec-Driven</h3>
+      <p style="font-size:0.9rem; color:var(--muted);">
+        <strong>Files changed in order:</strong><br/>
+        entity-api.yaml &rarr; AI reads spec diff &rarr; AI implements
+        AccountDocument + AccountService + tests &rarr; mvn test &rarr; CI
+      </p>
+      <p style="font-size:0.88rem; margin-top:10px;">
+        <span class="badge badge-blue">Time:</span> Moderate<br/>
+        <span class="badge badge-green">Safety:</span> High<br/>
+        <span class="badge badge-green">Fits this codebase:</span> Best fit
+      </p>
+    </div>
+  </div>
+
+</section>
+</div>
+
+<footer>
+  <div>
+    entityapi-db &mdash; Development Approaches Comparison &mdash; Generated 2026-03-15
+  </div>
+  <div style="margin-top:6px; font-size:0.8rem;">
+    Feature: <code style="background:transparent; border:none; color:#94a3b8;">emailConfidenceCode</code>
+    &bull; Spring Boot 3.2 &bull; Couchbase SDK &bull; OpenAPI 3.0.3
+  </div>
+</footer>
+
+</body>
+</html>
