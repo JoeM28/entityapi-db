@@ -79,7 +79,7 @@ services:
     volumes:
       - ./kafka/connectors:/connectors:ro
       - ./kafka/register-connectors.sh:/register-connectors.sh:ro
-    entrypoint: ["sh", "-c", "apk add -q --no-cache curl && sh /register-connectors.sh"]
+    entrypoint: ["sh", "-c", "apk add -q --no-cache curl && tr -d '\\r' < /register-connectors.sh > /tmp/register.sh && sh /tmp/register.sh"]
     networks:
       - entity-net
     restart: "no"

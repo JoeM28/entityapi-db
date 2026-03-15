@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Entity API — Kafka Pipeline Explained</title>
+  <style>
+    :root {
+      --bg:      #0b0d14;
+      --s1:      #13161f;
+      --s2:      #1a1e2e;
+      --s3:      #222840;
+      --border:  #2a3050;
+      --blue:    #4f8ef7;
+      --purple:  #a78bfa;
+      --green:   #34d399;
+      --orange:  #fb923c;
+      --pink:    #f472b6;
+      --yellow:  #fbbf24;
+      --cyan:    #22d3ee;
+      --red:     #f87171;
+      --teal:    #2dd4bf;
+      --lime:    #a3e635;
+      --text:    #e2e8f0;
+      --muted:   #94a3b8;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.7;padding:2rem}
+    a{color:var(--blue);text-decoration:none}
+
+    /* ── Hero ── */
+    .hero{text-align:center;padding:3.5rem 1rem 2.5rem;background:linear-gradient(135deg,#13161f 0%,#0b0d14 100%);border:1px solid var(--border);border-radius:1.5rem;margin-bottom:3rem;position:relative;overflow:hidden}
+    .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(79,142,247,0.12) 0%,rgba(167,139,250,0.06) 40%,transparent 70%)}
+    .hero h1{font-size:2.8rem;font-weight:800;background:linear-gradient(90deg,var(--blue),var(--purple),var(--cyan),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;position:relative}
+    .hero .sub{color:var(--muted);margin-top:.75rem;font-size:1.05rem;position:relative}
+    .hero .badges{margin-top:1.2rem;position:relative}
+    .badge{display:inline-block;padding:.3rem .9rem;border-radius:9999px;font-size:.78rem;font-weight:600;margin:.2rem}
+
+    /* ── TOC ── */
+    .toc{background:var(--s1);border:1px solid var(--border);border-radius:1rem;padding:1.5rem 2rem;margin-bottom:3rem}
+    .toc h2{color:var(--cyan);margin-bottom:1rem;font-size:1rem;letter-spacing:.08em;text-transform:uppercase}
+    .toc ol{padding-left:1.5rem;columns:2;column-gap:2rem}
+    .toc li{margin:.35rem 0;break-inside:avoid}
+    .toc a{color:var(--blue);font-size:.95rem}
+    .toc a:hover{color:var(--cyan)}
+    @media(max-width:600px){.toc ol{columns:1}}
+
+    /* ── Sections ── */
+    section{margin-bottom:4rem}
+    .sec-hdr{display:flex;align-items:center;gap:.85rem;margin-bottom:1.75rem;padding-bottom:1rem;border-bottom:1px solid var(--border)}
+    .sec-num{width:2.4rem;height:2.4rem;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;flex-shrink:0}
+    .sec-hdr h2{font-size:1.65rem;font-weight:700}
+
+    /* ── Cards ── */
+    .card{background:var(--s1);border:1px solid var(--border);border-radius:1rem;padding:1.4rem;margin-bottom:1.1rem}
+    .card h3{font-size:1.05rem;margin-bottom:.65rem;display:flex;align-items:center;gap:.5rem}
+    .card p,.card li{color:var(--muted);font-size:.95rem}
+    .card ul{padding-left:1.2rem}
+    .card li{margin:.28rem 0}
+    .bl{border-left:3px solid}
+
+    /* ── Diagram ── */
+    .diagram{background:#070910;border:1px solid var(--border);border-radius:.75rem;padding:1.4rem 1.6rem;font-family:'Cascadia Code','Fira Code',Consolas,monospace;font-size:.8rem;line-height:1.9;margin:1.2rem 0;overflow-x:auto;white-space:pre}
+
+    /* ── Grid ── */
+    .g2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+    .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
+    .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:.85rem}
+    @media(max-width:900px){.g3,.g4{grid-template-columns:1fr 1fr}}
+    @media(max-width:600px){.g2,.g3,.g4{grid-template-columns:1fr}}
+
+    /* ── Flow ── */
+    .flow{display:flex;flex-direction:column;gap:0;margin:1.25rem 0}
+    .fstep{display:flex;align-items:flex-start;gap:1rem;padding:1rem 1.25rem;background:var(--s1);border:1px solid var(--border);position:relative}
+    .fstep:first-child{border-radius:1rem 1rem 0 0}
+    .fstep:last-child{border-radius:0 0 1rem 1rem}
+    .fstep:not(:last-child){border-bottom:none}
+    .fstep:not(:last-child)::after{content:'▼';position:absolute;bottom:-1.1rem;left:1.6rem;color:var(--muted);font-size:.75rem;z-index:1}
+    .fbadge{min-width:1.9rem;height:1.9rem;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;flex-shrink:0;margin-top:.15rem}
+    .fcontent strong{color:var(--text);display:block;margin-bottom:.15rem}
+    .fcontent span{color:var(--muted);font-size:.88rem}
+    .fcontent code{background:rgba(255,255,255,0.07);border:1px solid var(--border);border-radius:.25rem;padding:.05rem .35rem;font-family:monospace;font-size:.83em;color:var(--yellow)}
+
+    /* ── Table ── */
+    .tw{overflow-x:auto;margin:1.2rem 0;border-radius:.75rem;border:1px solid var(--border)}
+    table{width:100%;border-collapse:collapse;font-size:.88rem}
+    thead tr{background:var(--s2)}
+    thead th{padding:.8rem 1rem;text-align:left;color:var(--cyan);font-weight:600;border-bottom:1px solid var(--border)}
+    tbody tr{border-bottom:1px solid var(--border);transition:background .12s}
+    tbody tr:last-child{border-bottom:none}
+    tbody tr:hover{background:var(--s2)}
+    tbody td{padding:.7rem 1rem;color:var(--muted)}
+    tbody td:first-child{color:var(--text);font-weight:500}
+    .yes{color:var(--green);font-weight:600}
+    .no{color:var(--red);font-weight:600}
+
+    /* ── Highlight ── */
+    .hl{border-radius:.75rem;padding:1rem 1.25rem;margin:1.1rem 0;border-left:4px solid;font-size:.93rem}
+    .hl-blue{background:rgba(79,142,247,.08);border-color:var(--blue);color:var(--blue)}
+    .hl-green{background:rgba(52,211,153,.08);border-color:var(--green);color:var(--green)}
+    .hl-orange{background:rgba(251,146,60,.08);border-color:var(--orange);color:var(--orange)}
+    .hl-purple{background:rgba(167,139,250,.08);border-color:var(--purple);color:var(--purple)}
+    .hl-cyan{background:rgba(34,211,238,.08);border-color:var(--cyan);color:var(--cyan)}
+    .hl-yellow{background:rgba(251,191,36,.08);border-color:var(--yellow);color:var(--yellow)}
+    .hl-pink{background:rgba(244,114,182,.08);border-color:var(--pink);color:var(--pink)}
+
+    /* ── Pill ── */
+    .pill{display:inline-block;padding:.18rem .6rem;border-radius:9999px;font-size:.73rem;font-weight:600;margin:.12rem}
+    .p-blue{background:rgba(79,142,247,.2);color:var(--blue)}
+    .p-green{background:rgba(52,211,153,.2);color:var(--green)}
+    .p-orange{background:rgba(251,146,60,.2);color:var(--orange)}
+    .p-purple{background:rgba(167,139,250,.2);color:var(--purple)}
+    .p-pink{background:rgba(244,114,182,.2);color:var(--pink)}
+    .p-cyan{background:rgba(34,211,238,.2);color:var(--cyan)}
+    .p-yellow{background:rgba(251,191,36,.2);color:var(--yellow)}
+    .p-teal{background:rgba(45,212,191,.2);color:var(--teal)}
+
+    /* ── Layer stack ── */
+    .stack{display:flex;flex-direction:column;gap:.5rem;margin:1.2rem 0;max-width:520px;margin-left:auto;margin-right:auto}
+    .layer{padding:.9rem 1.5rem;border-radius:.6rem;text-align:center;font-weight:600;font-size:.92rem;border:1px solid}
+    .layer small{display:block;font-weight:400;font-size:.78rem;opacity:.8;margin-top:.18rem}
+    .larrow{text-align:center;color:var(--muted);font-size:1.1rem;line-height:1}
+
+    /* ── Container boxes ── */
+    .cbox{background:var(--s2);border:1px solid var(--border);border-radius:.85rem;padding:1rem 1.2rem;text-align:center}
+    .cbox .icon{font-size:1.8rem;margin-bottom:.4rem}
+    .cbox h4{font-size:.9rem;font-weight:700;margin-bottom:.3rem}
+    .cbox p{font-size:.78rem;color:var(--muted)}
+    .cbox .port{display:inline-block;margin-top:.4rem;padding:.15rem .5rem;border-radius:.3rem;font-size:.72rem;font-weight:600;font-family:monospace}
+
+    /* ── Code inline ── */
+    code{background:rgba(255,255,255,.07);border:1px solid var(--border);border-radius:.25rem;padding:.08rem .4rem;font-family:'Cascadia Code','Fira Code',monospace;font-size:.84em;color:var(--yellow)}
+
+    /* ── Timeline ── */
+    .timeline{position:relative;padding-left:2.5rem;margin:1.25rem 0}
+    .timeline::before{content:'';position:absolute;left:.7rem;top:0;bottom:0;width:2px;background:var(--border)}
+    .titem{position:relative;margin-bottom:1.2rem}
+    .titem::before{content:'';position:absolute;left:-1.85rem;top:.45rem;width:.75rem;height:.75rem;border-radius:50%;border:2px solid}
+    .titem h4{font-size:.95rem;font-weight:600;margin-bottom:.2rem}
+    .titem p{color:var(--muted);font-size:.88rem}
+
+    /* ── Big arrow ── */
+    .big-arrow{text-align:center;font-size:2rem;color:var(--muted);margin:.5rem 0;line-height:1}
+
+    hr{border:none;border-top:1px solid var(--border);margin:2.5rem 0}
+    ::-webkit-scrollbar{width:5px;height:5px}
+    ::-webkit-scrollbar-track{background:var(--bg)}
+    ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+  </style>
+</head>
+<body>
+
+<!-- ═══ HERO ═══ -->
+<div class="hero">
+  <h1>Entity API — Kafka Pipeline</h1>
+  <p class="sub">Complete end-to-end walkthrough · 4 repos · 9 Docker containers · 1 email per account event</p>
+  <div class="badges">
+    <span class="badge" style="background:rgba(79,142,247,.15);color:var(--blue);border:1px solid var(--blue)">Spring Boot 3.2</span>
+    <span class="badge" style="background:rgba(167,139,250,.15);color:var(--purple);border:1px solid var(--purple)">Apache Kafka</span>
+    <span class="badge" style="background:rgba(34,211,238,.15);color:var(--cyan);border:1px solid var(--cyan)">Kafka Connect</span>
+    <span class="badge" style="background:rgba(52,211,153,.15);color:var(--green);border:1px solid var(--green)">Couchbase</span>
+    <span class="badge" style="background:rgba(251,146,60,.15);color:var(--orange);border:1px solid var(--orange)">Gmail SMTP</span>
+    <span class="badge" style="background:rgba(244,114,182,.15);color:var(--pink);border:1px solid var(--pink)">Docker Compose</span>
+  </div>
+</div>
+
+<!-- ═══ TOC ═══ -->
+<div class="toc">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#overview">Big Picture Overview</a></li>
+    <li><a href="#repos">The 4 Repos</a></li>
+    <li><a href="#containers">9 Docker Containers</a></li>
+    <li><a href="#startup">Startup Order &amp; Dependencies</a></li>
+    <li><a href="#request">POST Request Flow (entity-api)</a></li>
+    <li><a href="#kafka-internals">Kafka Internals</a></li>
+    <li><a href="#connect">Kafka Connect &amp; Couchbase Source Connector</a></li>
+    <li><a href="#consumer">entity-kafka-service (Consumer + Email)</a></li>
+    <li><a href="#e2e">End-to-End Trace</a></li>
+    <li><a href="#networking">Docker Networking</a></li>
+  </ol>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- 1. BIG PICTURE -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section id="overview">
+  <div class="sec-hdr">
+    <div class="sec-num" style="background:rgba(79,142,247,.2);color:var(--blue);border:1px solid var(--blue)">1</div>
+    <h2 style="color:var(--blue)">Big Picture Overview</h2>
+  </div>
+
+  <div class="diagram"><span style="color:var(--muted)">───────────────────────────────────────────────────────────────────────────────────</span>
+<span style="color:var(--cyan)">                         FULL SYSTEM — ONE REQUEST, ONE EMAIL</span>
+<span style="color:var(--muted)">───────────────────────────────────────────────────────────────────────────────────</span>
+
+ <span style="color:var(--yellow)">Postman / curl</span>
+       │  POST /entity/account  (JSON body)
+       ▼
+ <span style="color:var(--blue)">┌──────────────────────────────────────────────────────────────┐</span>
+ <span style="color:var(--blue)">│  entity-api  (port 8080)                                     │</span>
+ <span style="color:var(--blue)">│                                                              │</span>
+ <span style="color:var(--blue)">│  AccountController ──► AccountService ──► Couchbase SDK      │</span>
+ <span style="color:var(--blue)">│         ▲                    │                    │           │</span>
+ <span style="color:var(--blue)">│  @Valid + Bean Val.   DobValidator           collection      │</span>
+ <span style="color:var(--blue)">│  (Jakarta)            (entity-dob-           .upsert()       │</span>
+ <span style="color:var(--blue)">│                       validation lib)                        │</span>
+ <span style="color:var(--blue)">│                            │                                 │</span>
+ <span style="color:var(--blue)">│                     NameApiClient ──► entity-name-api:8081   │</span>
+ <span style="color:var(--blue)">│                                       (capitalise legalName) │</span>
+ <span style="color:var(--blue)">└──────────────────────────────────────────────────────────────┘</span>
+                                    │  upsert
+                                    ▼
+                    <span style="color:var(--green)">┌─────────────────────────────┐</span>
+                    <span style="color:var(--green)">│  Couchbase  (port 11210 KV) │</span>
+                    <span style="color:var(--green)">│  customer_bucket            │</span>
+                    <span style="color:var(--green)">│  key: "987654321"           │</span>
+                    <span style="color:var(--green)">│  { doc_type, name,          │</span>
+                    <span style="color:var(--green)">│    address, status … }      │</span>
+                    <span style="color:var(--green)">└─────────────────────────────┘</span>
+                                    │  DCP stream (mutation event)
+                                    ▼
+                    <span style="color:var(--cyan)">┌─────────────────────────────┐</span>
+                    <span style="color:var(--cyan)">│  Kafka Connect  (port 8083) │</span>
+                    <span style="color:var(--cyan)">│  couchbase-source connector │</span>
+                    <span style="color:var(--cyan)">│  RawJsonSourceHandler       │</span>
+                    <span style="color:var(--cyan)">└─────────────────────────────┘</span>
+                                    │  publishes bytes to topic
+                                    ▼
+                    <span style="color:var(--purple)">┌─────────────────────────────┐</span>
+                    <span style="color:var(--purple)">│  Kafka  (port 9092)         │</span>
+                    <span style="color:var(--purple)">│  topic: entity.accounts     │</span>
+                    <span style="color:var(--purple)">│  key:   "987654321"         │</span>
+                    <span style="color:var(--purple)">│  value: { raw JSON bytes }  │</span>
+                    <span style="color:var(--purple)">└─────────────────────────────┘</span>
+                                    │  @KafkaListener
+                                    ▼
+                    <span style="color:var(--orange)">┌─────────────────────────────┐</span>
+                    <span style="color:var(--orange)">│  entity-kafka-service       │</span>
+                    <span style="color:var(--orange)">│  (port 8082)                │</span>
+                    <span style="color:var(--orange)">│  AccountEventConsumer       │</span>
+                    <span style="color:var(--orange)">│  EmailNotificationService   │</span>
+                    <span style="color:var(--orange)">└─────────────────────────────┘</span>
+                                    │  STARTTLS / port 587
+                                    ▼
+                    <span style="color:var(--pink)">┌─────────────────────────────┐</span>
+                    <span style="color:var(--pink)">│  Gmail SMTP                 │</span>
+                    <span style="color:var(--pink)">│  smtp.gmail.com             │</span>
+                    <span style="color:var(--pink)">│  → mohanbellam12345         │</span>
+                    <span style="color:var(--pink)">│    @gmail.com               │</span>
+                    <span style="color:var(--pink)">└─────────────────────────────┘</span></div>
+
+  <div class="hl hl-cyan">
+    <strong>One sentence:</strong> Every time an account is created or updated via the REST API, Couchbase notifies Kafka Connect via DCP, which publishes the raw JSON to a Kafka topic, which entity-kafka-service consumes and emails to you — all automatically, zero manual steps.
+  </div>
+</section>
+
+<hr/>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- 2. THE 4 REPOS -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section id="repos">
+  <div class="sec-hdr">
+    <div class="sec-num" style="background:rgba(167,139,250,.2);color:var(--purple);border:1px solid var(--purple)">2</div>
+    <h2 style="color:var(--purple)">The 4 Repos</h2>
+  </div>
+
+  <div class="diagram"><span style="color:var(--muted)">Your disk  ~/</span>
+├── <span style="color:var(--blue)">entityapi-db/</span>              <span style="color:var(--muted)">← main repo  (this one — docker-compose.yml lives here)</span>
+│     ├── entity-api-service/    <span style="color:var(--muted)">Spring Boot REST API + Couchbase</span>
+│     ├── kafka/                 <span style="color:var(--muted)">Kafka Connect Dockerfile + connector configs</span>
+│     ├── couchbase/             <span style="color:var(--muted)">Couchbase init script</span>
+│     └── docker-compose.yml     <span style="color:var(--muted)">orchestrates ALL 9 containers</span>
+│
+├── <span style="color:var(--green)">entity-name-api/</span>           <span style="color:var(--muted)">← HTTP microservice  POST /name/capitalize</span>
+├── <span style="color:var(--purple)">entity-dob-validation/</span>     <span style="color:var(--muted)">← Maven JAR library  DobValidator.isValid()</span>
+└── <span style="color:var(--orange)">entity-kafka-service/</span>      <span style="color:var(--muted)">← Kafka consumer → email sender  (NEW)</span></div>
+
+  <div class="g4">
+    <div class="card bl" style="border-left-color:var(--blue)">
+      <h3 style="color:var(--blue)">🏗 entityapi-db</h3>
+      <p>Main service + orchestration. Houses docker-compose.yml that starts everything. Spring Boot API on port 8080.</p>
+      <div style="margin-top:.6rem"><span class="pill p-blue">Main repo</span><span class="pill p-cyan">docker-compose</span></div>
+    </div>
+    <div class="card bl" style="border-left-color:var(--green)">
+      <h3 style="color:var(--green)">🔤 entity-name-api</h3>
+      <p>HTTP service called during every upsert to capitalise legalName. Non-blocking fallback if it's down.</p>
+      <div style="margin-top:.6rem"><span class="pill p-green">Runtime HTTP</span><span class="pill p-teal">port 8081</span></div>
+    </div>
+    <div class="card bl" style="border-left-color:var(--purple)">
+      <h3 style="color:var(--purple)">📦 entity-dob-validation</h3>
+      <p>Maven JAR library. Published to ~/.m2 locally. Baked into the entity-api JAR at compile time.</p>
+      <div style="margin-top:.6rem"><span class="pill p-purple">Compile-time JAR</span><span class="pill p-yellow">~/.m2</span></div>
+    </div>
+    <div class="card bl" style="border-left-color:var(--orange)">
+      <h3 style="color:var(--orange)">📨 entity-kafka-service</h3>
+      <p>NEW. Kafka consumer that receives Couchbase change events and sends them as emails via Gmail SMTP.</p>
+      <div style="margin-top:.6rem"><span class="pill p-orange">Kafka consumer</span><span class="pill p-pink">port 8082</span></div>
+    </div>
+  </div>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Repo</th><th>Type</th><th>When resolved</th><th>How connected</th><th>Failure impact</th></tr></thead>
+      <tbody>
+        <tr><td>entity-dob-validation</td><td><span class="pill p-purple">Maven JAR</span></td><td>Compile time</td><td>~/.m2 local cache</td><td>Build fails — hard dep</td></tr>
+        <tr><td>entity-name-api</td><td><span class="pill p-green">HTTP service</span></td><td>Runtime (per upsert)</td><td>Docker DNS: entity-name-api:8081</td><td>Falls back to original name</td></tr>
+        <tr><td>entity-kafka-service</td><td><span class="pill p-orange">Kafka consumer</span></td><td>Runtime (async)</td><td>Docker DNS: kafka:29092</td><td>Events queue in Kafka, delivered when back up</td></tr>
+        <tr><td>entityapi-db</td><td><span class="pill p-blue">Main API</span></td><td>Always</td><td>—</td><td>—</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<hr/>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- 3. 9 DOCKER CONTAINERS -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section id="containers">
+  <div class="sec-hdr">
+    <div class="sec-num" style="background:rgba(34,211,238,.2);color:var(--cyan);border:1px solid var(--cyan)">3</div>
+    <h2 style="color:var(--cyan)">9 Docker Containers</h2>
+  </div>
+
+  <div class="hl hl-cyan">All containers join a single bridge network called <code>entity-net</code>. They resolve each other by service name via Docker's built-in DNS — no hardcoded IPs anywhere.</div>
+
+  <div class="g3" style="margin-top:1.25rem">
+    <div class="cbox" style="border-color:var(--purple)">
+      <div class="icon">🦒</div>
+      <h4 style="color:var(--purple)">zookeeper</h4>
+      <p>Kafka cluster coordinator. Manages broker metadata and leader election.</p>
+      <div class="port" style="background:rgba(167,139,250,.15);color:var(--purple)">:2181 (internal)</div>
+    </div>
+    <div class="cbox" style="border-color:var(--purple)">
+      <div class="icon">📨</div>
+      <h4 style="color:var(--purple)">kafka</h4>
+      <p>The message broker. Stores the entity.accounts topic and all events durably on disk.</p>
+      <div class="port" style="background:rgba(167,139,250,.15);color:var(--purple)">:9092 host · :29092 internal</div>
+    </div>
+    <div class="cbox" style="border-color:var(--cyan)">
+      <div class="icon">🔌</div>
+      <h4 style="color:var(--cyan)">kafka-connect</h4>
+      <p>Runs the Couchbase source connector. Streams DCP mutations from Couchbase into Kafka.</p>
+      <div class="port" style="background:rgba(34,211,238,.15);color:var(--cyan)">:8083 REST API</div>
+    </div>
+    <div class="cbox" style="border-color:var(--yellow)">
+      <div class="icon">⚙️</div>
+      <h4 style="color:var(--yellow)">kafka-connect-setup</h4>
+      <p>One-shot. POSTs the couchbase-source connector config to the Connect REST API. Exits when done.</p>
+      <div class="port" style="background:rgba(251,191,36,.15);color:var(--yellow)">one-shot · exits 0</div>
+    </div>
+    <div class="cbox" style="border-color:var(--green)">
+      <div class="icon">🪣</div>
+      <h4 style="color:var(--green)">couchbase</h4>
+      <p>The NoSQL database. Stores account documents. Exposes KV port for SDK access and DCP for streaming.</p>
+      <div class="port" style="background:rgba(52,211,153,.15);color:var(--green)">:8091 UI · :11210 KV</div>
+    </div>
+    <div class="cbox" style="border-color:var(--yellow)">
+      <div class="icon">🛠️</div>
+      <h4 style="color:var(--yellow)">couchbase-setup</h4>
+      <p>One-shot. Runs init.sh to create the cluster and customer_bucket. Exits when done.</p>
+      <div class="port" style="background:rgba(251,191,36,.15);color:var(--yellow)">one-shot · exits 0</div>
+    </div>
+    <div class="cbox" style="border-color:var(--blue)">
+      <div class="icon">🌐</div>
+      <h4 style="color:var(--blue)">entity-api</h4>
+      <p>Main REST API. Handles account GET/POST. Calls entity-name-api and writes to Couchbase.</p>
+      <div class="port" style="background:rgba(79,142,247,.15);color:var(--blue)">:8080</div>
+    </div>
+    <div class="cbox" style="border-color:var(--teal)">
+      <div class="icon">🔤</div>
+      <h4 style="color:var(--teal)">entity-name-api</h4>
+      <p>Microservice that capitalises legalName. Called by entity-api during every upsert.</p>
+      <div class="port" style="background:rgba(45,212,191,.15);color:var(--teal)">:8081</div>
+    </div>
+    <div class="cbox" style="border-color:var(--orange)">
+      <div class="icon">📧</div>
+      <h4 style="color:var(--orange)">entity-kafka-service</h4>
+      <p>Kafka consumer that reads entity.accounts topic and sends each event as an email via Gmail SMTP.</p>
+      <div class="port" style="background:rgba(251,146,60,.15);color:var(--orange)">:8082</div>
+    </div>
+  </div>
+</section>
+
+<hr/>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- 4. STARTUP ORDER -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section id="startup">
+  <div class="sec-hdr">
+    <div class="sec-num" style="background:rgba(251,191,36,.2);color:var(--yellow);border:1px solid var(--yellow)">4</div>
+    <h2 style="color:var(--yellow)">Startup Order &amp; Dependencies</h2>
+  </div>
+
+  <div class="hl hl-yellow">Docker Compose enforces a strict startup order using <code>depends_on</code> + <code>healthcheck</code> conditions. No container starts until its dependencies are confirmed ready.</div>
+
+  <div class="flow" style="margin-top:1.25rem">
+    <div class="fstep">
+      <div class="fbadge" style="background:rgba(167,139,250,.2);color:var(--purple);border:1px solid var(--purple)">1</div>
+      <div class="fcontent">
+        <strong>zookeeper starts</strong>
+        <span>No dependencies. Starts immediately. Kafka requires it to be up before it can join the cluster.</span>
+      </div>
+    </div>
+    <div class="fstep">
+      <div class="fbadge" style="background:rgba(52,211,153,.2);color:var(--green);border:1px solid var(--green)">2</div>
+      <div class="fcontent">
+        <strong>couchbase starts → healthcheck: GET /ui/index.html returns 200</strong>
+        <span>Polls every 10s up to 12 retries. The UI must be accessible before anything tries to connect.</span>
+      </div>
+    </div>
+    <div class="fstep">
+      <div class="fbadge" style="background:rgba(167,139,250,.2);color:var(--purple);border:1px solid var(--purple)">3</div>
+      <div class="fcontent">
+        <strong>kafka starts (depends on: zookeeper)</strong>
+        <span>Connects to Zookeeper, registers as broker ID 1, creates internal topics. Advertises two listeners: <code>kafka:29092</code> for containers and <code>localhost:9092</code> for host tools.</span>
+      </div>
+    </div>
+    <div class="fstep">
+      <div class="fbadge" style="background:rgba(251,191,36,.2);color:var(--yellow);border:1px solid var(--yellow)">4</div>
+      <div class="fcontent">
+        <strong>couchbase-setup runs init.sh → exits 0 (depends on: couchbase healthy)</strong>
+        <span>Creates the cluster and <code>customer_bucket</code> via <code>couchbase-cli</code>. Idempotent — skips if already exists. The Couchbase source connector cannot start until this bucket exists.</span>
+      </div>
+    </div>
+    <div class="fstep">
+      <div class="fbadge" style="background:rgba(34,211,238,.2);color:var(--cyan);border:1px solid var(--cyan)">5</div>
+      <div class="fcontent">
+        <strong>kafka-connect starts → healthcheck: GET /connectors returns 200 (depends on: kafka)</strong>
+        <span>Loads the Couchbase plugin from <code>/usr/share/confluent-hub-components</code>. Creates three internal Kafka topics for its own state: <code>_connect-configs</code>, <code>_connect-offsets</code>, <code>_connect-status</code>. Takes ~60–90s to fully start.</span>
+      </div>
+    </div>
+    <div class="fstep">
+      <div class="fbadge" style="background:rgba(45,212,191,.2);color:var(--teal);border:1px solid var(--teal)">6</div>
+      <div class="fcontent">
+        <strong>entity-name-api starts → healthcheck: GET /actuator/health (depends on: nothing)</strong>
+        <span>Starts independently. entity-api waits for it to be healthy before accepting traffic.</span>
+      </div>
+    </div>
+    <div class="fstep">
+      <div class="fbadge" style="background:rgba(251,191,36,.2);color:var(--yellow);border:1px solid var(--yellow)">7</div>
+      <div class="fcontent">
+        <strong>kafka-connect-setup runs register-connectors.sh → exits 0 (depends on: kafka-connect healthy + couchbase-setup completed)</strong>
+        <span>POSTs <code>couchbase-source.json</code> to <code>http://kafka-connect:8083/connectors</code>. Skips if already registered. Once registered, the connector immediately starts streaming DCP events from Couchbase.</span>
+      </div>
+    </div>
+    <div class="fstep">
+      <div class="fbadge" style="background:rgba(79,142,247,.2);color:var(--blue);border:1px solid var(--blue)">8</div>
+      <div class="fcontent">
+        <strong>entity-api starts (depends on: couchbase-setup completed + entity-name-api healthy)</strong>
+        <span><code>CouchbaseConfig</code> calls <code>bucket.waitUntilReady(10s)</code> — blocks Spring startup until the KV connection is confirmed. Then serves traffic on port 8080.</span>
+      </div>
+    </div>
+    <div class="fstep">
+      <div class="fbadge" style="background:rgba(251,146,60,.2);color:var(--orange);border:1px solid var(--orange)">9</div>
+      <div class="fcontent">
+        <strong>entity-kafka-service starts (depends on: kafka-connect-setup completed)</strong>
+        <span>Subscribes to <code>entity.accounts</code> topic as consumer group <code>entity-kafka-email-group</code>. Kafka records its offset so it never processes the same message twice — even after a restart.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr/>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- 5. POST REQUEST FLOW -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section id="request">
+  <div class="sec-hdr">
+    <div class="sec-num" style="background:rgba(52,211,153,.2);color:var(--green);border:1px solid var(--green)">5</div>
+    <h2 style="color:var(--green)">POST Request Flow (entity-api)</h2>
+  </div>
+
+  <p style="color:var(--muted);margin-bottom:1.25rem">What happens inside entity-api when you fire <code>POST /entity/account</code> — before Kafka even gets involved.</p>
+
+  <div class="flow">
+    <div class="fstep">
+      <div class="fbadge" style="background:rgba(34,211,238,.2);color:var(--cyan);border:1px solid var(--cyan)">1</div>
+      <div class="fcontent">
+        <strong>AccountController receives request — @Valid triggers Jakarta Bean Validation</strong>
+        <span>Spring automatically validates the <code>AccountRecord</code> object against annotations on the <em>generated</em> model: <code>@NotNull</code> status, <code>@Size(max=20)</code> on legalName, <code>@Pattern</code> on state (2-char uppercase), countryCode (3-char uppercase). Any failure → <code>GlobalExceptionHandler</code> → <strong>400</strong> with <code>errors[]</code> array. Never reaches the service layer.</span>
+      </div>
+    </div>
+    <div class="fstep">
+      <div class="fbadge" style="background:rgba(79,142,247,.2);color:var(--blue);border:1px solid var(--blue)">2</div>
+      <div class="fcontent">
+        <strong>accountService.exists() — Couchbase KV EXISTS</strong>
+        <span>100ms timeout. Returns true/false. No lock, no transaction. Used only to decide the response code: <strong>201</strong> (new document) vs <strong>200</strong> (existing document updated). This check happens before the upsert.</span>
+      </div>
+    </div>
+    <div class="fstep">
+      <div class="fbadge" style="background:rgba(251,146,60,.2);color:var(--orange);border:1px solid var(--orange)">3</div>
+      <div class="fcontent">
+        <strong>accountService.upsert() — manual null + state validation</strong>
+        <span>Service-layer guards beyond bean validation: null record → <code>BadDataException</code> → <strong>400</strong>. Missing <code>address.state</code> → <code>BadDataException</code> → <strong>400</strong>.</span>
+      </div>
+    </div>
+    <div class="fstep">
+      <div class="fbadge" style="background:rgba(167,139,250,.2);color:var(--purple);border:1px solid var(--purple)">4</div>
+      <div class="fcontent">
+        <strong>DobValidator.isValid() — entity-dob-validation Maven library (in-process)</strong>
+        <span>Validates MM-DD-YYYY format with a 4-digit year. This is an in-JVM call to the separately versioned library. Invalid → <code>BadDataException</code> → <strong>400</strong>.</span>
+      </div>
+    </div>
+    <div class="fstep">
+      <div class="fbadge" style="background:rgba(45,212,191,.2);color:var(--teal);border:1px solid var(--teal)">5</div>
+      <div class="fcontent">
+        <strong>NameApiClient.capitalize() — HTTP POST to entity-name-api:8081</strong>
+        <span>Sends <code>{"legalName":"john smith"}</code>, receives <code>{"legalName":"JOHN SMITH"}</code>. If the call fails for any reason, logs a warning and continues with the original value. <em>Never blocks the upsert.</em></span>
+      </div>
+    </div>
+    <div class="fstep">
+      <div class="fbadge" style="background:rgba(52,211,153,.2);color:var(--green);border:1px solid var(--green)">6</div>
+      <div class="fcontent">
+        <strong>toDocument() — maps AccountRecord → AccountDocument</strong>
+        <span>Converts camelCase API model to snake_case Couchbase document. Sets server-side fields: <code>last_update_date</code> (today) and <code>last_update_timestamp</code> (now ISO 8601). Client can never override these.</span>
+      </div>
+    </div>
+    <div class="fstep">
+      <div class="fbadge" style="background:rgba(52,211,153,.2);color:var(--green);border:1px solid var(--green)">7</div>
+      <div class="fcontent">
+        <strong>collection.upsert(key, doc) — Couchbase KV UPSERT</strong>
+        <span>500ms timeout. Key = accountNumber as string e.g. <code>"987654321"</code>. Inserts if new, replaces if existing. This is a raw Couchbase SDK call — no N1QL, no ORM. At this moment Couchbase emits a <strong>DCP mutation event</strong> which starts the Kafka pipeline.</span>
+      </div>
+    </div>
+    <div class="fstep">
+      <div class="fbadge" style="background:rgba(251,191,36,.2);color:var(--yellow);border:1px solid var(--yellow)">8</div>
+      <div class="fcontent">
+        <strong>toRecord() → HTTP 201 or 200 response</strong>
+        <span>Maps AccountDocument back to AccountRecord (snake_case → camelCase). Returns the full saved record including server-set fields. Status 201 if the document was new, 200 if it already existed.</span>
+      </div>
+    </div>
+  </div>
+
+  <h3 style="color:var(--cyan);margin:1.5rem 0 .75rem">Two Model Layers</h3>
+  <div class="diagram"><span style="color:var(--cyan)">HTTP boundary (camelCase)    Java DTO (generated)         Couchbase doc (snake_case)</span>
+{ "legalName": "foo" }  ←→  AccountRecord / Name  ←→  AccountDocument / NameDoc
+{ "line1": "123 St"  }       from entity-api.yaml        { "legal_name": "FOO"    }
+                                                          { "line_1": "123 St"     }
+
+<span style="color:var(--yellow)">toDocument()</span>: API model → Couchbase doc   (on every write)
+<span style="color:var(--green)">toRecord()</span>:   Couchbase doc → API model   (on every read and after write)</div>
+</section>
+
+<hr/>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- 6. KAFKA INTERNALS -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section id="kafka-internals">
+  <div class="sec-hdr">
+    <div class="sec-num" style="background:rgba(167,139,250,.2);color:var(--purple);border:1px solid var(--purple)">6</div>
+    <h2 style="color:var(--purple)">Kafka Internals</h2>
+  </div>
+
+  <div class="g2">
+    <div>
+      <div class="card bl" style="border-left-color:var(--purple)">
+        <h3 style="color:var(--purple)">🦒 Zookeeper — The Coordinator</h3>
+        <ul>
+          <li>Maintains the list of active Kafka brokers</li>
+          <li>Stores topic metadata and partition assignments</li>
+          <li>Manages leader election for partitions</li>
+          <li>Kafka brokers register themselves here on startup</li>
+          <li>Only used internally — your app never talks to it</li>
+        </ul>
+      </div>
+      <div class="card bl" style="border-left-color:var(--purple)">
+        <h3 style="color:var(--purple)">📨 Kafka Broker — The Message Store</h3>
+        <ul>
+          <li>Receives messages from producers (Kafka Connect)</li>
+          <li>Stores them durably in topic partitions on disk</li>
+          <li>Delivers them to consumers (entity-kafka-service)</li>
+          <li>Tracks consumer offsets per group</li>
+          <li>Two listeners: <code>kafka:29092</code> (internal) and <code>localhost:9092</code> (host)</li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <div class="card bl" style="border-left-color:var(--blue)">
+        <h3 style="color:var(--blue)">📋 Topic: entity.accounts</h3>
+        <ul>
+          <li>Auto-created by Kafka Connect when first message is published</li>
+          <li><strong>Key:</strong> the Couchbase document ID (e.g. <code>"987654321"</code>) as a String</li>
+          <li><strong>Value:</strong> raw JSON bytes of the full Couchbase document</li>
+          <li>1 partition (single-node dev setup)</li>
+          <li>Messages are retained for 7 days by default</li>
+        </ul>
+      </div>
+      <div class="card bl" style="border-left-color:var(--green)">
+        <h3 style="color:var(--green)">📍 Consumer Offsets</h3>
+        <ul>
+          <li>entity-kafka-service uses group ID <code>entity-kafka-email-group</code></li>
+          <li>After processing each message, it commits the offset back to Kafka</li>
+          <li>If entity-kafka-service restarts, it resumes from where it left off</li>
+          <li>No duplicate emails — each message processed exactly once</li>
+          <li><code>auto-offset-reset: earliest</code> — on first start, reads from beginning</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="diagram"><span style="color:var(--cyan)">Topic: entity.accounts  (1 partition)</span>
+
+offset:  0          1          2          3          4   ...
+       ┌──────────┬──────────┬──────────┬──────────┬──────────┐
+       │ key:123  │ key:456  │ key:789  │ key:123  │ key:999  │  ← messages appended (immutable)
+       │ {doc...} │ {doc...} │ {doc...} │ {doc...} │ {doc...} │
+       └──────────┴──────────┴──────────┴──────────┴──────────┘
+                                                    ▲
+                                          <span style="color:var(--orange)">entity-kafka-service</span>
+                                          committed offset = 4
+                                          (next read starts at 4)</div>
+</section>
+
+<hr/>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- 7. KAFKA CONNECT + COUCHBASE SOURCE CONNECTOR -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section id="connect">
+  <div class="sec-hdr">
+    <div class="sec-num" style="background:rgba(34,211,238,.2);color:var(--cyan);border:1px solid var(--cyan)">7</div>
+    <h2 style="color:var(--cyan)">Kafka Connect &amp; Couchbase Source Connector</h2>
+  </div>
+
+  <div class="stack">
+    <div class="layer" style="background:rgba(34,211,238,.12);border-color:var(--cyan);color:var(--cyan)">
+      Kafka Connect Worker (JVM process)
+      <small>Framework that loads and runs connectors · REST API on :8083 · manages offsets</small>
+    </div>
+    <div class="larrow">▼ loads plugin from</div>
+    <div class="layer" style="background:rgba(167,139,250,.12);border-color:var(--purple);color:var(--purple)">
+      couchbase/kafka-connect-couchbase:4.1.12
+      <small>Installed via confluent-hub at Docker build time · JAR in /usr/share/confluent-hub-components</small>
+    </div>
+    <div class="larrow">▼ instantiates</div>
+    <div class="layer" style="background:rgba(52,211,153,.12);border-color:var(--green);color:var(--green)">
+      CouchbaseSourceConnector + CouchbaseSourceTask
+      <small>Opens a DCP (Database Change Protocol) stream from customer_bucket</small>
+    </div>
+    <div class="larrow">▼ publishes to</div>
+    <div class="layer" style="background:rgba(79,142,247,.12);border-color:var(--blue);color:var(--blue)">
+      Kafka topic: entity.accounts
+      <small>One message per document mutation · key = doc ID · value = raw JSON bytes</small>
+    </div>
+  </div>
+
+  <h3 style="color:var(--yellow);margin:1.5rem 0 .75rem">What is DCP?</h3>
+  <div class="card bl" style="border-left-color:var(--green)">
+    <h3 style="color:var(--green)">Database Change Protocol (DCP)</h3>
+    <p>DCP is Couchbase's internal replication protocol. The Kafka connector opens a persistent DCP stream — think of it like a change-data-capture (CDC) feed. Every time a document is created, updated, or deleted in <code>customer_bucket</code>, Couchbase pushes a DCP event to all DCP subscribers — including the Kafka connector. This happens at the database level, not the application level. Even if you write directly to Couchbase bypassing your API, the event still flows to Kafka.</p>
+  </div>
+
+  <h3 style="color:var(--yellow);margin:1.5rem 0 .75rem">Connector Configuration</h3>
+  <div class="diagram"><span style="color:var(--muted)">kafka/connectors/couchbase-source.json</span>
+
+{
+  "name": "<span style="color:var(--cyan)">couchbase-source</span>",
+  "config": {
+    "connector.class": "<span style="color:var(--green)">com.couchbase.connect.kafka.CouchbaseSourceConnector</span>",
+    "tasks.max": "<span style="color:var(--yellow)">1</span>",
+
+    <span style="color:var(--muted)">// Couchbase connection — Docker DNS resolves "couchbase" to the container IP</span>
+    "couchbase.seed.nodes": "<span style="color:var(--green)">couchbase</span>",
+    "couchbase.bucket":     "<span style="color:var(--green)">customer_bucket</span>",
+    "couchbase.username":   "<span style="color:var(--green)">Administrator</span>",
+    "couchbase.password":   "<span style="color:var(--green)">password</span>",
+
+    <span style="color:var(--muted)">// Handler that sends the raw document JSON bytes (no schema wrapper)</span>
+    "couchbase.source.handler": "<span style="color:var(--purple)">RawJsonSourceHandler</span>",
+
+    <span style="color:var(--muted)">// All events from customer_bucket go to this Kafka topic</span>
+    "couchbase.topic": "<span style="color:var(--blue)">entity.accounts</span>",
+
+    <span style="color:var(--muted)">// key = document ID (String) · value = raw bytes (no schema conversion)</span>
+    "key.converter":   "<span style="color:var(--orange)">StringConverter</span>",
+    "value.converter": "<span style="color:var(--orange)">ByteArrayConverter</span>"
+  }
+}</div>
+
+  <h3 style="color:var(--yellow);margin:1.5rem 0 .75rem">How the Connector is Registered</h3>
+  <div class="flow">
+    <div class="fstep">
+      <div class="fbadge" style="background:rgba(251,191,36,.2);color:var(--yellow);border:1px solid var(--yellow)">1</div>
+      <div class="fcontent">
+        <strong>kafka-connect-setup container starts (alpine image)</strong>
+        <span>Installs curl via <code>apk</code>, strips Windows CRLF from the script (<code>tr -d '\r'</code>), then runs <code>register-connectors.sh</code></span>
+      </div>
+    </div>
+    <div class="fstep">
+      <div class="fbadge" style="background:rgba(34,211,238,.2);color:var(--cyan);border:1px solid var(--cyan)">2</div>
+      <div class="fcontent">
+        <strong>Script checks if connector already exists</strong>
+        <span><code>GET http://kafka-connect:8083/connectors/couchbase-source</code> → if 200, skip. If 404, register. This makes it safe to run on every <code>docker compose up</code>.</span>
+      </div>
+    </div>
+    <div class="fstep">
+      <div class="fbadge" style="background:rgba(52,211,153,.2);color:var(--green);border:1px solid var(--green)">3</div>
+      <div class="fcontent">
+        <strong>POSTs the connector config to Kafka Connect REST API</strong>
+        <span><code>POST http://kafka-connect:8083/connectors</code> with the JSON body from <code>couchbase-source.json</code>. Connect validates the config, instantiates the connector class, and starts the DCP stream immediately.</span>
+      </div>
+    </div>
+    <div class="fstep">
+      <div class="fbadge" style="background:rgba(251,191,36,.2);color:var(--yellow);border:1px solid var(--yellow)">4</div>
+      <div class="fcontent">
+        <strong>kafka-connect-setup exits 0</strong>
+        <span>The connector continues running inside the kafka-connect worker. The setup container is done — it's a one-shot job.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr/>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- 8. entity-kafka-service -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section id="consumer">
+  <div class="sec-hdr">
+    <div class="sec-num" style="background:rgba(251,146,60,.2);color:var(--orange);border:1px solid var(--orange)">8</div>
+    <h2 style="color:var(--orange)">entity-kafka-service — Consumer + Email</h2>
+  </div>
+
+  <div class="g2">
+    <div class="card bl" style="border-left-color:var(--orange)">
+      <h3 style="color:var(--orange)">AccountEventConsumer.java</h3>
+      <ul>
+        <li>Annotated with <code>@KafkaListener(topics = "entity.accounts")</code></li>
+        <li>Receives <code>ConsumerRecord&lt;String, byte[]&gt;</code> — key is the document ID, value is raw JSON bytes</li>
+        <li>Converts bytes to String using UTF-8</li>
+        <li>Passes both to <code>EmailNotificationService</code></li>
+        <li>Kafka auto-commits the offset after the method returns</li>
+      </ul>
+    </div>
+    <div class="card bl" style="border-left-color:var(--pink)">
+      <h3 style="color:var(--pink)">EmailNotificationService.java</h3>
+      <ul>
+        <li>Parses the raw JSON bytes and pretty-prints them using Jackson's <code>ObjectMapper</code></li>
+        <li>Builds subject: <em>"Entity Account Event — Document ID: 987654321"</em></li>
+        <li>Creates a <code>MimeMessage</code> via Spring's <code>JavaMailSender</code></li>
+        <li>Sends via Gmail SMTP on port 587 with STARTTLS</li>
+        <li>Catches all exceptions — a failed email never causes a Kafka offset rollback</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="diagram"><span style="color:var(--muted)">Email you receive in your inbox:</span>
+
+<span style="color:var(--cyan)">Subject: Entity Account Event — Document ID: 987654321</span>
+<span style="color:var(--muted)">From:    mohanbellam12345@gmail.com</span>
+<span style="color:var(--muted)">To:      mohanbellam12345@gmail.com</span>
+
+A Couchbase account document was created or updated.
+
+Document ID : <span style="color:var(--yellow)">987654321</span>
+─────────────────────────────────────────────
+
+{
+  "<span style="color:var(--blue)">doc_type</span>": "Account",
+  "<span style="color:var(--blue)">account_number</span>": 987654321,
+  "<span style="color:var(--blue)">name</span>": {
+    "<span style="color:var(--green)">legal_name</span>": "<span style="color:var(--green)">JANE DOE</span>",
+    "dba_name": null
+  },
+  "<span style="color:var(--blue)">address</span>": {
+    "line_1": "456 Oak Ave",
+    "city": "Dallas",
+    "state": "TX",
+    "country_code": "USA"
+  },
+  "<span style="color:var(--blue)">status</span>": "ACTIVE",
+  "<span style="color:var(--blue)">dob</span>": "03-22-1985",
+  "<span style="color:var(--blue)">last_update_date</span>": "2026-03-15",
+  "<span style="color:var(--blue)">last_update_timestamp</span>": "2026-03-15T01:29:54.444150469Z"
+}
+
+─────────────────────────────────────────────
+Source      : entity.accounts (Kafka topic)
+Connector   : couchbase-source (Kafka Connect)</div>
+
+  <h3 style="color:var(--yellow);margin:1.5rem 0 .75rem">Gmail SMTP Setup</h3>
+  <div class="g2">
+    <div class="card bl" style="border-left-color:var(--yellow)">
+      <h3 style="color:var(--yellow)">Why App Password?</h3>
+      <p>Google blocks "less secure" password auth. With 2-Step Verification enabled, you generate a 16-char App Password that only works for SMTP — it can't log into your Google Account. This is how Gmail allows automated email sending safely.</p>
+    </div>
+    <div class="card bl" style="border-left-color:var(--yellow)">
+      <h3 style="color:var(--yellow)">SSL Trust Config</h3>
+      <p>The alpine JRE image has a minimal CA certificate store. Setting <code>mail.smtp.ssl.trust=smtp.gmail.com</code> tells JavaMail to explicitly trust Gmail's SMTP host, bypassing the alpine CA store limitation — without disabling SSL entirely.</p>
+    </div>
+  </div>
+
+  <div class="diagram"><span style="color:var(--muted)">application.yml — credential flow</span>
+
+<span style="color:var(--muted)">.env file</span>                <span style="color:var(--muted)">docker-compose.yml</span>           <span style="color:var(--muted)">application.yml</span>
+MAIL_USERNAME=...  →  environment:               →  username: <span style="color:var(--yellow)">${MAIL_USERNAME}</span>
+MAIL_PASSWORD=...      MAIL_USERNAME: ${...}         password: <span style="color:var(--yellow)">${MAIL_PASSWORD}</span>
+                       MAIL_PASSWORD: ${...}
+
+<span style="color:var(--green)">✓</span> .env is in .gitignore — credentials never pushed to GitHub</div>
+</section>
+
+<hr/>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- 9. END-TO-END TRACE -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section id="e2e">
+  <div class="sec-hdr">
+    <div class="sec-num" style="background:rgba(244,114,182,.2);color:var(--pink);border:1px solid var(--pink)">9</div>
+    <h2 style="color:var(--pink)">End-to-End Trace — What Actually Happened</h2>
+  </div>
+
+  <div class="hl hl-pink">This is the real log trace from the successful test run. Every line below is from an actual container log.</div>
+
+  <div class="timeline" style="margin-top:1.5rem">
+    <div class="titem" style="--dot-color:var(--yellow)">
+      <div style="position:absolute;left:-1.85rem;top:.45rem;width:.75rem;height:.75rem;border-radius:50%;background:var(--yellow);border:2px solid var(--yellow)"></div>
+      <h4 style="color:var(--yellow)">T+0s — Postman fires POST /entity/account</h4>
+      <p>Body: accountNumber 987654321, legalName "jane doe", status ACTIVE, TX address, dob 03-22-1985</p>
+    </div>
+    <div class="titem">
+      <div style="position:absolute;left:-1.85rem;top:.45rem;width:.75rem;height:.75rem;border-radius:50%;background:var(--teal);border:2px solid var(--teal)"></div>
+      <h4 style="color:var(--teal)">T+0.1s — entity-name-api capitalises legalName</h4>
+      <p><code>"jane doe"</code> → <code>"JANE DOE"</code> via POST /name/capitalize on entity-name-api:8081</p>
+    </div>
+    <div class="titem">
+      <div style="position:absolute;left:-1.85rem;top:.45rem;width:.75rem;height:.75rem;border-radius:50%;background:var(--green);border:2px solid var(--green)"></div>
+      <h4 style="color:var(--green)">T+0.2s — Couchbase upsert completes</h4>
+      <p>Document stored with key <code>"987654321"</code> in customer_bucket. lastUpdateTimestamp set to 2026-03-15T01:29:54Z. HTTP 201 returned to caller.</p>
+    </div>
+    <div class="titem">
+      <div style="position:absolute;left:-1.85rem;top:.45rem;width:.75rem;height:.75rem;border-radius:50%;background:var(--cyan);border:2px solid var(--cyan)"></div>
+      <h4 style="color:var(--cyan)">T+0.2s — Couchbase emits DCP mutation event</h4>
+      <p>Couchbase pushes the change to the DCP stream immediately after persistence. The Kafka Connect worker's open DCP socket receives it.</p>
+    </div>
+    <div class="titem">
+      <div style="position:absolute;left:-1.85rem;top:.45rem;width:.75rem;height:.75rem;border-radius:50%;background:var(--purple);border:2px solid var(--purple)"></div>
+      <h4 style="color:var(--purple)">T+0.3s — Kafka Connect publishes to entity.accounts</h4>
+      <p>RawJsonSourceHandler serialises the document to bytes. ByteArrayConverter wraps it. Kafka Connect producer sends to topic. Kafka assigns offset.</p>
+    </div>
+    <div class="titem">
+      <div style="position:absolute;left:-1.85rem;top:.45rem;width:.75rem;height:.75rem;border-radius:50%;background:var(--orange);border:2px solid var(--orange)"></div>
+      <h4 style="color:var(--orange)">T+0.5s — entity-kafka-service poll loop wakes up</h4>
+      <p>Log: <code>Received Couchbase event — key: 987654321, payload length: 308 bytes</code>. ByteArrayDeserializer → UTF-8 String → passes to EmailNotificationService.</p>
+    </div>
+    <div class="titem">
+      <div style="position:absolute;left:-1.85rem;top:.45rem;width:.75rem;height:.75rem;border-radius:50%;background:var(--pink);border:2px solid var(--pink)"></div>
+      <h4 style="color:var(--pink)">T+2.3s — Email sent</h4>
+      <p>Log: <code>Email sent for document ID: 987654321</code>. Jackson pretty-prints the JSON. MimeMessage sent via smtp.gmail.com:587 with STARTTLS. Total pipeline latency: ~2 seconds.</p>
+    </div>
+    <div class="titem">
+      <div style="position:absolute;left:-1.85rem;top:.45rem;width:.75rem;height:.75rem;border-radius:50%;background:var(--green);border:2px solid var(--green)"></div>
+      <h4 style="color:var(--green)">T+2.3s — Inbox receives email ✓</h4>
+      <p>mohanbellam12345@gmail.com receives "Entity Account Event — Document ID: 987654321" with the full pretty-printed JSON of the account document.</p>
+    </div>
+  </div>
+</section>
+
+<hr/>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- 10. DOCKER NETWORKING -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section id="networking">
+  <div class="sec-hdr">
+    <div class="sec-num" style="background:rgba(163,230,53,.2);color:var(--lime);border:1px solid var(--lime)">10</div>
+    <h2 style="color:var(--lime)">Docker Networking</h2>
+  </div>
+
+  <div class="diagram"><span style="color:var(--lime)">┌──────────────────────────────── entity-net (bridge) ────────────────────────────────────────────┐</span>
+│                                                                                                  │
+│   <span style="color:var(--purple)">[zookeeper]</span>    <span style="color:var(--purple)">[kafka]</span>       <span style="color:var(--cyan)">[kafka-connect]</span>  <span style="color:var(--yellow)">[kafka-connect-setup]</span>                          │
+│   :2181           :29092         :8083             one-shot                                     │
+│                                                                                                  │
+│   <span style="color:var(--green)">[couchbase]</span>    <span style="color:var(--yellow)">[couchbase-setup]</span>                                                             │
+│   :11210 KV       one-shot                                                                       │
+│   :8091 UI                                                                                       │
+│                                                                                                  │
+│   <span style="color:var(--blue)">[entity-api]</span>   <span style="color:var(--teal)">[entity-name-api]</span>  <span style="color:var(--orange)">[entity-kafka-service]</span>                                     │
+│   :8080           :8081              :8082                                                       │
+│                                                                                                  │
+<span style="color:var(--lime)">└──────────────────────────────────────────────────────────────────────────────────────────────────┘</span>
+         ▲                    ▲                   ▲                 ▲
+     :8080                :8081               :9092             :8083
+     :8091              (internal            (Kafka CLI        (Connect
+     :11210              only)               on host)           REST API)
+    exposed to host (localhost)</div>
+
+  <div class="g2" style="margin-top:1.25rem">
+    <div class="card bl" style="border-left-color:var(--blue)">
+      <h3 style="color:var(--blue)">Internal Communication (container→container)</h3>
+      <ul>
+        <li><code>entity-api → couchbase:11210</code> (Couchbase KV SDK)</li>
+        <li><code>entity-api → entity-name-api:8081</code> (HTTP REST)</li>
+        <li><code>kafka-connect → couchbase:8091</code> (DCP bootstrap)</li>
+        <li><code>kafka-connect → kafka:29092</code> (producer)</li>
+        <li><code>entity-kafka-service → kafka:29092</code> (consumer)</li>
+        <li><code>kafka → zookeeper:2181</code> (cluster coordination)</li>
+      </ul>
+    </div>
+    <div class="card bl" style="border-left-color:var(--green)">
+      <h3 style="color:var(--green)">External Communication (container→internet)</h3>
+      <ul>
+        <li><code>entity-kafka-service → smtp.gmail.com:587</code> (email)</li>
+        <li>All other inter-container traffic stays inside entity-net</li>
+        <li>Docker NATs outbound connections via the host network</li>
+      </ul>
+      <h3 style="color:var(--orange);margin-top:.85rem">Ports Exposed to Your Host (localhost)</h3>
+      <ul>
+        <li><code>:8080</code> entity-api (Postman targets this)</li>
+        <li><code>:8081</code> entity-name-api</li>
+        <li><code>:8083</code> Kafka Connect REST API</li>
+        <li><code>:8091–8096</code> Couchbase Management UI</li>
+        <li><code>:9092</code> Kafka (for local CLI tools)</li>
+        <li><code>:11210</code> Couchbase KV</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>From</th><th>To</th><th>Protocol</th><th>Port</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td>Postman (host)</td><td>entity-api</td><td>HTTP</td><td>8080</td><td>REST API calls</td></tr>
+        <tr><td>entity-api</td><td>entity-name-api</td><td>HTTP (RestClient)</td><td>8081</td><td>Capitalise legalName</td></tr>
+        <tr><td>entity-api</td><td>couchbase</td><td>Couchbase KV binary</td><td>11210</td><td>get / exists / upsert</td></tr>
+        <tr><td>kafka-connect</td><td>couchbase</td><td>DCP (binary)</td><td>11210</td><td>Change data stream</td></tr>
+        <tr><td>kafka-connect</td><td>kafka</td><td>Kafka protocol</td><td>29092</td><td>Publish messages (producer)</td></tr>
+        <tr><td>entity-kafka-service</td><td>kafka</td><td>Kafka protocol</td><td>29092</td><td>Consume messages</td></tr>
+        <tr><td>entity-kafka-service</td><td>smtp.gmail.com</td><td>SMTP + STARTTLS</td><td>587</td><td>Send email</td></tr>
+        <tr><td>kafka</td><td>zookeeper</td><td>ZK protocol</td><td>2181</td><td>Broker coordination</td></tr>
+        <tr><td>kafka-connect-setup</td><td>kafka-connect</td><td>HTTP (curl)</td><td>8083</td><td>Register connector via REST</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<div style="text-align:center;color:var(--muted);font-size:.8rem;margin-top:3rem;padding-top:1.5rem;border-top:1px solid var(--border)">
+  Entity API — Kafka Pipeline Reference &nbsp;·&nbsp; entityapi-db + entity-kafka-service
+</div>
+
+</body>
+</html>
